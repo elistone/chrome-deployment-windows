@@ -1,0 +1,42 @@
+{
+  "name": "chrome-deployment-window",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "gulp": "gulp",
+    "watch": "npx webpack --watch",
+    "build": "gulp build",
+    "package": "gulp package"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "BSD-3-Clause",
+  "devDependencies": {
+    "@types/chrome": "0.0.75",
+    "@types/react": "^16.7.8",
+    "@types/react-dom": "^16.0.11",
+    "css-loader": "^1.0.1",
+    "file-loader": "^6.0.0",
+    "gulp": "^4.0.2",
+    "gulp-zip": "^5.0.2",
+    "slugify": "^1.4.5",
+    "style-loader": "^0.23.1",
+    "ts-loader": "^5.3.1",
+    "typescript": "^3.1.6",
+    "webpack": "^4.26.1",
+    "webpack-cli": "^3.1.2"
+  },
+  "dependencies": {
+    "ajv": "^6.12.3",
+    "brace": "^0.11.1",
+    "jsoneditor": "^9.0.3",
+    "jsoneditor-react": "^3.0.0",
+    "moment": "^2.27.0",
+    "moment-timezone": "^0.5.31",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3",
+    "url-match-patterns": "^0.2.0"
+  }
+}

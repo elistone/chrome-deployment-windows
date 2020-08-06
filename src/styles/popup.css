@@ -1,0 +1,64 @@
+body {
+    font-size: 10px;
+    min-width: 350px;
+    margin: 0;
+    padding: 0;
+}
+
+h1, h2, h3 {
+    padding: 0;
+    margin: 0 0 0.2em;
+}
+
+table {
+    width: 100%;
+    font-size: 1.3em;
+    line-height: 1.8em;
+    margin-bottom: 0.9em;
+    padding: 1em;
+}
+
+table tbody {
+    vertical-align: baseline;
+}
+
+table tr td:first-child {
+    font-weight: bold;
+}
+
+.notes-section {
+    padding: 0.7em 1.4em;
+}
+
+.notice-message {
+    padding: 0.7em 1.4em;
+    font-size: 1.5em;
+    background: gray;
+    color: white;
+}
+
+.popup-deployment-info h1 {
+    padding: 1em;
+}
+
+.popup-deployment-info .status {
+    font-weight: bold;
+}
+
+.popup-deployment-info.can-deploy .status {
+    color: rgb(23, 111, 44);
+}
+
+.popup-deployment-info.can-not-deploy .status {
+    color: rgb(158, 28, 35);
+}
+
+.popup-deployment-info.can-deploy h1 {
+    background-color: #dcffe4;
+    border-bottom: 1px solid rgba(23, 111, 44, .2);
+}
+
+.popup-deployment-info.can-not-deploy h1 {
+    background-color: #ffe3e6;
+    border-bottom: 1px solid rgba(158, 28, 35, .2);
+}

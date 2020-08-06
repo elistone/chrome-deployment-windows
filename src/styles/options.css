@@ -1,0 +1,96 @@
+body {
+    background: #fbfbff;
+}
+
+h1, h2, h3, h4 {
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.tabs .tab {
+    margin-top: 10px;
+    color: rgba(0, 0, 0, 0.6);
+    display: inline-block;
+    padding: 10px;
+    border-radius: 10px 10px 0 0;
+    cursor: pointer;
+}
+
+.tabs .tab:hover, .tabs .tab.active {
+    background: none;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+}
+
+.tabs .content {
+    padding: 20px;
+    color: rgba(0, 0, 0, 0.6);
+    background: rgba(255, 255, 255, 0.2);
+    border-top: 2px solid rgba(0, 0, 0, 0.2);
+    margin-top: -2px;
+}
+
+.site-options-information {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+    padding: 1rem 0.7rem;
+}
+
+.site-options-information:last-child {
+    border-bottom: 0;
+}
+
+.site-information-title {
+    margin-bottom: 0;
+}
+
+.mono-text {
+    font-family: "Courier New", Courier, monospace;
+}
+
+.custom-class {
+    font-family: "Courier New", Courier, monospace;
+}
+
+.custom-class.custom-class-deploy {
+    color: green;
+}
+
+.custom-class.custom-class-no-deploy {
+    color: red;
+}
+
+.content-import-export {
+    height: 600px;
+}
+
+.content-import-export > div {
+    height: 100%;
+}
+
+table.table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+table.table td, table.table th {
+    border-top: 1px solid rgba(191, 191, 191, 0.37);
+    padding: 10px;
+}
+
+table.table td {
+    border-left: 1px solid rgba(191, 191, 191, 0.37);
+}
+
+table.table td:first-child {
+    border-left: 0;
+}
+
+table.table th {
+    text-transform: capitalize;
+    background-color: #b8ddff;
+}
+
+table.table tr:nth-of-type(even) td {
+    background-color: #e8f4ff;
+}
