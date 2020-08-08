@@ -74,7 +74,6 @@ class ImportExport extends React.Component<Props> {
             }, 1200);
         }, 400)
     }
-
     /**
      * render method
      */
