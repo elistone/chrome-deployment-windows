@@ -64,7 +64,11 @@ class SiteInformation extends React.Component<Props> {
         }
         return (
             <div className="content-wrapper content-site-information">
-                <h2 className="site-information-title">{Methods.i18n('l10nSiteInformation')}</h2>
+                <div className="flex-row">
+                    <div className="flex-col">
+                        <h2>{Methods.i18n('l10nSiteInformation')}</h2>
+                    </div>
+                </div>
                 {this.siteOptions()}
                 {noInformation}
             </div>

@@ -67,7 +67,11 @@ class DeploymentWindows extends React.Component<Props> {
         }
         return (
             <div className="content-wrapper content-deployment-window">
-                <h2>{Methods.i18n('l10nDeploymentWindows')}</h2>
+                <div className="flex-row">
+                    <div className="flex-col">
+                        <h2>{Methods.i18n('l10nDeploymentWindows')}</h2>
+                    </div>
+                </div>
                 <table className="table">
                     <thead>
                     <tr>
