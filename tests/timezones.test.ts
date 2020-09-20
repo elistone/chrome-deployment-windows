@@ -2,12 +2,16 @@ import * as expect from 'expect';
 import {Timezones} from "../src/app/components/Timezones";
 
 describe('Timezones', function () {
+
     beforeEach('Create new time obj', function () {
         this.time = new Timezones("12:00", "Europe/London");
     });
 
-
-    it('has the correct outputs the correct original time', function () {
+    /**
+     * If you set the time the output time is as expected
+     * @test
+     */
+    it('correctly outputs the original time', function () {
         // args: [time, original_timezone]
         const timeFormats = [
             {args: ["01:00", "Europe/Zurich"], expected: "01:00"},
@@ -23,7 +27,11 @@ describe('Timezones', function () {
         });
     });
 
-    it('converts the time into the correct timezone', function () {
+    /**
+     * If you set a time it converts correct to another timezone
+     * @test
+     */
+    it('converts the set time into the correct timezone', function () {
         // the set time
         const setTime = "12:00";
         // args: [original_timezone, local_timezone]
@@ -46,6 +54,33 @@ describe('Timezones', function () {
             const dlt = time.isDayLightTime();
             const expected = dlt ? test.expected[1] : test.expected[0];
             expect(time.toLocalTime()).toEqual(expected);
+        });
+    });
+
+    /**
+     * Make sure that we get the correct state for a deployment window.
+     */
+    it('can work out if time is in a deployment window', function () {
+        // args: [start_time, end_time, current_time]
+        const deploymentInformation = [
+            {args: ['22:00', '06:00', '12:00'], expected: false},
+            {args: ['22:00', '06:00', '04:00'], expected: true},
+            {args: ['05:00', '22:00', '23:00'], expected: false},
+            {args: ['05:00', '22:00', '12:00'], expected: true},
+            {args: ['00:00', '23:59', '01:00'], expected: true},
+            {args: ['00:00', '23:59', '07:00'], expected: true},
+            {args: ['00:00', '23:59', '11:00'], expected: true},
+            {args: ['00:00', '23:59', '15:00'], expected: true},
+            {args: ['00:00', '23:59', '19:00'], expected: true},
+            {args: ['00:00', '23:59', '22:00'], expected: true},
+            {args: ['10:00', '10:30', '10:31'], expected: false},
+            {args: ['10:00', '10:30', '10:30'], expected: true},
+
+        ]
+
+        deploymentInformation.forEach(function (test) {
+            const isDeployment = Timezones.isDeploymentWindow(test.args[0],test.args[1],test.args[2]);
+            expect(isDeployment).toEqual(test.expected);
         });
     });
 });
