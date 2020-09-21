@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test:mocha": "ts-mocha tests/**/*.test.ts",
+    "test:cypress": "cypress run",
+    "cypress:ui": "cypress open",
     "gulp": "gulp",
     "watch": "npx webpack --watch",
     "build": "gulp build",
@@ -20,6 +22,7 @@
     "@types/react": "^16.7.8",
     "@types/react-dom": "^16.0.11",
     "css-loader": "^1.0.1",
+    "cypress": "^5.2.0",
     "file-loader": "^6.0.0",
     "gulp": "^4.0.2",
     "gulp-zip": "^5.0.2",
