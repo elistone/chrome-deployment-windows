@@ -76,8 +76,26 @@ export class Notice {
         const ogTime = this.deploymentInfo['timeObj']['original'];
         const lcTime = this.deploymentInfo['timeObj']['local'];
         const nameTxt = this.deploymentInfo['name'];
-        const notesTxt = this.deploymentInfo['notes']
+        const notesTxt = this.deploymentInfo['notes'];
+        const notesOnly = this.deploymentInfo['notes-only'] || false;
 
+        if (!notesOnly) {
+            return this.contentDeployment(ogTime, lcTime, nameTxt, notesTxt);
+        }
+
+        return this.contentNotesOnly(nameTxt, notesTxt);
+    }
+
+    /**
+     * Builds a string to handle the deployment content
+     *
+     * @param ogTime
+     * @param lcTime
+     * @param nameTxt
+     * @param notesTxt
+     * @protected
+     */
+    protected contentDeployment(ogTime, lcTime, nameTxt, notesTxt) {
         const status = this.dw.getDeploymentStatus(lcTime['start'], lcTime['end']);
 
         const name = `<span class="dw-current-name"><strong>${nameTxt}</strong></span>`;
@@ -102,6 +120,22 @@ export class Notice {
         const rowThree = `<div class='dw-notice-row dw-notice-row-3'>${textDetails}</div>`
 
         return rowZero + rowOne + rowTwo + rowThree;
+    }
+
+    /**
+     * Builds a string that handles displaying notes only
+     *
+     * @param nameTxt
+     * @param notesTxt
+     * @protected
+     */
+    protected contentNotesOnly(nameTxt, notesTxt) {
+        const name = `<span class="dw-current-name"><strong>${nameTxt}</strong></span>`;
+        const textDetails = `<div class="dw-details"><strong>${Methods.i18n('l10nNotes')}</strong><br><span class="dw-notes">${notesTxt}</span></div>`;
+
+        const rowZero = `<div class='dw-notice-row dw-notice-row-0'>${name}</div>`
+        const rowOne = `<div class='dw-notice-row dw-notice-row-1'>${textDetails}</div>`
+        return rowZero + rowOne;
     }
 
     /**
@@ -136,7 +170,7 @@ export class Notice {
      */
     private enableToggleDetails() {
         const elm = document.getElementById("dw-toggle-btn");
-        if (typeof elm !== "undefined") {
+        if (typeof elm !== "undefined" && elm !== null) {
             elm.addEventListener("click", this.toggleDetails);
         }
     }
@@ -185,7 +219,11 @@ export class Notice {
      * @param endTime
      */
     private getDeploymentClass(startTime, endTime) {
-        const deploymentClass = this.dw.canDeploy(startTime, endTime) ? this.deploymentInfo['domainInfo']['classes']['deploy'] : this.deploymentInfo['domainInfo']['classes']['no-deploy'];
+        const notesOnly = this.deploymentInfo['notes-only'] || false;
+        let deploymentClass = this.dw.canDeploy(startTime, endTime) ? this.deploymentInfo['domainInfo']['classes']['deploy'] : this.deploymentInfo['domainInfo']['classes']['no-deploy'];
+        if(notesOnly && this.deploymentInfo['domainInfo']['classes']['notes']){
+            deploymentClass = this.deploymentInfo['domainInfo']['classes']['notes'];
+        }
         return "dw-notification  " + deploymentClass;
     }
 }

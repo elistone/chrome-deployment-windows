@@ -140,6 +140,7 @@ insert.insert_data.position|string[before\|after]|Specify if the notice should b
 classes|object[class_data]|Object containing the information about classes to style the notice
 classes.class_data.deploy|string|Classes to apply on deployment open
 classes.class_data.no-deploy|string|Classes to apply on deployment closed
+classes.class_data.notes|string|An optional parameter that will apply classes if set to notes only
 
 **Deployments**
 
@@ -148,7 +149,8 @@ Option | Type | Description
 key|string|Unique key that for a deployment
 name|string|Name of the deployment, will be displayed on the notice and popup
 notes|string|Notes will be displayed on the notice and popup
-case-sensitive|boolean|An optional parameter to enable case sensitivity for urls and domain keys, if not set will be _false_
+case-sensitive|boolean|An optional parameter to enable case sensitivity for urls and domain keys, is set default _false_ by default
+notes-only|boolean|An optional parameter to enable only showing of notes, is set to _false_ by default
 time|object[time_data]|Object containing the information the deployment window
 time.time_data.start|time[24]|Time in 24 hours when the deployment window starts
 time.time_data.end|time[24]|Time in 24 hours when the deployment window closes

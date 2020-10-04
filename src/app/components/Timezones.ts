@@ -18,7 +18,7 @@ export class Timezones {
         this.time = time;
         this.timeFormat = 'HH:mm';
         this.originalTimeZone = originalTimeZone;
-        this.localTimeZone = localTimeZone || this.findLocalTimezone();
+        this.localTimeZone = localTimeZone || Timezones.findLocalTimezone();
     }
 
     /**
@@ -44,7 +44,7 @@ export class Timezones {
     /**
      * Finds the local timezone
      */
-    public findLocalTimezone() {
+    public static findLocalTimezone() {
         return moment.tz.guess();
     }
 
