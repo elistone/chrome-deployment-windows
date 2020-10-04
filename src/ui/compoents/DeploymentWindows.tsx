@@ -48,11 +48,19 @@ class DeploymentWindows extends React.Component<Props> {
     siteDeployments = () => {
         return Object.keys(this.props.deployments).map(key => {
             const window = this.props.deployments[key];
-            const caseSensitive = window['case-sensitive'] ? 'true' : 'false';
+            const caseSensitive = window['case-sensitive'] ? Methods.i18n('l10nTrue') : Methods.i18n('l10nFalse');
+            const notesOnly = window['notes-only'] ? Methods.i18n('l10nTrue') : Methods.i18n('l10nFalse');
+            const name = window['name'] ? window['name'] : Methods.i18n('l10nNoName');
+            const notes = window['notes'] ? window['notes'] : Methods.i18n('l10nNoNotes');
+            const timeStart =  window['time'] && window['time']['start'] ? window['time']['start'] : Methods.i18n('l10nNoTimeStart');
+            const timeEnd =  window['time'] && window['time']['end'] ? window['time']['end'] :  Methods.i18n('l10nNoTimeEnd');
+            const timeTimezone =  window['time'] && window['time']['timezone'] ? window['time']['timezone'] : Methods.i18n('l10nNoTimeTimezone');
+
             return <tr key={key}>
-                <td>{window['name']}</td>
-                <td>{window['time']['start']} - {window['time']['end']} ({window['time']['timezone']})</td>
-                <td>{window['notes']}</td>
+                <td>{name}</td>
+                <td>{timeStart} - {timeEnd} ({timeTimezone})</td>
+                <td>{notesOnly}</td>
+                <td>{notes}</td>
                 {this.getDomainInformation(key)}
                 <td>{caseSensitive}</td>
             </tr>
@@ -79,6 +87,7 @@ class DeploymentWindows extends React.Component<Props> {
                     <tr>
                         <th>{Methods.i18n('l10nName')}</th>
                         <th>{Methods.i18n('l10nDeploymentWindow')}</th>
+                        <th>{Methods.i18n('l10nNotesOnly')}</th>
                         <th>{Methods.i18n('l10nNotes')}</th>
                         {this.allDomainTitles()}
                         <th>{Methods.i18n('l10nCaseSensitive')}</th>

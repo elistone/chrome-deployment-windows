@@ -31,6 +31,10 @@
     "message": "Notes",
     "description": "Any notes about the project."
   },
+  "l10nNotesOnly": {
+    "message": "Notes only",
+    "description": "Notes only flag."
+  },
   "l10nCaseSensitive": {
     "message": "Case sensitive",
     "description": "Case sensitive information"
@@ -98,5 +102,33 @@
   "l10nName": {
     "message": "Name",
     "description": "name"
+  },
+  "l10nTrue": {
+    "message": "True",
+    "description": "true"
+  },
+  "l10nFalse": {
+    "message": "False",
+    "description": "false"
+  },
+  "l10nNoName": {
+    "message": "No name set",
+    "description": "No name set"
+  },
+  "l10nNoNotes": {
+    "message": "No notes set",
+    "description": "No notes set"
+  },
+  "l10nNoTimeStart": {
+    "message": "Start not set",
+    "description": "Start not set"
+  },
+  "l10nNoTimeEnd": {
+    "message": "End not set",
+    "description": "Start not set"
+  },
+  "l10nNoTimeTimezone": {
+    "message": "Timezone not set",
+    "description": "Timezone not set"
   }
 }

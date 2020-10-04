@@ -31,26 +31,33 @@ class Popup extends React.Component {
     popupTable = data => {
         const ogTime = data.timeObj['original'];
         const lcTime = data.timeObj['local'];
+        const notesOnly = data['notes-only'] || false;
+
+        let table = (<table>
+            <tbody>
+            <tr>
+                <td>{Methods.i18n('l10nDeploymentWindow')}</td>
+                <td>{ogTime['start']} - {ogTime['end']}<br/><small>({ogTime['timezone']})</small></td>
+            </tr>
+            <tr>
+                <td>{Methods.i18n('l10nYourTimezone')}</td>
+                <td>{lcTime['start']} - {lcTime['end']}<br/><small>({lcTime['timezone']})</small></td>
+            </tr>
+            <tr>
+                <td>{Methods.i18n('l10nStatus')}</td>
+                <td><span className="status">{data.status}</span></td>
+            </tr>
+            </tbody>
+        </table>);
+        if(notesOnly){
+            table = (<span></span>);
+        }
+
         return (
             <div className={"popup-deployment-info " + (data.canDeploy ? "can-deploy " : "can-not-deploy ")}>
                 <h1>{data.name}</h1>
-                <table>
-                    <tbody>
-                    <tr>
-                        <td>{Methods.i18n('l10nDeploymentWindow')}</td>
-                        <td>{ogTime['start']} - {ogTime['end']}<br/><small>({ogTime['timezone']})</small></td>
-                    </tr>
-                    <tr>
-                        <td>{Methods.i18n('l10nYourTimezone')}</td>
-                        <td>{lcTime['start']} - {lcTime['end']}<br/><small>({lcTime['timezone']})</small></td>
-                    </tr>
-                    <tr>
-                        <td>{Methods.i18n('l10nStatus')}</td>
-                        <td><span className="status">{data.status}</span></td>
-                    </tr>
-                    </tbody>
-                </table>
-                {data.notes.length > 0 && <hr/>}
+                {table}
+                {!notesOnly && data.notes.length > 0 && <hr/>}
                 {data.notes.length > 0 && <div className="notes-section">
                     <h2>{Methods.i18n('l10nNotes')}</h2>
                     <p>{data.notes}</p>
