@@ -8,7 +8,7 @@ export class Notice {
     inserted: boolean = false;
     infoFound: boolean = false;
     deploymentInfo: object
-    realTimeTimer: number;
+    realTimeTimer: NodeJS.Timeout;
 
     /**
      * create new notice
