@@ -1,24 +1,20 @@
 import * as moment from "moment-timezone"
 
 export class Timezones {
-    static currentTime: string;
     time: string;
     timeFormat: string;
-    originalTimeZone: string;
-    localTimeZone: string;
+    timeZone: string;
 
     /**
      * Init Timezones
      *
-     * @param time - the time we are looking at
-     * @param originalTimeZone - the original timezone attached the time
-     * @param localTimeZone - an optional local timezone, if not set will try and be calculated
+     * @param time
+     * @param timeZone
      */
-    public constructor(time: string, originalTimeZone: string, localTimeZone: string = null) {
+    public constructor(time: string, timeZone: string) {
         this.time = time;
         this.timeFormat = 'HH:mm';
-        this.originalTimeZone = originalTimeZone;
-        this.localTimeZone = localTimeZone || this.findLocalTimezone();
+        this.timeZone = timeZone;
     }
 
     /**
@@ -29,8 +25,7 @@ export class Timezones {
         timeZone = timeZone || this.getOriginalTimezone();
         const tSplit = this.time.split(":");
         const localTz = this.getLocalTimezone();
-        const date = Timezones.getCurrentDate();
-        return moment.tz(`${date.year}-${date.month}-${date.day} ${tSplit[0]}:${tSplit[1]}`, timeZone).tz(localTz).format(this.timeFormat);
+        return moment.tz(`2020-01-01 ${tSplit[0]}:${tSplit[1]}`, timeZone).tz(localTz).format(this.timeFormat);
     }
 
     /**
@@ -42,9 +37,9 @@ export class Timezones {
     }
 
     /**
-     * Finds the local timezone
+     * Get current local timezone
      */
-    public findLocalTimezone() {
+    public getLocalTimezone() {
         return moment.tz.guess();
     }
 
@@ -52,34 +47,16 @@ export class Timezones {
      * Get the original timezone
      */
     public getOriginalTimezone() {
-        return this.originalTimeZone;
-    }
-
-    /**
-     * Get current local timezone
-     */
-    public getLocalTimezone() {
-        return this.localTimeZone;
-    }
-
-    /**
-     * Calculates todays date is in or out of daylight saving time.
-     */
-    public isDayLightTime() {
-        const timeZone = this.getOriginalTimezone();
-        const date = Timezones.getCurrentDate();
-        return moment.tz(`${date.year}-${date.month}-${date.day} 00:00`, timeZone).isDST();
+        return this.timeZone;
     }
 
     /**
      * Get the current time
      *
      * @param timeFormat
-     * @param setTime
      */
-    public static getCurrentTime(setTime: string = null, timeFormat: string = "HH:mm:ss") {
-        const date = Timezones.getCurrentDate();
-        return !setTime ? moment().format(timeFormat) : moment(`${date.year}-${date.month}-${date.day} ${setTime}`).format(timeFormat);
+    public static getCurrentTime(timeFormat = "HH:mm:ss") {
+        return moment().format(timeFormat);
     }
 
     /**
@@ -87,38 +64,13 @@ export class Timezones {
      *
      * @param startTime
      * @param endTime
-     * @param setTime
      * @param timeFormat
      */
-    public static isDeploymentWindow(startTime: string, endTime: string, setTime: string = null, timeFormat: string = "HH:mm:ss") {
-        let time = moment(Timezones.getCurrentTime(setTime), timeFormat);
-        let beforeTime = moment(startTime + ":00", timeFormat);
-        let afterTime = moment(endTime + ":00", timeFormat);
-        if(afterTime < beforeTime) {
-            return !time.isBetween(afterTime, beforeTime);
-        }
-        // adding and removing 1 minute to make sure the between bounds are met
-        beforeTime.add(-1, 'minute');
-        afterTime.add(1, 'minute');
-        return time.isBetween(beforeTime, afterTime);
-    }
+    public static isDeploymentWindow(startTime, endTime, timeFormat = "HH:mm:ss") {
+        let time = moment(this.getCurrentTime(), timeFormat),
+            beforeTime = moment(startTime + ":00", timeFormat),
+            afterTime = moment(endTime + ":00", timeFormat);
 
-    /**
-     * Get the current date
-     */
-    public static getCurrentDate() {
-        const d = new Date();
-        let day: string | number = d.getDate();
-        let month: string | number = d.getMonth() + 1;
-        const year: string | number = d.getFullYear();
-
-        day = 10 > day ? `0${day}` : day;
-        month = 10 > month ? `0${month}` : month;
-
-        return {
-            day,
-            month,
-            year
-        }
+        return !time.isBetween(afterTime, beforeTime);
     }
 }
