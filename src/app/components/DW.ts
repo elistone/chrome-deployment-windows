@@ -116,8 +116,16 @@ export class DW {
             for (const site in configDeployments) {
                 const info = configDeployments[site];
                 if (info.hasOwnProperty(domainKey)) {
-                    const path = info[domainKey];
-                    if (this.currentUrl.includes(path)) {
+                    let caseSensitive = info['case-sensitive'] || false;
+                    let path = info[domainKey];
+                    let currentUrl = this.currentUrl;
+
+                    if(!caseSensitive) {
+                        path = path.toLowerCase();
+                        currentUrl = currentUrl.toLowerCase();
+                    }
+
+                    if (currentUrl.includes(path)) {
                         this.deploymentInfo = info;
                         this.deploymentInfo = this.getDeploymentInfo();
                         return info;

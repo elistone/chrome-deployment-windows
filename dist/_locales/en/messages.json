@@ -31,6 +31,10 @@
     "message": "Notes",
     "description": "Any notes about the project."
   },
+  "l10nCaseSensitive": {
+    "message": "Case sensitive",
+    "description": "Case sensitive information"
+  },
   "l10nDetailsShow": {
     "message": "Show details",
     "description": "Show extra details."

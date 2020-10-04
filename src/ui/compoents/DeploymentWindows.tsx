@@ -48,11 +48,13 @@ class DeploymentWindows extends React.Component<Props> {
     siteDeployments = () => {
         return Object.keys(this.props.deployments).map(key => {
             const window = this.props.deployments[key];
+            const caseSensitive = window['case-sensitive'] ? 'true' : 'false';
             return <tr key={key}>
                 <td>{window['name']}</td>
                 <td>{window['time']['start']} - {window['time']['end']} ({window['time']['timezone']})</td>
                 <td>{window['notes']}</td>
                 {this.getDomainInformation(key)}
+                <td>{caseSensitive}</td>
             </tr>
         });
     }
@@ -79,6 +81,7 @@ class DeploymentWindows extends React.Component<Props> {
                         <th>{Methods.i18n('l10nDeploymentWindow')}</th>
                         <th>{Methods.i18n('l10nNotes')}</th>
                         {this.allDomainTitles()}
+                        <th>{Methods.i18n('l10nCaseSensitive')}</th>
                     </tr>
                     </thead>
                     <tbody>

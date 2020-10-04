@@ -148,6 +148,7 @@ Option | Type | Description
 key|string|Unique key that for a deployment
 name|string|Name of the deployment, will be displayed on the notice and popup
 notes|string|Notes will be displayed on the notice and popup
+case-sensitive|boolean|An optional parameter to enable case sensitivity for urls and domain keys, if not set will be _false_
 time|object[time_data]|Object containing the information the deployment window
 time.time_data.start|time[24]|Time in 24 hours when the deployment window starts
 time.time_data.end|time[24]|Time in 24 hours when the deployment window closes
