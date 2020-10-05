@@ -17,3 +17,24 @@
     text-align: right;
     font-size: 0.8em;
 }
+
+.dw-notes ul,
+.dw-notes ul li {
+    margin: 0;
+    padding: 0;
+    text-indent: 0;
+    list-style-type: disc;
+}
+
+.dw-notes ol,
+.dw-notes ol li {
+    margin: 0;
+    padding: 0;
+    text-indent: 0;
+}
+
+.dw-notes ul,
+.dw-notes ol {
+    margin-left: 1.6rem;
+    margin-top: 0.5rem;
+}

@@ -1,5 +1,6 @@
 import * as React from "react"
 import {Methods} from "../../app/components/Methods";
+import {TextFormatter} from "../../app/components/TextFormatter";
 
 type Props = {
     domains: { [key: string]: string[] },
@@ -35,10 +36,10 @@ class DeploymentWindows extends React.Component<Props> {
             const hasKey = window.hasOwnProperty(key);
 
             if (hasKey && window[key]) {
-                return <td key={key}>{window[key]}</td>
+                return <td key={TextFormatter.stripTags(key)}>{TextFormatter.stripTags(window[key])}</td>
             }
 
-            return <td key={key}>-</td>
+            return <td key={TextFormatter.stripTags(key)}>-</td>
         });
     }
 
@@ -57,10 +58,10 @@ class DeploymentWindows extends React.Component<Props> {
             const timeTimezone =  window['time'] && window['time']['timezone'] ? window['time']['timezone'] : Methods.i18n('l10nNoTimeTimezone');
 
             return <tr key={key}>
-                <td>{name}</td>
-                <td>{timeStart} - {timeEnd} ({timeTimezone})</td>
+                <td>{TextFormatter.stripTags(name)}</td>
+                <td>{TextFormatter.stripTags(timeStart)} - {TextFormatter.stripTags(timeEnd)} ({TextFormatter.stripTags(timeTimezone)})</td>
                 <td>{notesOnly}</td>
-                <td>{notes}</td>
+                <td dangerouslySetInnerHTML={{__html: TextFormatter.toMarkdown(notes)}} />
                 {this.getDomainInformation(key)}
                 <td>{caseSensitive}</td>
             </tr>

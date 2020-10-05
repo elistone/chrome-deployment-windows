@@ -1,5 +1,6 @@
 import * as React from "react"
 import {Methods} from "../../app/components/Methods";
+import {TextFormatter} from "../../app/components/TextFormatter";
 
 type Props = {
     domains: { [key: string]: string[] }
@@ -28,15 +29,15 @@ class SiteInformation extends React.Component<Props> {
             const insertMethods = siteDetails['insert'];
 
             const urls = domainUrls.map((item, key) =>
-                <li key={key}>{item}</li>
+                <li key={key}>{TextFormatter.stripTags(item)}</li>
             );
 
             const inserts = insertMethods.map((item, key) =>
-                <li key={key}>{Methods.i18n('l10nPosition')}: <span className="mono-text">{item.position}</span> | {Methods.i18n('l10nElement')}: <span className="mono-text">{item.class}</span></li>
+                <li key={key}>{Methods.i18n('l10nPosition')}: <span className="mono-text">{TextFormatter.stripTags(item.position)}</span> | {Methods.i18n('l10nElement')}: <span className="mono-text">{TextFormatter.stripTags(item.class)}</span></li>
             );
 
-            return <div key={key} className="site-options-information">
-                <h3 className="site-options-title">{key}</h3>
+            return <div key={TextFormatter.stripTags(key)} className="site-options-information">
+                <h3 className="site-options-title">{TextFormatter.stripTags(key)}</h3>
                 <h4 className="site-options-subtitle">{Methods.i18n('l10nUrlPatterns')}</h4>
                 <ul className="site-options-list site-options-list-urls">
                     {urls}
@@ -47,8 +48,8 @@ class SiteInformation extends React.Component<Props> {
                 </ul>
                 <h4 className="site-options-subtitle">{Methods.i18n('l10nCustomClasses')}</h4>
                 <ul className="site-options-list site-options-list-classes">
-                    <li className="custom-class custom-class-deploy">{customClasses['deploy']}</li>
-                    <li className="custom-class custom-class-no-deploy">{customClasses['no-deploy']}</li>
+                    <li className="custom-class custom-class-deploy">{TextFormatter.stripTags(customClasses['deploy'])}</li>
+                    <li className="custom-class custom-class-no-deploy">{TextFormatter.stripTags(customClasses['no-deploy'])}</li>
                 </ul>
             </div>;
         });

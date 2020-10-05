@@ -1,6 +1,7 @@
 import * as React from "react"
 import * as ReactDOM from "react-dom"
 import {Methods} from "../app/components/Methods";
+import {TextFormatter} from "../app/components/TextFormatter";
 
 import "../styles/popup.css"
 import {DW} from "../app/components/DW";
@@ -37,15 +38,15 @@ class Popup extends React.Component {
             <tbody>
             <tr>
                 <td>{Methods.i18n('l10nDeploymentWindow')}</td>
-                <td>{ogTime['start']} - {ogTime['end']}<br/><small>({ogTime['timezone']})</small></td>
+                <td>{TextFormatter.stripTags(ogTime['start'])} - {TextFormatter.stripTags(ogTime['end'])}<br/><small>({TextFormatter.stripTags(ogTime['timezone'])})</small></td>
             </tr>
             <tr>
                 <td>{Methods.i18n('l10nYourTimezone')}</td>
-                <td>{lcTime['start']} - {lcTime['end']}<br/><small>({lcTime['timezone']})</small></td>
+                <td>{TextFormatter.stripTags(lcTime['start'])} - {TextFormatter.stripTags(lcTime['end'])}<br/><small>({TextFormatter.stripTags(lcTime['timezone'])})</small></td>
             </tr>
             <tr>
                 <td>{Methods.i18n('l10nStatus')}</td>
-                <td><span className="status">{data.status}</span></td>
+                <td><span className="status">{TextFormatter.stripTags(data.status)}</span></td>
             </tr>
             </tbody>
         </table>);
@@ -55,12 +56,12 @@ class Popup extends React.Component {
 
         return (
             <div className={"popup-deployment-info " + (data.canDeploy ? "can-deploy " : "can-not-deploy ")}>
-                <h1>{data.name}</h1>
+                <h1 className="popup-title">{TextFormatter.stripTags(data.name)}</h1>
                 {table}
                 {!notesOnly && data.notes.length > 0 && <hr/>}
                 {data.notes.length > 0 && <div className="notes-section">
                     <h2>{Methods.i18n('l10nNotes')}</h2>
-                    <p>{data.notes}</p>
+                    <p dangerouslySetInnerHTML={{__html:TextFormatter.toMarkdown(data.notes)}} />
                 </div>}
             </div>
         )
