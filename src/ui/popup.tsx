@@ -56,7 +56,7 @@ class Popup extends React.Component {
 
         return (
             <div className={"popup-deployment-info " + (data.canDeploy ? "can-deploy " : "can-not-deploy ")}>
-                <h1>{TextFormatter.stripTags(data.name)}</h1>
+                <h1 className="popup-title">{TextFormatter.stripTags(data.name)}</h1>
                 {table}
                 {!notesOnly && data.notes.length > 0 && <hr/>}
                 {data.notes.length > 0 && <div className="notes-section">

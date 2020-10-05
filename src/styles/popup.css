@@ -37,7 +37,7 @@ table tr td:first-child {
     color: white;
 }
 
-.popup-deployment-info h1 {
+.popup-deployment-info h1.popup-title {
     padding: 1em;
 }
 
@@ -53,12 +53,12 @@ table tr td:first-child {
     color: rgb(158, 28, 35);
 }
 
-.popup-deployment-info.can-deploy h1 {
+.popup-deployment-info.can-deploy h1.popup-title {
     background-color: #dcffe4;
     border-bottom: 1px solid rgba(23, 111, 44, .2);
 }
 
-.popup-deployment-info.can-not-deploy h1 {
+.popup-deployment-info.can-not-deploy h1.popup-title {
     background-color: #ffe3e6;
     border-bottom: 1px solid rgba(158, 28, 35, .2);
 }
