@@ -11,7 +11,7 @@
 
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
-const extensionLoader = require('cypress-browser-extension-plugin/loader');
+const extensionLoader = require('@elistone/cypress-extensions-plugin/loader');
 
 
 /**
