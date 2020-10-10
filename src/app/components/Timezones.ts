@@ -1,9 +1,26 @@
-import * as moment from "moment-timezone"
+import * as dayjs from "dayjs"
+import * as utc from "dayjs/plugin/utc";
+import * as customParseFormat from "dayjs/plugin/customParseFormat";
+import * as timezone from "dayjs/plugin/timezone"
+import * as isBetween from "dayjs/plugin/isBetween"
+
+dayjs.extend(utc);
+dayjs.extend(customParseFormat);
+dayjs.extend(timezone);
+dayjs.extend(isBetween);
+
+const HH_MM_FORMAT = 'HH:mm';
+const HH_MM_SS_FORMAT = 'HH:mm:ss';
+
+const TIME_SEPARATOR = ':';
+
+const FIRST_OF_JAN_2020 = "2020-01-01";
+const SECONDS_SUFFIX = "00";
 
 export class Timezones {
     time: string;
-    timeFormat: string;
     timeZone: string;
+    timeFormat: string;
 
     /**
      * Init Timezones
@@ -13,8 +30,8 @@ export class Timezones {
      */
     public constructor(time: string, timeZone: string) {
         this.time = time;
-        this.timeFormat = 'HH:mm';
         this.timeZone = timeZone;
+        this.timeFormat = HH_MM_FORMAT;
     }
 
     /**
@@ -23,9 +40,16 @@ export class Timezones {
      */
     public toLocalTime(timeZone: string = null) {
         timeZone = timeZone || this.getOriginalTimezone();
-        const tSplit = this.time.split(":");
+
+        const formattedTime = this.getFormattedTime();
         const localTz = this.getLocalTimezone();
-        return moment.tz(`2020-01-01 ${tSplit[0]}:${tSplit[1]}`, timeZone).tz(localTz).format(this.timeFormat);
+        return dayjs.tz(formattedTime, timeZone).tz(localTz).format(this.timeFormat);
+    }
+
+    private getFormattedTime() {
+        const [hours, minutes] = this.time.split(TIME_SEPARATOR);
+
+        return `${FIRST_OF_JAN_2020 } ${hours}${TIME_SEPARATOR}${minutes}`;
     }
 
     /**
@@ -40,7 +64,7 @@ export class Timezones {
      * Get current local timezone
      */
     public getLocalTimezone() {
-        return moment.tz.guess();
+        return dayjs.tz.guess();
     }
 
     /**
@@ -55,8 +79,8 @@ export class Timezones {
      *
      * @param timeFormat
      */
-    public static getCurrentTime(timeFormat = "HH:mm:ss") {
-        return moment().format(timeFormat);
+    public static getCurrentTime(timeFormat = HH_MM_SS_FORMAT) {
+        return dayjs().format(timeFormat);
     }
 
     /**
@@ -66,11 +90,16 @@ export class Timezones {
      * @param endTime
      * @param timeFormat
      */
-    public static isDeploymentWindow(startTime, endTime, timeFormat = "HH:mm:ss") {
-        let time = moment(this.getCurrentTime(), timeFormat),
-            beforeTime = moment(startTime + ":00", timeFormat),
-            afterTime = moment(endTime + ":00", timeFormat);
+    public static isDeploymentWindow(startTime, endTime, timeFormat = HH_MM_SS_FORMAT) {
+        const time = dayjs(this.getCurrentTime(), timeFormat);
+        
+        const beforeTime = dayjs(this.withSecondsSuffix(startTime), timeFormat);
+        const afterTime = dayjs(this.withSecondsSuffix(endTime), timeFormat);
 
         return !time.isBetween(afterTime, beforeTime);
+    }
+
+    private static withSecondsSuffix(hoursAndMinutes) {
+        return hoursAndMinutes + TIME_SEPARATOR + SECONDS_SUFFIX;
     }
 }
