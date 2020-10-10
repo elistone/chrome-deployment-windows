@@ -1,8 +1,8 @@
 import * as dayjs from "dayjs"
 import * as utc from "dayjs/plugin/utc";
 import * as customParseFormat from "dayjs/plugin/customParseFormat";
-import * as timezone from "dayjs/plugin/timezone"
-import * as isBetween from "dayjs/plugin/isBetween"
+import * as timezone from "dayjs/plugin/timezone";
+import * as isBetween from "dayjs/plugin/isBetween";
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -14,8 +14,8 @@ const HH_MM_SS_FORMAT = 'HH:mm:ss';
 
 const TIME_SEPARATOR = ':';
 
-const FIRST_OF_JAN_2020 = "2020-01-01";
-const SECONDS_SUFFIX = "00";
+const FIRST_OF_JAN_2020 = '2020-01-01';
+const SECONDS_SUFFIX = '00';
 
 export class Timezones {
     time: string;
