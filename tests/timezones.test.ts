@@ -4,7 +4,7 @@ import {Timezones} from "../src/app/components/Timezones";
 describe('Timezones', function () {
 
     beforeEach('Create new time obj', function () {
-        this.time = new Timezones("12:00", "Europe/London");
+        this.time = new Timezones("12:00", "Europe/London", null,  "2020/01/01");
     });
 
     /**
@@ -34,25 +34,42 @@ describe('Timezones', function () {
     it('converts the set time into the correct timezone', function () {
         // the set time
         const setTime = "12:00";
+        const date1 = "2020/01/01";
+        const date2 = "2020/06/01";
         // args: [original_timezone, local_timezone]
-        // expected: [non_dlt, dlt]
+        // expected: [time]
+        // date
         const timeConversation = [
-            {args: ["Europe/London", "Africa/Johannesburg"], expected: ["14:00", "13:00"]},
-            {args: ["Europe/London", "America/New_York"], expected: ["06:00", "07:00"]},
-            {args: ["Europe/London", "America/Los_Angeles"], expected: ["03:00", "04:00"]},
-            {args: ["Europe/London", "Asia/Hong_Kong"], expected: ["19:00", "19:00"]},
-            {args: ["Europe/London", "Australia/Perth"], expected: ["20:00", "19:00"]},
-            {args: ["Africa/Johannesburg", "Europe/London"], expected: ["11:00", "11:00"]},
-            {args: ["America/New_York", "Europe/London"], expected: ["16:00", "17:00"]},
-            {args: ["America/Los_Angeles", "Europe/London"], expected: ["19:00", "20:00"]},
-            {args: ["Asia/Hong_Kong", "Europe/London"], expected: ["05:00", "05:00"]},
-            {args: ["Australia/Perth", "Europe/London"], expected: ["05:00", "05:00"]}
+            {args: ["Europe/London", "Africa/Johannesburg"], expected: ["14:00"], date: date1},
+            {args: ["Europe/London", "America/New_York"], expected: ["07:00"], date: date1},
+            {args: ["Europe/London", "America/Los_Angeles"], expected: ["04:00"], date: date1},
+            {args: ["Europe/London", "Asia/Hong_Kong"], expected: ["20:00"], date: date1},
+            {args: ["Europe/London", "Australia/Perth"], expected: ["20:00"], date: date1},
+            {args: ["Europe/London", "Asia/Tokyo"], expected: ["21:00"], date: date1},
+            {args: ["Africa/Johannesburg", "Europe/London"], expected: ["10:00"], date: date1},
+            {args: ["America/New_York", "Europe/London"], expected: ["17:00"], date: date1},
+            {args: ["America/Los_Angeles", "Europe/London"], expected: ["20:00"], date: date1},
+            {args: ["Asia/Hong_Kong", "Europe/London"], expected: ["04:00"], date: date1},
+            {args: ["Australia/Perth", "Europe/London"], expected: ["04:00"], date: date1},
+            {args: ["Asia/Tokyo", "Europe/London"], expected: ["03:00"], date: date1},
+
+            {args: ["Europe/London", "Africa/Johannesburg"], expected: ["13:00"], date: date2},
+            {args: ["Europe/London", "America/New_York"], expected: ["07:00"], date: date2},
+            {args: ["Europe/London", "America/Los_Angeles"], expected: ["04:00"], date: date2},
+            {args: ["Europe/London", "Asia/Hong_Kong"], expected: ["19:00"], date: date2},
+            {args: ["Europe/London", "Australia/Perth"], expected: ["19:00"], date: date2},
+            {args: ["Europe/London", "Asia/Tokyo"], expected: ["20:00"], date: date2},
+            {args: ["Africa/Johannesburg", "Europe/London"], expected: ["11:00"], date: date2},
+            {args: ["America/New_York", "Europe/London"], expected: ["17:00"], date: date2},
+            {args: ["America/Los_Angeles", "Europe/London"], expected: ["20:00"], date: date2},
+            {args: ["Asia/Hong_Kong", "Europe/London"], expected: ["05:00"], date: date2},
+            {args: ["Australia/Perth", "Europe/London"], expected: ["05:00"], date: date2},
+            {args: ["Asia/Tokyo", "Europe/London"], expected: ["04:00"], date: date2},
         ];
 
         timeConversation.forEach(function (test) {
-            const time = new Timezones(setTime, test.args[0], test.args[1]);
-            const dlt = time.isDayLightTime();
-            const expected = dlt ? test.expected[1] : test.expected[0];
+            const time = new Timezones(setTime, test.args[0], test.args[1], test.date);
+            const expected = test.expected[0];
             expect(time.toLocalTime()).toEqual(expected);
         });
     });
@@ -79,7 +96,7 @@ describe('Timezones', function () {
         ]
 
         deploymentInformation.forEach(function (test) {
-            const isDeployment = Timezones.isDeploymentWindow(test.args[0],test.args[1],test.args[2]);
+            const isDeployment = Timezones.isDeploymentWindow(test.args[0], test.args[1], test.args[2]);
             expect(isDeployment).toEqual(test.expected);
         });
     });
