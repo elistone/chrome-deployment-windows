@@ -17,7 +17,10 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
+          registry-url: https://npm.pkg.github.com/
+          scope: '@elistone'
       - run: npm install
       - run: npm run test:mocha
         env:
           CI: true
+          NODE_AUTH_TOKEN: ${{secrets.READ_PACKAGES_PAT}}
