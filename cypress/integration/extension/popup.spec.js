@@ -1,5 +1,9 @@
 context('Popup', () => {
     beforeEach(() => {
-        cy.visit('https://example.cypress.io/commands/viewport')
+        cy.visit('https://github.com/elistone/cypress-extensions-plugin')
+    })
+
+    it('shows window deployments in the popup', () => {
+
     })
 })
