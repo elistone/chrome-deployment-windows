@@ -22,9 +22,14 @@ module.exports = {
 
     module: {
         rules: [
-            { test: /\.tsx?$/, loader: "ts-loader" },
-            { test: /\.css$/, use: ['style-loader', 'css-loader'] },
-            { test: /\.(png|jpe?g|gif|svg)$/i, loader: 'file-loader', options: {outputPath: '../images', esModule: false,} },
+            {test: /\.tsx?$/, loader: "ts-loader"},
+            {test: /\.css$/, use: ['style-loader', 'css-loader']},
+            {
+                test: /\.(png|jpe?g|gif|svg)$/i,
+                loader: 'file-loader',
+                options: {outputPath: '../images', esModule: false,}
+            },
+            {test: /\.md$/, use: [{loader: "html-loader"}, {loader: "markdown-loader"}]}
         ]
     },
 };
