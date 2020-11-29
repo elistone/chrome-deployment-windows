@@ -1,10 +1,11 @@
 import * as React from "react"
 import * as ReactDOM from "react-dom"
-import Tabs from "./compoents/Tabs";
+import Tabs from "./components/Tabs";
 
-import SiteInformation from "./compoents/SiteInformation";
-import DeploymentWindows from "./compoents/DeploymentWindows";
-import ImportExport from "./compoents/ImportExport";
+import SiteInformation from "./components/SiteInformation";
+import DeploymentWindows from "./components/DeploymentWindows";
+import ImportExport from "./components/ImportExport";
+import HowToUse from "./components/HowToUse";
 
 import {Methods} from "../app/components/Methods";
 import {Config} from "../app/config/Config";
@@ -74,6 +75,11 @@ class Options extends React.Component {
                 <span>
                     {this.loadedMessage(loaded)}
                     {loaded && <ImportExport config={config} onChange={this.setConfig}/>}
+                </span>
+                {Methods.i18n('l10nHowToUse')}
+                <span>
+                    {this.loadedMessage(loaded)}
+                    {loaded && <HowToUse />}
                 </span>
             </Tabs>
         </div>

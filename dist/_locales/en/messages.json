@@ -79,6 +79,10 @@
     "message": "Edit / Import / Export",
     "description": "Edit / Import / Export title"
   },
+  "l10nHowToUse": {
+    "message": "How to use",
+    "description": "How to use"
+  },
   "l10nCustomClasses": {
     "message": "Custom classes",
     "description": "Custom classes title"
