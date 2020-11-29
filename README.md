@@ -16,7 +16,7 @@ The extension aims to be flexible in what can be displayed however it is still a
 
 ## Using the extension
 
-How to use the extension can be [found here](/blob/1.1.0/help/src/documents/HowToUse.md)
+How to use the extension can be [found here](/src/documents/HowToUse.md)
 
 ## Working on the extension
 
