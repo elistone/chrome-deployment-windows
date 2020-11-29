@@ -6,8 +6,6 @@ The extension aims to be flexible in what can be displayed however it is still a
 
 ## Table of contents
 * [Using the extension](#using-the-extension)
-    * [Config](#config)
-    * [Parameters](#parameters)
 * [Working on the extension](#working-on-the-extension)
     * [Setup](#setup) 
 * [Credits](#credits)
@@ -16,7 +14,7 @@ The extension aims to be flexible in what can be displayed however it is still a
 
 ## Using the extension
 
-How to use the extension can be [found here](/src/documents/HowToUse.md)
+How to use the extension can be [found here](/src/documents/HowToUse.md).
 
 ## Working on the extension
 
