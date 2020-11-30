@@ -116,8 +116,16 @@ export class DW {
             for (const site in configDeployments) {
                 const info = configDeployments[site];
                 if (info.hasOwnProperty(domainKey)) {
-                    const path = info[domainKey];
-                    if (this.currentUrl.includes(path)) {
+                    let caseSensitive = info['case-sensitive'] || false;
+                    let path = info[domainKey];
+                    let currentUrl = this.currentUrl;
+
+                    if (!caseSensitive) {
+                        path = path.toLowerCase();
+                        currentUrl = currentUrl.toLowerCase();
+                    }
+
+                    if (currentUrl.includes(path)) {
                         this.deploymentInfo = info;
                         this.deploymentInfo = this.getDeploymentInfo();
                         return info;
@@ -135,9 +143,9 @@ export class DW {
      * @param timeObj
      */
     protected getTime(timeObj = null) {
-        const start = timeObj && timeObj['start'] ? timeObj['start'] : this.deploymentInfo['time']['start'];
-        const end = timeObj && timeObj['end'] ? timeObj['end'] : this.deploymentInfo['time']['end'];
-        const timezone = timeObj && timeObj['timezone'] ? timeObj['timezone'] : this.deploymentInfo['time']['timezone'];
+        const start = timeObj && timeObj['start'] ? timeObj['start'] : (this.deploymentInfo['time'] && this.deploymentInfo['time']['start'] ? this.deploymentInfo['time']['start'] : "00:00");
+        const end = timeObj && timeObj['end'] ? timeObj['end'] : (this.deploymentInfo['time'] && this.deploymentInfo['time']['end'] ? this.deploymentInfo['time']['end'] : "00:00");
+        const timezone = timeObj && timeObj['timezone'] ? timeObj['timezone'] : (this.deploymentInfo['time'] && this.deploymentInfo['time']['timezone'] ? this.deploymentInfo['time']['timezone'] : Timezones.findLocalTimezone());
 
         const startTime = new Timezones(start, timezone);
         const endTime = new Timezones(end, timezone);

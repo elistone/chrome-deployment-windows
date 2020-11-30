@@ -1,6 +1,7 @@
 import {Timezones} from "./Timezones";
 import {Methods} from "./Methods";
 import {DW} from "./DW";
+import {TextFormatter} from "./TextFormatter";
 
 export class Notice {
     dw: DW;
@@ -8,7 +9,7 @@ export class Notice {
     inserted: boolean = false;
     infoFound: boolean = false;
     deploymentInfo: object
-    realTimeTimer: number;
+    realTimeTimer: NodeJS.Timeout;
 
     /**
      * create new notice
@@ -76,20 +77,38 @@ export class Notice {
         const ogTime = this.deploymentInfo['timeObj']['original'];
         const lcTime = this.deploymentInfo['timeObj']['local'];
         const nameTxt = this.deploymentInfo['name'];
-        const notesTxt = this.deploymentInfo['notes']
+        const notesTxt = this.deploymentInfo['notes'];
+        const notesOnly = this.deploymentInfo['notes-only'] || false;
 
+        if (!notesOnly) {
+            return this.contentDeployment(ogTime, lcTime, nameTxt, notesTxt);
+        }
+
+        return this.contentNotesOnly(nameTxt, notesTxt);
+    }
+
+    /**
+     * Builds a string to handle the deployment content
+     *
+     * @param ogTime
+     * @param lcTime
+     * @param nameTxt
+     * @param notesTxt
+     * @protected
+     */
+    protected contentDeployment(ogTime, lcTime, nameTxt, notesTxt) {
         const status = this.dw.getDeploymentStatus(lcTime['start'], lcTime['end']);
 
-        const name = `<span class="dw-current-name"><strong>${nameTxt}</strong></span>`;
+        const name = `<span class="dw-current-name"><strong>${TextFormatter.stripTags(nameTxt)}</strong></span>`;
 
-        const currentTime = `<span class="dw-current-time"><strong>${Methods.i18n('l10nCurrentTime')}:</strong> <span class="dw-current-time-text">${Timezones.getCurrentTime()}</span></span>`;
-        const currentStatus = `<span class="dw-current-status"><strong>${Methods.i18n('l10nStatus')}:</strong> <span class="dw-current-status-text">${status}</span></span>`;
+        const currentTime = `<span class="dw-current-time"><strong>${Methods.i18n('l10nCurrentTime')}:</strong> <span class="dw-current-time-text">${TextFormatter.stripTags(Timezones.getCurrentTime())}</span></span>`;
+        const currentStatus = `<span class="dw-current-status"><strong>${Methods.i18n('l10nStatus')}:</strong> <span class="dw-current-status-text">${TextFormatter.stripTags(status)}</span></span>`;
 
-        const deploymentTime = `<span class="dw-deployment-time"><strong>${Methods.i18n('l10nDeploymentWindow')}:</strong> ${ogTime['start']} - ${ogTime['end']} <small>(${ogTime['timezone']})</small></span>`
-        const localTime = `<span class="dw-local-time"><strong>${Methods.i18n('l10nYourTimezone')}:</strong> ${lcTime['start']} - ${lcTime['end']} <small>(${lcTime['timezone']})</small></span>`
+        const deploymentTime = `<span class="dw-deployment-time"><strong>${Methods.i18n('l10nDeploymentWindow')}:</strong> ${TextFormatter.stripTags(ogTime['start'])} - ${TextFormatter.stripTags(ogTime['end'])} <small>(${TextFormatter.stripTags(ogTime['timezone'])})</small></span>`
+        const localTime = `<span class="dw-local-time"><strong>${Methods.i18n('l10nYourTimezone')}:</strong> ${TextFormatter.stripTags(lcTime['start'])} - ${TextFormatter.stripTags(lcTime['end'])} <small>(${TextFormatter.stripTags(lcTime['timezone'])})</small></span>`
 
         let showDetails = `<a href="#" id="dw-toggle-btn" class="dw-toggle">${Methods.i18n('l10nDetailsShow')}</a>`;
-        let textDetails = `<div class="dw-details" style="display: none;"><strong>${Methods.i18n('l10nNotes')}</strong><br><span class="dw-notes">${notesTxt}</span></div>`;
+        let textDetails = `<div class="dw-details" style="display: none;"><strong>${Methods.i18n('l10nNotes')}</strong><br><span class="dw-notes">${TextFormatter.toMarkdown(notesTxt)}</span></div>`;
 
         if (notesTxt.length === 0) {
             showDetails = '';
@@ -102,6 +121,22 @@ export class Notice {
         const rowThree = `<div class='dw-notice-row dw-notice-row-3'>${textDetails}</div>`
 
         return rowZero + rowOne + rowTwo + rowThree;
+    }
+
+    /**
+     * Builds a string that handles displaying notes only
+     *
+     * @param nameTxt
+     * @param notesTxt
+     * @protected
+     */
+    protected contentNotesOnly(nameTxt, notesTxt) {
+        const name = `<span class="dw-current-name"><strong>${TextFormatter.stripTags(nameTxt)}</strong></span>`;
+        const textDetails = `<div class="dw-details"><strong>${Methods.i18n('l10nNotes')}</strong><br><span class="dw-notes">${TextFormatter.toMarkdown(notesTxt)}</span></div>`;
+
+        const rowZero = `<div class='dw-notice-row dw-notice-row-0'>${name}</div>`
+        const rowOne = `<div class='dw-notice-row dw-notice-row-1'>${textDetails}</div>`
+        return rowZero + rowOne;
     }
 
     /**
@@ -136,7 +171,7 @@ export class Notice {
      */
     private enableToggleDetails() {
         const elm = document.getElementById("dw-toggle-btn");
-        if (typeof elm !== "undefined") {
+        if (typeof elm !== "undefined" && elm !== null) {
             elm.addEventListener("click", this.toggleDetails);
         }
     }
@@ -185,7 +220,11 @@ export class Notice {
      * @param endTime
      */
     private getDeploymentClass(startTime, endTime) {
-        const deploymentClass = this.dw.canDeploy(startTime, endTime) ? this.deploymentInfo['domainInfo']['classes']['deploy'] : this.deploymentInfo['domainInfo']['classes']['no-deploy'];
+        const notesOnly = this.deploymentInfo['notes-only'] || false;
+        let deploymentClass = this.dw.canDeploy(startTime, endTime) ? this.deploymentInfo['domainInfo']['classes']['deploy'] : this.deploymentInfo['domainInfo']['classes']['no-deploy'];
+        if(notesOnly && this.deploymentInfo['domainInfo']['classes']['notes']){
+            deploymentClass = this.deploymentInfo['domainInfo']['classes']['notes'];
+        }
         return "dw-notification  " + deploymentClass;
     }
 }
