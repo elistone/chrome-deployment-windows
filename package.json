@@ -20,8 +20,8 @@
     "@types/chrome": "0.0.75",
     "@types/expect": "^24.3.0",
     "@types/mocha": "^8.0.3",
-    "@types/react": "^16.7.8",
-    "@types/react-dom": "^16.0.11",
+    "@types/react": "^17.0.3",
+    "@types/react-dom": "^17.0.2",
     "css-loader": "^1.0.1",
     "cypress": "^6.0.0",
     "file-loader": "^6.0.0",
@@ -45,8 +45,8 @@
     "jsoneditor": "^9.0.3",
     "jsoneditor-react": "^3.0.0",
     "markdown-it": "^11.0.1",
-    "react": "^16.6.3",
-    "react-dom": "^16.6.3",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
     "url-match-patterns": "^0.2.0",
     "webpack-merge": "^5.1.4"
   }
