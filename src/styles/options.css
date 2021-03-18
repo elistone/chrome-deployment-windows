@@ -198,3 +198,15 @@ table.table th {
 table.table tr:nth-of-type(even) td {
     background-color: #e8f4ff;
 }
+
+.alert {
+    margin: 0 10px;
+    padding: 10px;
+    border: 1px solid;
+    border-radius: 5px;
+}
+
+.alert.alert-info {
+    border-color: #2660a4;
+    color: #2660a4;
+}
