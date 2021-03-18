@@ -21,12 +21,24 @@ function assets() {
         })
     })
 }
-exports.build = gulp.series(assets)
+
+/**
+ * Moves the static files over to the dist dir
+ * @returns {*}
+ */
+function move() {
+    const filesToMove = [
+        'static/**/**/*.*'
+    ];
+
+    return gulp.src(filesToMove).pipe(gulp.dest('dist'));
+}
+exports.build = gulp.series(assets, move)
 
 /**
  * converts the dist folder into a package ready for upload
  */
-function package(){
+function package() {
     const manifest = require('./dist/manifest.json');
     const version = manifest.version;
     const name = slugify(manifest.name, {lower: true, strict: true});
@@ -34,4 +46,5 @@ function package(){
 
     return gulp.src('dist/**').pipe(zipUp(zipName + '.zip')).pipe(gulp.dest('package'));
 }
-exports.package = gulp.series(assets, package)
+
+exports.package = gulp.series(assets, move, package)
