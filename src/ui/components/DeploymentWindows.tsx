@@ -80,7 +80,8 @@ class DeploymentWindows extends React.Component<Props> {
             <div className="content-wrapper content-deployment-window">
                 <div className="flex-row">
                     <div className="flex-col">
-                        <h2>{Methods.i18n('l10nDeploymentWindows')}</h2>
+                        <h2 className="page-title">{Methods.i18n('l10nDeploymentWindows')}</h2>
+                        <h3 className="page-subtitle">The currently configured deployment windows.</h3>
                     </div>
                 </div>
                 <table className="table">

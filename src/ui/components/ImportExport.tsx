@@ -106,14 +106,18 @@ class ImportExport extends React.Component<Props> {
             <div className="content-wrapper content-import-export">
                 <div className="flex-row">
                     <div className="flex-col">
-                        <h2>{Methods.i18n('l10nImportExport')}</h2>
-
+                        <h2 className="page-title">{Methods.i18n('l10nImportExport')}</h2>
+                        <h3 className="page-subtitle">Update & change the config.</h3>
                     </div>
-                    <div className="flex-col flex-end">
+                    <div className="controls">
                         {messageText && <div className="alert alert-info">{messageText}</div>}
-                        {hasChanges && <span className="chip chip-info">Config changes</span>}
-                        <button disabled={buttonDisabled} onClick={this.saveChanges}
-                                className="btn btn-success">{buttonText}</button>
+                        <div className="chip-holder">
+                            {!messageText && hasChanges && <span className="chip chip-info">Config changes</span>}
+                        </div>
+                        <div className="btn-holder">
+                            <button disabled={buttonDisabled} onClick={this.saveChanges}
+                                    className="btn btn-success">{buttonText}</button>
+                        </div>
                     </div>
                 </div>
                 <div className="editor">
