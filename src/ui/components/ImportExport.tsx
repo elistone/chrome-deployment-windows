@@ -24,12 +24,20 @@ class ImportExport extends React.Component<Props> {
      */
     constructor(props) {
         super(props);
-        this.state = {buttonText: "Save", messageText: false, hasChanges: false, buttonDisabled: true, changedConfig: {}}
+        this.state = {
+            buttonText: "Save",
+            messageText: false,
+            messageClass: "alert alert-info",
+            hasChanges: false,
+            buttonDisabled: true,
+            changedConfig: {}
+        }
     }
 
     componentDidMount() {
         this.setState({
-            changedConfig: this.props.config
+            changedConfig: this.props.config,
+            currentConfig: this.props.config,
         });
     }
 
@@ -37,61 +45,70 @@ class ImportExport extends React.Component<Props> {
      * on change of json re-save
      */
     handleChange = (data) => {
+        // @ts-ignore
+        if (JSON.stringify(this.state.currentConfig) === JSON.stringify(data)) {
+            this.setState({
+                hasChanges: false,
+                buttonDisabled: true
+            });
+        } else {
+            this.setState({
+                hasChanges: true,
+                buttonDisabled: false,
+                changedConfig: data,
+            });
+        }
         this.setState({
-            changedConfig: data,
-            hasChanges: true,
-            buttonDisabled: false
+            messageText: false,
         });
     }
 
     saveChanges = () => {
-        const _that = this;
+        const _this = this;
         // @ts-ignore
         const {changedConfig} = this.state;
 
-        _that.setState({
+        _this.setState({
             buttonDisabled: true,
-            buttonText: "Saving...",
-            messageText: false
+            buttonText: "Validating...",
+            messageText: false,
+            messageClass:  "alert alert-info"
         });
 
         const validator = new ConfigValidate(changedConfig);
-        validator.check().then(function (value){
+        validator.check().then(function (value) {
             // save the config information and update.
             const config = new Config();
             config.deployments = changedConfig['deployments'];
             config.domains = changedConfig['domains'];
             config.sites = changedConfig['sites'];
-            _that.props.onChange(config.getFullConfig());
+            _this.props.onChange(config.getFullConfig());
 
             setTimeout(function () {
-                _that.setState({
+                _this.setState({
                     buttonText: "Saved!",
                     messageText: value,
+                    messageClass:  "alert alert-success"
                 });
                 setTimeout(function () {
-                    _that.setState({
+                    _this.setState({
                         buttonText: "Save",
-                        buttonDisabled: false,
                         hasChanges: false,
                         messageText: false
                     });
                 }, 1200);
-            },400);
-        }).catch(function (value){
-            setTimeout(function () {
-                _that.setState({
-                    buttonText: "Error...",
-                    messageText: value,
-                });
-                setTimeout(function () {
-                    _that.setState({
-                        buttonText: "Save",
-                        buttonDisabled: false,
-                        hasChanges: false,
-                    });
-                }, 2300);
-            },400);
+            }, 400);
+        }).catch(function (value) {
+            _this.setState({
+                buttonText: "Save",
+                hasChanges: false,
+                messageText: value,
+                messageClass:  "alert alert-danger"
+            });
+        }).finally(function (){
+            _this.setState({
+                currentConfig: changedConfig,
+            });
         });
     }
 
@@ -100,7 +117,7 @@ class ImportExport extends React.Component<Props> {
      */
     render() {
         // @ts-ignore
-        const {buttonText, hasChanges, buttonDisabled, messageText} = this.state;
+        const {buttonText, hasChanges, buttonDisabled, messageText, messageClass} = this.state;
 
         return (
             <div className="content-wrapper content-import-export">
@@ -110,9 +127,10 @@ class ImportExport extends React.Component<Props> {
                         <h3 className="page-subtitle">Update & change the config.</h3>
                     </div>
                     <div className="controls">
-                        {messageText && <div className="alert alert-info">{messageText}</div>}
                         <div className="chip-holder">
-                            {!messageText && hasChanges && <span className="chip chip-info">Config changes</span>}
+                            {messageText && <span className={messageClass}>{messageText}</span>}
+                            {!messageText && hasChanges &&
+                            <span className="alert alert-info">Config changes detected</span>}
                         </div>
                         <div className="btn-holder">
                             <button disabled={buttonDisabled} onClick={this.saveChanges}

@@ -108,16 +108,14 @@ h1, h2, h3, h4 {
     background-color: $colour-white;
     padding: 0.3rem 2rem 2rem;
     width: 80%;
-    margin: -2rem 2rem -2rem 0;
+    margin: -2rem 0 -2rem 0;
   }
 }
 
 .content-import-export {
-  height: 680px;
-
   .editor,
   .editor > div {
-    height: 95%;
+    height: 40rem;
   }
 }
 
@@ -298,23 +296,27 @@ h1, h2, h3, h4 {
   border-radius: 5px;
 
   &.alert-danger {
+    background-color: $colour-danger;
     border-color: $colour-danger;
-    color: $colour-danger;
+    color: $colour-white;
   }
 
-  &.alert-danger {
+  &.alert-success {
+    background-color: $colour-success;
     border-color: $colour-success;
-    color: $colour-success;
+    color: $colour-white;
   }
 
   &.alert-info {
+    background-color: $colour-info;
     border-color: $colour-info;
-    color: $colour-info;
+    color: $colour-white;
   }
 
   &.alert-warning {
+    background-color: $colour-warning;
     border-color: $colour-warning;
-    color: $colour-warning;
+    color: $colour-white;
   }
 }
 
