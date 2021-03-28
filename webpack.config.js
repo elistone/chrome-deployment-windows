@@ -30,7 +30,7 @@ module.exports = {
                 loader: 'file-loader',
                 options: {outputPath: '../images', esModule: false,}
             },
-            {test: /\.md$/, use: [{loader: "html-loader"}, {loader: "markdown-loader"}]}
+            {test: /\.md$/, use: [{loader: "html-loader"}, {loader: "highlight-loader"}, {loader: "markdown-loader"}]}
         ]
     },
 };

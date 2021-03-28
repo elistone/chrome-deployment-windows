@@ -341,44 +341,41 @@ h1, h2, h3, h4 {
 //    justify-content: flex-end;
 //}
 //
-//table.table {
-//    width: 100%;
-//    border-collapse: collapse;
-//    text-align: left;
-//    overflow: hidden;
-//    margin-bottom: 2rem;
-//}
-//
-//table.table td, table.table th {
-//    border-top: 1px solid rgba(191, 191, 191, 0.37);
-//    padding: 10px;
-//}
-//
-//table.table td {
-//    border-left: 1px solid rgba(191, 191, 191, 0.37);
-//}
-//
-//table.table td:first-child {
-//    border-left: 0;
-//}
-//
-//table.table th {
-//    text-transform: capitalize;
-//    background-color: #b8ddff;
-//}
-//
-//table.table tr:nth-of-type(even) td {
-//    background-color: #e8f4ff;
-//}
-//
-//.alert {
-//    margin: 0 10px;
-//    padding: 10px;
-//    border: 1px solid;
-//    border-radius: 5px;
-//}
-//
-//.alert.alert-info {
-//    border-color: #2660a4;
-//    color: #2660a4;
-//}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  td,
+  th {
+    border-top: 1px solid rgba(191, 191, 191, 0.37);
+    padding: 10px;
+  }
+  td {
+    border-left: 1px solid rgba(191, 191, 191, 0.37);
+    &:first-child {
+      border-left: 0;
+    }
+  }
+  th {
+    text-transform: capitalize;
+    background-color: $colour-primary-tint;
+    color: $colour-white;
+  }
+  tr {
+    &:nth-of-type(even) td {
+      background-color: rgba($colour-primary-tint,0.25);
+    }
+  }
+}
+
+.markdown {
+  a {
+    color: $colour-primary;
+
+    &:hover, &:focus {
+      color: rgba($colour-primary, 0.5);
+    }
+  }
+}

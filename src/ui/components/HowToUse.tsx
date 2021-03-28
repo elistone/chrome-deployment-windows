@@ -1,5 +1,6 @@
 import * as React from "react"
 import {Methods} from "../../app/components/Methods";
+import 'highlight.js/styles/github.css';
 
 type Props = {}
 
@@ -27,7 +28,7 @@ class HowToUse extends React.Component<Props> {
                         <h3 className="page-subtitle">Help with the plugin.</h3>
                     </div>
                 </div>
-                <div dangerouslySetInnerHTML={{__html: howToUseMD}}/>
+                <div className="markdown" dangerouslySetInnerHTML={{__html: howToUseMD}}/>
             </div>
         );
     }
