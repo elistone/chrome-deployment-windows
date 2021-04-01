@@ -25,6 +25,9 @@ class SiteInformation extends React.Component<Props> {
             const domainUrls = this.props.domains[key];
 
             const siteDetails = this.props.details[key];
+            if (typeof siteDetails === "undefined" || siteDetails.length === 0) {
+                return "";
+            }
             const customClasses = siteDetails['classes'];
             const insertMethods = siteDetails['insert'];
 
@@ -33,24 +36,32 @@ class SiteInformation extends React.Component<Props> {
             );
 
             const inserts = insertMethods.map((item, key) =>
-                <li key={key}>{Methods.i18n('l10nPosition')}: <span className="mono-text">{TextFormatter.stripTags(item.position)}</span> | {Methods.i18n('l10nElement')}: <span className="mono-text">{TextFormatter.stripTags(item.class)}</span></li>
+                <li key={key}>{Methods.i18n('l10nPosition')}: <span
+                    className="mono-text">{TextFormatter.stripTags(item.position)}</span> | {Methods.i18n('l10nElement')}: <span
+                    className="mono-text">{TextFormatter.stripTags(item.class)}</span></li>
             );
 
             return <div key={TextFormatter.stripTags(key)} className="site-options-information">
                 <h3 className="site-options-title">{TextFormatter.stripTags(key)}</h3>
-                <h4 className="site-options-subtitle">{Methods.i18n('l10nUrlPatterns')}</h4>
-                <ul className="site-options-list site-options-list-urls">
-                    {urls}
-                </ul>
-                <h4 className="site-options-subtitle">{Methods.i18n('l10nInsertElements')}</h4>
-                <ul className="site-options-list site-options-list-elements">
-                    {inserts}
-                </ul>
-                <h4 className="site-options-subtitle">{Methods.i18n('l10nCustomClasses')}</h4>
-                <ul className="site-options-list site-options-list-classes">
-                    <li className="custom-class custom-class-deploy">{TextFormatter.stripTags(customClasses['deploy'])}</li>
-                    <li className="custom-class custom-class-no-deploy">{TextFormatter.stripTags(customClasses['no-deploy'])}</li>
-                </ul>
+                <div className="site-options-patterns">
+                    <h4 className="site-options-subtitle">{Methods.i18n('l10nUrlPatterns')}</h4>
+                    <ul className="site-options-list site-options-list-urls">
+                        {urls}
+                    </ul>
+                </div>
+                <div className="site-options-element-insert">
+                    <h4 className="site-options-subtitle">{Methods.i18n('l10nInsertElements')}</h4>
+                    <ul className="site-options-list site-options-list-elements">
+                        {inserts}
+                    </ul>
+                </div>
+                <div className="site-options-custom-classes">
+                    <h4 className="site-options-subtitle">{Methods.i18n('l10nCustomClasses')}</h4>
+                    <ul className="site-options-list site-options-list-classes">
+                        <li className="custom-class custom-class-deploy">{TextFormatter.stripTags(customClasses['deploy'])}</li>
+                        <li className="custom-class custom-class-no-deploy">{TextFormatter.stripTags(customClasses['no-deploy'])}</li>
+                    </ul>
+                </div>
             </div>;
         });
     }
@@ -59,9 +70,15 @@ class SiteInformation extends React.Component<Props> {
      * render method
      */
     render() {
-        let noInformation = <p />
+        const siteDetails = this.siteOptions();
+        let displaySiteDetails = false;
+        for (let i = 0; i < siteDetails.length; i++) {
+            if(siteDetails[i] !== ""){
+                displaySiteDetails = true;
+            }
+        }
         if (Object.keys(this.props.domains).length == 0) {
-            noInformation = <p>{Methods.i18n('l10nNoDomainInformationSet')}</p>;
+            displaySiteDetails = false;
         }
         return (
             <div className="content-wrapper content-site-information">
@@ -71,8 +88,10 @@ class SiteInformation extends React.Component<Props> {
                         <h3 className="page-subtitle">The sites and settings configured with them.</h3>
                     </div>
                 </div>
-                {this.siteOptions()}
-                {noInformation}
+                <div className="site-options">
+                    {displaySiteDetails && siteDetails}
+                    {!displaySiteDetails && <div className="alert alert-warning alert-block text-center">{Methods.i18n('l10nNoSiteInformation')}</div>}
+                </div>
             </div>
         );
     }

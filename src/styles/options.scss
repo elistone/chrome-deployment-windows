@@ -4,6 +4,7 @@ $colour-background: #F5F8FF;
 $colour-text: #B1B1B1;
 $colour-primary: #2BBDA4;
 $colour-primary-tint: #63827D;
+$colour-border: #E9E9E9;
 
 $colour-success: #0E584C;
 $colour-danger: #BB2A43;
@@ -50,7 +51,7 @@ h1, h2, h3, h4 {
     margin-top: -1.25rem;
     font-size: 0.8rem;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid #E9E9E9;
+    border-bottom: 1px solid $colour-border;
     margin-bottom: 1.4rem;
   }
 }
@@ -157,58 +158,51 @@ h1, h2, h3, h4 {
   }
 }
 
-//.tabs .tab {
-//    margin-top: 10px;
-//    color: rgba(0, 0, 0, 0.6);
-//    display: inline-block;
-//    padding: 10px;
-//    border-radius: 10px 10px 0 0;
-//    cursor: pointer;
-//}
-//
-//.tabs .tab:hover, .tabs .tab.active {
-//    background: none;
-//    border-bottom: 2px solid rgba(0, 0, 0, 0.5);
-//}
-//
-//.tabs .content {
-//    padding: 20px;
-//    color: rgba(0, 0, 0, 0.6);
-//    background: rgba(255, 255, 255, 0.2);
-//    border-top: 2px solid rgba(0, 0, 0, 0.2);
-//    margin-top: -2px;
-//}
-//
-//.site-options-information {
-//    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
-//    padding: 1rem 0.7rem;
-//}
-//
-//.site-options-information:last-child {
-//    border-bottom: 0;
-//}
-//
-//.site-information-title {
-//    margin-bottom: 0;
-//}
-//
-//.mono-text {
-//    font-family: "Courier New", Courier, monospace;
-//}
-//
-//.custom-class {
-//    font-family: "Courier New", Courier, monospace;
-//}
-//
-//.custom-class.custom-class-deploy {
-//    color: green;
-//}
-//
-//.custom-class.custom-class-no-deploy {
-//    color: red;
-//}
-//
-//
+.site-options {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  .site-options-information {
+    box-sizing: border-box;
+    flex: 1 0 47%;
+    margin: 1rem 0.85em;
+    padding: 0 1rem;
+    max-width: 395px;
+    &:nth-of-type(odd) {
+      border-right: 1px solid $colour-border;
+    }
+
+    .site-options-title  {
+      color: $colour-primary-tint;
+      font-size: 1.1rem;
+    }
+    .site-options-patterns {
+      min-height: 4rem;
+    }
+    .site-options-element-insert {
+      min-height: 5rem;
+    }
+    .site-options-custom-classes {
+      min-height: 4rem;
+    }
+
+    .custom-class {
+      font-family: "Courier New", Courier, monospace;
+
+      &.custom-class-deploy {
+        color: $colour-success;
+      }
+
+      &.custom-class-no-deploy {
+        color: $colour-danger;
+      }
+    }
+
+    .mono-text {
+      font-family: "Courier New", Courier, monospace;
+    }
+  }
+}
 
 .controls {
   margin: 15px 0;
@@ -316,56 +310,45 @@ h1, h2, h3, h4 {
   &.alert-warning {
     background-color: $colour-warning;
     border-color: $colour-warning;
-    color: $colour-white;
+    color: $colour-black;
+  }
+
+  &.alert-block {
+    width: 100%;
+    display: block;
   }
 }
 
-//
-//.flex-row {
-//    display: flex;
-//    flex-direction: row;
-//    flex-wrap: wrap;
-//    width: 100%;
-//    margin-bottom: 1rem;
-//}
-//
-//.flex-col {
-//    display: flex;
-//    flex-direction: column;
-//    flex: 1;
-//}
-//
-//.flex-end {
-//    align-items: center;
-//    flex-flow: row nowrap;
-//    justify-content: flex-end;
-//}
-//
 table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-    overflow: hidden;
-    margin-bottom: 2rem;
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  overflow: hidden;
+  margin-bottom: 2rem;
+
   td,
   th {
     border-top: 1px solid rgba(191, 191, 191, 0.37);
     padding: 10px;
   }
+
   td {
     border-left: 1px solid rgba(191, 191, 191, 0.37);
+
     &:first-child {
       border-left: 0;
     }
   }
+
   th {
     text-transform: capitalize;
     background-color: $colour-primary-tint;
     color: $colour-white;
   }
+
   tr {
     &:nth-of-type(even) td {
-      background-color: rgba($colour-primary-tint,0.25);
+      background-color: rgba($colour-primary-tint, 0.10);
     }
   }
 }
@@ -378,4 +361,11 @@ table {
       color: rgba($colour-primary, 0.5);
     }
   }
+  hr {
+    border: 1px solid $colour-border;
+  }
+}
+
+.text-center {
+  text-align: center;
 }

@@ -59,6 +59,10 @@
     "message": "No deployment information has been set.",
     "description": "There is no information for this set."
   },
+  "l10nNoSiteInformation": {
+    "message": "No site information has been set.",
+    "description": "There is no information for this set."
+  },
   "l10nNoDomainInformationSet": {
     "message": "No site information has been set.",
     "description": "There is site information"
