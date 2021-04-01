@@ -25,7 +25,7 @@ class ImportExport extends React.Component<Props> {
     constructor(props) {
         super(props);
         this.state = {
-            buttonText: "Save",
+            buttonText: Methods.i18n("l10nSave"),
             messageText: false,
             messageClass: "alert alert-info",
             hasChanges: false,
@@ -70,7 +70,7 @@ class ImportExport extends React.Component<Props> {
 
         _this.setState({
             buttonDisabled: true,
-            buttonText: "Validating...",
+            buttonText: Methods.i18n("l10nValidating"),
             messageText: false,
             messageClass:  "alert alert-info"
         });
@@ -86,13 +86,13 @@ class ImportExport extends React.Component<Props> {
 
             setTimeout(function () {
                 _this.setState({
-                    buttonText: "Saved!",
+                    buttonText: Methods.i18n("l10nSaved"),
                     messageText: value,
                     messageClass:  "alert alert-success"
                 });
                 setTimeout(function () {
                     _this.setState({
-                        buttonText: "Save",
+                        buttonText: Methods.i18n("l10nSave"),
                         hasChanges: false,
                         messageText: false
                     });
@@ -100,7 +100,7 @@ class ImportExport extends React.Component<Props> {
             }, 400);
         }).catch(function (value) {
             _this.setState({
-                buttonText: "Save",
+                buttonText: Methods.i18n("l10nSave"),
                 hasChanges: false,
                 messageText: value,
                 messageClass:  "alert alert-danger"
@@ -124,13 +124,13 @@ class ImportExport extends React.Component<Props> {
                 <div className="flex-row">
                     <div className="flex-col">
                         <h2 className="page-title">{Methods.i18n('l10nImportExport')}</h2>
-                        <h3 className="page-subtitle">Update & change the config.</h3>
+                        <h3 className="page-subtitle">{Methods.i18n('l10nImportExportSubtitle')}</h3>
                     </div>
                     <div className="controls">
                         <div className="chip-holder">
                             {messageText && <span className={messageClass}>{messageText}</span>}
                             {!messageText && hasChanges &&
-                            <span className="alert alert-info">Config changes detected</span>}
+                            <span className="alert alert-info">{Methods.i18n('l10nChangesDetected')}</span>}
                         </div>
                         <div className="btn-holder">
                             <button disabled={buttonDisabled} onClick={this.saveChanges}

@@ -75,17 +75,33 @@
     "message": "Site Information",
     "description": "Site Information title"
   },
+  "l10nSiteInformationSubtitle": {
+    "message": "The sites and settings configured with them.",
+    "description": "Site Information subtitle"
+  },
   "l10nDeploymentWindows": {
     "message": "Deployment Windows",
     "description": "Deployment Windows title"
+  },
+  "l10nDeploymentWindowsSubtitle": {
+    "message": "The currently configured deployment windows.",
+    "description": "Deployment Windows subtitle"
   },
   "l10nImportExport": {
     "message": "Edit / Import / Export",
     "description": "Edit / Import / Export title"
   },
+  "l10nImportExportSubtitle": {
+    "message": "Update & change the config.",
+    "description": "Edit / Import / Export subtitle"
+  },
   "l10nHowToUse": {
     "message": "How to use",
-    "description": "How to use"
+    "description": "How to use title"
+  },
+  "l10nHowToUseSubtitle": {
+    "message": "Help with the plugin.",
+    "description": "How to use subtitle"
   },
   "l10nCustomClasses": {
     "message": "Custom classes",
@@ -138,5 +154,21 @@
   "l10nNoTimeTimezone": {
     "message": "Timezone not set",
     "description": "Timezone not set"
+  },
+  "l10nSaved": {
+    "message": "Saved!",
+    "description": "Saved"
+  },
+  "l10nSave": {
+    "message": "Save",
+    "description": "Save"
+  },
+  "l10nValidating": {
+    "message": "Validating...",
+    "description": "Validating"
+  },
+  "l10nChangesDetected": {
+    "message": "Config changes detected",
+    "description": "Changes detected"
   }
 }

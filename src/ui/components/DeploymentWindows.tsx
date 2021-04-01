@@ -83,7 +83,7 @@ class DeploymentWindows extends React.Component<Props> {
                 <div className="flex-row">
                     <div className="flex-col">
                         <h2 className="page-title">{Methods.i18n('l10nDeploymentWindows')}</h2>
-                        <h3 className="page-subtitle">The currently configured deployment windows.</h3>
+                        <h3 className="page-subtitle">{Methods.i18n('l10nDeploymentWindowsSubtitle')}</h3>
                     </div>
                 </div>
                 {!noData && <table className="table">
