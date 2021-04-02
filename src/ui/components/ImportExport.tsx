@@ -72,7 +72,7 @@ class ImportExport extends React.Component<Props> {
             buttonDisabled: true,
             buttonText: Methods.i18n("l10nValidating"),
             messageText: false,
-            messageClass:  "alert alert-info"
+            messageClass: "alert alert-info"
         });
 
         const validator = new ConfigValidate(changedConfig);
@@ -88,7 +88,7 @@ class ImportExport extends React.Component<Props> {
                 _this.setState({
                     buttonText: Methods.i18n("l10nSaved"),
                     messageText: value,
-                    messageClass:  "alert alert-success"
+                    messageClass: "alert alert-success"
                 });
                 setTimeout(function () {
                     _this.setState({
@@ -103,9 +103,9 @@ class ImportExport extends React.Component<Props> {
                 buttonText: Methods.i18n("l10nSave"),
                 hasChanges: false,
                 messageText: value,
-                messageClass:  "alert alert-danger"
+                messageClass: "alert alert-danger"
             });
-        }).finally(function (){
+        }).finally(function () {
             _this.setState({
                 currentConfig: changedConfig,
             });
@@ -125,6 +125,27 @@ class ImportExport extends React.Component<Props> {
                     <div className="flex-col">
                         <h2 className="page-title">{Methods.i18n('l10nImportExport')}</h2>
                         <h3 className="page-subtitle">{Methods.i18n('l10nImportExportSubtitle')}</h3>
+                    </div>
+                    <div className="settings">
+                        <fieldset>
+                            <legend> Settings</legend>
+                            <div className="form-holder">
+                                <p className="form-info above">Would you like to enable global config?</p>
+                                <div className="form-selects">
+                                    <input type="radio" id="global_true" name="global" value="true"/>
+                                    <label htmlFor="global_true">Enabled</label>
+                                    <input type="radio" id="global_false" name="global" value="false"/>
+                                    <label htmlFor="global_false">Disabled</label>
+                                </div>
+                            </div>
+                            <div className="form-holder">
+                                <span>
+                                    <input className="form-input" id="config_url" type="text" placeholder="Enter your global url"/>
+                                    <label htmlFor="config_url">Global URL</label>
+                                </span>
+                                <p className="form-info below">Enter a valid global config url.</p>
+                            </div>
+                        </fieldset>
                     </div>
                     <div className="controls">
                         <div className="chip-holder">

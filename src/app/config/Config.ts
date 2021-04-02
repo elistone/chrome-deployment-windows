@@ -1,4 +1,3 @@
-
 export class Config {
 
     /**
@@ -18,6 +17,12 @@ export class Config {
      */
     private _deployments: object;
     private _deploymentsKey: string = "DEPLOYMENTS";
+
+    /**
+     * The config url
+     */
+    private _configUrl: string;
+    private _configUrlKey: string = "CONFIG_URL";
 
     /**
      * Get domains
@@ -65,6 +70,22 @@ export class Config {
     public set deployments(value: object) {
         this._deployments = value || {};
         this.storageSet(this._deploymentsKey, this._deployments).then(r => '').catch(e => console.error(e));
+    }
+
+    /**
+     * Get deployments
+     */
+    public get configUrl(): string {
+        return this._configUrl;
+    }
+
+    /**
+     * Set deployments
+     * @param value
+     */
+    public set configUrl(value: string) {
+        this._configUrl = value || "";
+        this.storageSet(this._configUrlKey, {url: this._configUrl}).then(r => '').catch(e => console.error(e));
     }
 
     /**
