@@ -1,0 +1,39 @@
+{
+  "name": "Deployment windows",
+  "version": "1.1.0",
+  "manifest_version": 2,
+  "description": "Apply reminders on to sites to give information about deployment windows.",
+  "icons": {
+    "16": "icons/default/icon16.png",
+    "48": "icons/default/icon48.png",
+    "128": "icons/default/icon128.png"
+  },
+  "options_page": "options.html",
+  "browser_action": {
+    "default_title": "Deployment windows",
+    "default_popup": "popup.html"
+  },
+  "default_locale": "en",
+  "background": {
+    "scripts": [
+      "js/background.js"
+    ],
+    "persistent": true
+  },
+  "permissions": [
+    "https://*/*",
+    "storage"
+  ],
+  "content_security_policy": "default-src 'self'; img-src 'self' data:; font-src http://fonts.gstatic.com https://use.fontawesome.com; style-src 'self' 'unsafe-inline' http://fonts.googleapis.com https://use.fontawesome.com;",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/*"
+      ],
+      "js": [
+        "js/content.js"
+      ]
+    }
+  ]
+}
+

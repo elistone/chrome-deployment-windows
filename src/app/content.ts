@@ -2,7 +2,7 @@ import {Notice} from "./components/Notice";
 import {DW} from "./components/DW";
 
 // import the basic styling
-import "../styles/content.css"
+import "../styles/content.scss"
 
 
 chrome.runtime.sendMessage({}, (response) => {

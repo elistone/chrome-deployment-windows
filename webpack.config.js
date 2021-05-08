@@ -24,12 +24,13 @@ module.exports = {
         rules: [
             {test: /\.tsx?$/, loader: "ts-loader"},
             {test: /\.css$/, use: ['style-loader', 'css-loader']},
+            {test: /\.s[ac]ss$/i, use: ['style-loader', 'css-loader', 'sass-loader']},
             {
                 test: /\.(png|jpe?g|gif|svg)$/i,
                 loader: 'file-loader',
                 options: {outputPath: '../images', esModule: false,}
             },
-            {test: /\.md$/, use: [{loader: "html-loader"}, {loader: "markdown-loader"}]}
+            {test: /\.md$/, use: [{loader: "html-loader"}, {loader: "highlight-loader"}, {loader: "markdown-loader"}]}
         ]
     },
 };

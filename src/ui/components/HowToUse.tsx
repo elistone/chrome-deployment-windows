@@ -1,4 +1,6 @@
 import * as React from "react"
+import {Methods} from "../../app/components/Methods";
+import 'highlight.js/styles/github.css';
 
 type Props = {}
 
@@ -20,7 +22,13 @@ class HowToUse extends React.Component<Props> {
 
         return (
             <div className="content-wrapper content-site-information">
-                <div dangerouslySetInnerHTML={{__html: howToUseMD}}/>
+                <div className="flex-row">
+                    <div className="flex-col">
+                        <h2 className="page-title">{Methods.i18n('l10nHowToUse')}</h2>
+                        <h3 className="page-subtitle">{Methods.i18n('l10nHowToUseSubtitle')}</h3>
+                    </div>
+                </div>
+                <div className="markdown" dangerouslySetInnerHTML={{__html: howToUseMD}}/>
             </div>
         );
     }

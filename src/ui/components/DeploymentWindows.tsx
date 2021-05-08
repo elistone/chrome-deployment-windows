@@ -72,18 +72,21 @@ class DeploymentWindows extends React.Component<Props> {
      * render method
      */
     render() {
-        let noInformation = <p />
+        let noInformation = <div />
+        let noData = false
         if (Object.keys(this.props.deployments).length == 0) {
-            noInformation = <p>{Methods.i18n('l10nNoInformationSet')}</p>;
+            noInformation = <div className="site-options"><div className="alert alert-warning alert-block text-center">{Methods.i18n('l10nNoInformationSet')}</div></div>;
+            noData = true
         }
         return (
             <div className="content-wrapper content-deployment-window">
                 <div className="flex-row">
                     <div className="flex-col">
-                        <h2>{Methods.i18n('l10nDeploymentWindows')}</h2>
+                        <h2 className="page-title">{Methods.i18n('l10nDeploymentWindows')}</h2>
+                        <h3 className="page-subtitle">{Methods.i18n('l10nDeploymentWindowsSubtitle')}</h3>
                     </div>
                 </div>
-                <table className="table">
+                {!noData && <table className="table">
                     <thead>
                     <tr>
                         <th>{Methods.i18n('l10nName')}</th>
@@ -97,7 +100,7 @@ class DeploymentWindows extends React.Component<Props> {
                     <tbody>
                     {this.siteDeployments()}
                     </tbody>
-                </table>
+                </table> }
                 {noInformation}
             </div>
         );

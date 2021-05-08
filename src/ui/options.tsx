@@ -9,7 +9,7 @@ import HowToUse from "./components/HowToUse";
 
 import {Methods} from "../app/components/Methods";
 import {Config} from "../app/config/Config";
-import "../styles/options.css"
+import "../styles/options.scss"
 
 class Options extends React.Component {
     /**
@@ -59,29 +59,31 @@ class Options extends React.Component {
         const {config, loaded} = this.state;
 
         return <div>
-            <h1>{Methods.i18n('l10nDeploymentWindowsConfig')}</h1>
-            <Tabs>
-                {Methods.i18n('l10nSiteInformation')}
-                <span>
-                    {this.loadedMessage(loaded)}
-                    {loaded && <SiteInformation domains={config.domains} details={config.sites}/>}
-                </span>
-                {Methods.i18n('l10nDeploymentWindows')}
-                <span>
-                    {this.loadedMessage(loaded)}
-                    {loaded && <DeploymentWindows domains={config.domains} deployments={config.deployments}/>}
-                </span>
-                {Methods.i18n('l10nImportExport')}
-                <span>
-                    {this.loadedMessage(loaded)}
-                    {loaded && <ImportExport config={config} onChange={this.setConfig}/>}
-                </span>
-                {Methods.i18n('l10nHowToUse')}
-                <span>
-                    {this.loadedMessage(loaded)}
-                    {loaded && <HowToUse />}
-                </span>
-            </Tabs>
+            <h1 className="options-title">{Methods.i18n('l10nDeploymentWindowsConfig')}</h1>
+            <div className="main-container">
+                <Tabs>
+                    <span className="nav-title" data-icon="fa-tasks">{Methods.i18n('l10nSiteInformation')}</span>
+                    <span>
+                        {this.loadedMessage(loaded)}
+                        {loaded && <SiteInformation domains={config.domains} details={config.sites}/>}
+                    </span>
+                    <span className="nav-title" data-icon="fa-rocket">{Methods.i18n('l10nDeploymentWindows')}</span>
+                    <span>
+                        {this.loadedMessage(loaded)}
+                        {loaded && <DeploymentWindows domains={config.domains} deployments={config.deployments}/>}
+                    </span>
+                    <span className="nav-title" data-icon="fa-cog">{Methods.i18n('l10nImportExport')}</span>
+                    <span>
+                        {this.loadedMessage(loaded)}
+                        {loaded && <ImportExport config={config} onChange={this.setConfig}/>}
+                    </span>
+                    <span className="nav-title" data-icon="fa-info-circle">{Methods.i18n('l10nHowToUse')}</span>
+                    <span>
+                        {this.loadedMessage(loaded)}
+                        {loaded && <HowToUse/>}
+                    </span>
+                </Tabs>
+            </div>
         </div>
     }
 }

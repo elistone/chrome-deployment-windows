@@ -1,0 +1,174 @@
+{
+  "l10nHello": {
+    "message": "Hello, React!",
+    "description": "Hello text for the popup."
+  },
+  "l10nDeploymentClosed": {
+    "message": "Deployment window closed",
+    "description": "Statement that the deployment window has closed."
+  },
+  "l10nDeploymentOpen": {
+    "message": "Deployment window open",
+    "description": "Statement that the deployment window is open."
+  },
+  "l10nDeploymentWindow": {
+    "message": "Deployment window",
+    "description": "What is the original deployment window."
+  },
+  "l10nYourTimezone": {
+    "message": "Your timezone",
+    "description": "What is the deployment window in your local timezone."
+  },
+  "l10nCurrentTime": {
+    "message": "Current time",
+    "description": "What is the current time."
+  },
+  "l10nStatus": {
+    "message": "Status",
+    "description": "What is the current status."
+  },
+  "l10nNotes": {
+    "message": "Notes",
+    "description": "Any notes about the project."
+  },
+  "l10nNotesOnly": {
+    "message": "Notes only",
+    "description": "Notes only flag."
+  },
+  "l10nCaseSensitive": {
+    "message": "Case sensitive",
+    "description": "Case sensitive information"
+  },
+  "l10nDetailsShow": {
+    "message": "Show details",
+    "description": "Show extra details."
+  },
+  "l10nDetailsHide": {
+    "message": "Hide details",
+    "description": "Hide extra details."
+  },
+  "l10nLoading": {
+    "message": "Loading...",
+    "description": "Some content is loading."
+  },
+  "l10nNoInformation": {
+    "message": "No deployment information for this domain.",
+    "description": "There is no information for this domain."
+  },
+  "l10nNoInformationSet": {
+    "message": "No deployment information has been set.",
+    "description": "There is no information for this set."
+  },
+  "l10nNoSiteInformation": {
+    "message": "No site information has been set.",
+    "description": "There is no information for this set."
+  },
+  "l10nNoDomainInformationSet": {
+    "message": "No site information has been set.",
+    "description": "There is site information"
+  },
+  "l10nDeploymentWindowsConfig": {
+    "message": "Deployment windows config",
+    "description": "Deployment windows options"
+  },
+  "l10nSiteInformation": {
+    "message": "Site Information",
+    "description": "Site Information title"
+  },
+  "l10nSiteInformationSubtitle": {
+    "message": "The sites and settings configured with them.",
+    "description": "Site Information subtitle"
+  },
+  "l10nDeploymentWindows": {
+    "message": "Deployment Windows",
+    "description": "Deployment Windows title"
+  },
+  "l10nDeploymentWindowsSubtitle": {
+    "message": "The currently configured deployment windows.",
+    "description": "Deployment Windows subtitle"
+  },
+  "l10nImportExport": {
+    "message": "Edit / Import / Export",
+    "description": "Edit / Import / Export title"
+  },
+  "l10nImportExportSubtitle": {
+    "message": "Update & change the config.",
+    "description": "Edit / Import / Export subtitle"
+  },
+  "l10nHowToUse": {
+    "message": "How to use",
+    "description": "How to use title"
+  },
+  "l10nHowToUseSubtitle": {
+    "message": "Help with the plugin.",
+    "description": "How to use subtitle"
+  },
+  "l10nCustomClasses": {
+    "message": "Custom classes",
+    "description": "Custom classes title"
+  },
+  "l10nInsertElements": {
+    "message": "Insert elements",
+    "description": "Insert elements title"
+  },
+  "l10nUrlPatterns": {
+    "message": "URL patterns",
+    "description": "URL patterns title"
+  },
+  "l10nPosition": {
+    "message": "Position",
+    "description": "Position"
+  },
+  "l10nElement": {
+    "message": "Element",
+    "description": "Element"
+  },
+  "l10nName": {
+    "message": "Name",
+    "description": "name"
+  },
+  "l10nTrue": {
+    "message": "True",
+    "description": "true"
+  },
+  "l10nFalse": {
+    "message": "False",
+    "description": "false"
+  },
+  "l10nNoName": {
+    "message": "No name set",
+    "description": "No name set"
+  },
+  "l10nNoNotes": {
+    "message": "No notes set",
+    "description": "No notes set"
+  },
+  "l10nNoTimeStart": {
+    "message": "Start not set",
+    "description": "Start not set"
+  },
+  "l10nNoTimeEnd": {
+    "message": "End not set",
+    "description": "Start not set"
+  },
+  "l10nNoTimeTimezone": {
+    "message": "Timezone not set",
+    "description": "Timezone not set"
+  },
+  "l10nSaved": {
+    "message": "Saved!",
+    "description": "Saved"
+  },
+  "l10nSave": {
+    "message": "Save",
+    "description": "Save"
+  },
+  "l10nValidating": {
+    "message": "Validating...",
+    "description": "Validating"
+  },
+  "l10nChangesDetected": {
+    "message": "Config changes detected",
+    "description": "Changes detected"
+  }
+}

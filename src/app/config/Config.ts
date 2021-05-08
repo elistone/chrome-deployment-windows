@@ -1,5 +1,6 @@
+import { ConfigStorage } from "./ConfigStorage";
 
-export class Config {
+export class Config extends ConfigStorage {
 
     /**
      * The domains object
@@ -108,41 +109,6 @@ export class Config {
         const setStorage3 = this.storageGet(this._deploymentsKey).then(r => this.deployments = r[this._deploymentsKey]).catch(e => console.error(e));
 
         return Promise.all([setStorage1, setStorage2, setStorage3]);
-    }
-
-    /**
-     * Get information from chrome storage
-     * @param key
-     */
-    private async storageGet(key: string): Promise<object> {
-        return new Promise<object>((resolve, reject) =>
-            chrome.storage.sync.get(key, result =>
-                chrome.runtime.lastError ? reject(Error(chrome.runtime.lastError.message)) : resolve(result)
-            )
-        )
-    }
-
-    /**
-     * Set information into chrome storage
-     * @param key
-     * @param value
-     */
-    private async storageSet(key: string, value: object): Promise<string> {
-        let save = {};
-        save[key] = value;
-
-        return new Promise((resolve, reject) =>
-            chrome.storage.sync.set(save, () =>
-                chrome.runtime.lastError ? reject(Error(chrome.runtime.lastError.message)) : resolve()
-            )
-        )
-    }
-
-    /**
-     * Clear storage
-     */
-    private storageClear() {
-        chrome.storage.sync.clear();
     }
 
     /**

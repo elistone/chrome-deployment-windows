@@ -3,7 +3,7 @@ import * as ReactDOM from "react-dom"
 import {Methods} from "../app/components/Methods";
 import {TextFormatter} from "../app/components/TextFormatter";
 
-import "../styles/popup.css"
+import "../styles/popup.scss"
 import {DW} from "../app/components/DW";
 
 class Popup extends React.Component {
