@@ -10,6 +10,7 @@ const ajv = new Ajv({allErrors: true, verbose: true});
 import * as ace from 'brace';
 import 'brace/mode/json';
 import 'brace/theme/github';
+import {ConfigGlobal} from "../../app/config/ConfigGlobal";
 
 
 type Props = {
@@ -30,15 +31,25 @@ class ImportExport extends React.Component<Props> {
             messageClass: "alert alert-info",
             hasChanges: false,
             buttonDisabled: true,
-            changedConfig: {}
+            changedConfig: {},
+            globalConfigSettings: {}
         }
     }
 
     componentDidMount() {
+        const _this = this;
         this.setState({
             changedConfig: this.props.config,
             currentConfig: this.props.config,
         });
+
+        const configGlobal = new ConfigGlobal();
+        configGlobal.load().then(() => {
+            const enabled = configGlobal.enabled;
+            const url = configGlobal.url;
+            const lastSync = configGlobal.lastSync;
+            this.setState({globalConfigSettings: {'enabled': enabled, 'url': url, 'lastSync': lastSync}});
+        })
     }
 
     /**
@@ -61,6 +72,25 @@ class ImportExport extends React.Component<Props> {
         this.setState({
             messageText: false,
         });
+    }
+
+    globalChange = (event) => {
+        // @ts-ignore
+        const {globalConfigSettings} = this.state
+        globalConfigSettings[event.target.name] = event.target.value;
+        this.setState({
+            globalConfigSettings: globalConfigSettings
+        });
+    }
+
+    saveGlobalChanges = (event) => {
+        event.preventDefault();
+        console.log("Save global config");
+        // @ts-ignore
+        const {globalConfigSettings} = this.state
+        const configGlobal = new ConfigGlobal();
+        configGlobal.enabled = globalConfigSettings.enabled;
+        configGlobal.url = globalConfigSettings.url;
     }
 
     saveChanges = () => {
@@ -117,8 +147,7 @@ class ImportExport extends React.Component<Props> {
      */
     render() {
         // @ts-ignore
-        const {buttonText, hasChanges, buttonDisabled, messageText, messageClass} = this.state;
-
+        const {buttonText, hasChanges, buttonDisabled, messageText, messageClass, globalConfigSettings} = this.state;
         return (
             <div className="content-wrapper content-import-export">
                 <div className="flex-row">
@@ -126,28 +155,46 @@ class ImportExport extends React.Component<Props> {
                         <h2 className="page-title">{Methods.i18n('l10nImportExport')}</h2>
                         <h3 className="page-subtitle">{Methods.i18n('l10nImportExportSubtitle')}</h3>
                     </div>
-                    <div className="settings">
+                    <form className="settings" onSubmit={this.saveGlobalChanges}>
                         <fieldset>
-                            <legend> Settings</legend>
+                            <legend>Settings</legend>
                             <div className="form-holder">
                                 <p className="form-info above">Would you like to enable global config?</p>
                                 <div className="form-selects">
-                                    <input type="radio" id="global_true" name="global" value="true"/>
+                                    <input type="radio"
+                                           id="global_true"
+                                           name="enabled"
+                                           value="true"
+                                           checked={globalConfigSettings.enabled === "true"}
+                                           onChange={this.globalChange}/>
                                     <label htmlFor="global_true">Enabled</label>
-                                    <input type="radio" id="global_false" name="global" value="false"/>
+                                    <input type="radio"
+                                           id="global_false"
+                                           name="enabled"
+                                           value="false"
+                                           checked={globalConfigSettings.enabled === "false"}
+                                           onChange={this.globalChange}/>
                                     <label htmlFor="global_false">Disabled</label>
                                 </div>
                             </div>
                             <div className="form-holder">
                                 <span>
-                                    <input className="form-input" id="config_url" type="text" placeholder="Enter your global url"/>
+                                    <input className="form-input" id="config_url" type="text"
+                                           placeholder="Enter your global url"
+                                           name="url"
+                                           value={globalConfigSettings.url}
+                                           onChange={this.globalChange}/>
                                     <label htmlFor="config_url">Global URL</label>
                                 </span>
                                 <p className="form-info below">Enter a valid global config url.</p>
                             </div>
+                            <div className="form-holder form-actions">
+                                <div>Last Sync: {globalConfigSettings.lastSync}</div>
+                                <input className="btn btn-success" type="submit" value="Save Config"/>
+                            </div>
                         </fieldset>
-                    </div>
-                    <div className="controls">
+                    </form>
+                    {globalConfigSettings.enabled === "false" && <div className="controls">
                         <div className="chip-holder">
                             {messageText && <span className={messageClass}>{messageText}</span>}
                             {!messageText && hasChanges &&
@@ -157,9 +204,9 @@ class ImportExport extends React.Component<Props> {
                             <button disabled={buttonDisabled} onClick={this.saveChanges}
                                     className="btn btn-success">{buttonText}</button>
                         </div>
-                    </div>
+                    </div> }
                 </div>
-                <div className="editor">
+                {globalConfigSettings.enabled === "false" && <div className="editor">
                     <Editor
                         value={this.props.config}
                         onChange={this.handleChange}
@@ -168,7 +215,7 @@ class ImportExport extends React.Component<Props> {
                         mode="code"
                         allowedModes={['code', 'text', 'tree']}
                     />
-                </div>
+                </div> }
             </div>
         );
     }

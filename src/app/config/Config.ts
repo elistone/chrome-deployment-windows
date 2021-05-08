@@ -1,4 +1,6 @@
-export class Config {
+import { ConfigStorage } from "./ConfigStorage";
+
+export class Config extends ConfigStorage {
 
     /**
      * The domains object
@@ -17,12 +19,6 @@ export class Config {
      */
     private _deployments: object;
     private _deploymentsKey: string = "DEPLOYMENTS";
-
-    /**
-     * The config url
-     */
-    private _configUrl: string;
-    private _configUrlKey: string = "CONFIG_URL";
 
     /**
      * Get domains
@@ -73,22 +69,6 @@ export class Config {
     }
 
     /**
-     * Get deployments
-     */
-    public get configUrl(): string {
-        return this._configUrl;
-    }
-
-    /**
-     * Set deployments
-     * @param value
-     */
-    public set configUrl(value: string) {
-        this._configUrl = value || "";
-        this.storageSet(this._configUrlKey, {url: this._configUrl}).then(r => '').catch(e => console.error(e));
-    }
-
-    /**
      * Return the full config
      */
     public getFullConfig(): object {
@@ -129,41 +109,6 @@ export class Config {
         const setStorage3 = this.storageGet(this._deploymentsKey).then(r => this.deployments = r[this._deploymentsKey]).catch(e => console.error(e));
 
         return Promise.all([setStorage1, setStorage2, setStorage3]);
-    }
-
-    /**
-     * Get information from chrome storage
-     * @param key
-     */
-    private async storageGet(key: string): Promise<object> {
-        return new Promise<object>((resolve, reject) =>
-            chrome.storage.sync.get(key, result =>
-                chrome.runtime.lastError ? reject(Error(chrome.runtime.lastError.message)) : resolve(result)
-            )
-        )
-    }
-
-    /**
-     * Set information into chrome storage
-     * @param key
-     * @param value
-     */
-    private async storageSet(key: string, value: object): Promise<string> {
-        let save = {};
-        save[key] = value;
-
-        return new Promise((resolve, reject) =>
-            chrome.storage.sync.set(save, () =>
-                chrome.runtime.lastError ? reject(Error(chrome.runtime.lastError.message)) : resolve()
-            )
-        )
-    }
-
-    /**
-     * Clear storage
-     */
-    private storageClear() {
-        chrome.storage.sync.clear();
     }
 
     /**

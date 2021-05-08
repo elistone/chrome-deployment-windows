@@ -385,6 +385,13 @@ fieldset {
 }
 
 .form-holder {
+  &.form-actions {
+    display: flex;
+    flex-direction: row;
+    margin: 1.3rem 0 0;
+    align-items: center;
+    justify-content: space-between;
+  }
   .form-info {
     margin: 0.3rem 0 0;
     &.above {
