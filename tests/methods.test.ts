@@ -44,38 +44,6 @@ describe('Methods', () => {
     })
   })
 
-  describe('updateText', () => {
-    it('replaces the element text', () => {
-      document.body.innerHTML = '<span class="t">old</span>'
-      expect(Methods.updateText('new', 't')).toBe(true)
-      expect(document.querySelector('.t')?.textContent).toBe('new')
-    })
-
-    it('does not interpret the value as html', () => {
-      document.body.innerHTML = '<span class="t">old</span>'
-      Methods.updateText('<b>bold</b>', 't')
-
-      expect(document.querySelector('.t b')).toBeNull()
-      expect(document.querySelector('.t')?.textContent).toBe('<b>bold</b>')
-    })
-
-    it('reports failure when the target is absent', () => {
-      expect(Methods.updateText('new', 'missing')).toBe(false)
-    })
-  })
-
-  describe('updateClassName', () => {
-    it('replaces the class list wholesale', () => {
-      document.body.innerHTML = '<div class="a b">x</div>'
-      expect(Methods.updateClassName('c d', 'a')).toBe(true)
-      expect(document.querySelector('div')?.className).toBe('c d')
-    })
-
-    it('reports failure when the target is absent', () => {
-      expect(Methods.updateClassName('c', 'missing')).toBe(false)
-    })
-  })
-
   describe('isHidden', () => {
     it('detects display none', () => {
       document.body.innerHTML = '<div id="e" style="display:none">x</div>'

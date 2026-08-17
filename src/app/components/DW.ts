@@ -7,7 +7,7 @@ import type {
 } from '../config/types'
 import { matchesAny } from '../matching/MatchPattern'
 import { Methods } from './Methods'
-import { Timezones } from './Timezones'
+import { Timezones, isValidTimezone } from './Timezones'
 
 const DEFAULT_TIME = '00:00'
 
@@ -68,8 +68,14 @@ export class DW {
   }
 
   /**
-   * Find the first deployment whose fragment for the matched domain appears in
+   * Find the deployment whose fragment for the matched domain best identifies
    * the current URL, and build the resolved view of it.
+   *
+   * Matching is by substring, so fragments can overlap: "acme/repo" is
+   * contained in ".../acme/repo-two". Taking the first match meant the more
+   * general entry shadowed the more specific one, and which of the two won
+   * depended on object key order. The longest matching fragment is the most
+   * specific, so that is the one that wins.
    */
   private resolveDeployment(): ResolvedDeployment | null {
     const domainKey = this.domainKey
@@ -83,6 +89,9 @@ export class DW {
       // case there is nowhere to inject and nothing to render.
       return null
     }
+
+    let best: { key: string; deployment: DeploymentConfig; length: number } | null =
+      null
 
     for (const [key, deployment] of Object.entries(
       this.config.deployments ?? {},
@@ -98,12 +107,15 @@ export class DW {
         ? this.currentUrl
         : this.currentUrl.toLowerCase()
 
-      if (haystack.includes(needle)) {
-        return this.buildResolved(key, deployment, domainKey)
+      // Ties keep the earlier entry, so ordering stays predictable.
+      if (haystack.includes(needle) && fragment.length > (best?.length ?? 0)) {
+        best = { key, deployment, length: fragment.length }
       }
     }
 
-    return null
+    return best
+      ? this.buildResolved(best.key, best.deployment, domainKey)
+      : null
   }
 
   private buildResolved(
@@ -135,10 +147,14 @@ export class DW {
       typeof time?.start === 'string' && time.start ? time.start : DEFAULT_TIME
     const end =
       typeof time?.end === 'string' && time.end ? time.end : DEFAULT_TIME
-    const timezone =
-      typeof time?.timezone === 'string' && time.timezone
-        ? time.timezone
-        : Timezones.findLocalTimezone()
+    // An unrecognised zone makes dayjs throw, which previously escaped all the
+    // way out and left the page with no notice at all. Fall back instead, so a
+    // typo degrades to "your own timezone" rather than to nothing.
+    const configured =
+      typeof time?.timezone === 'string' ? time.timezone : ''
+    const timezone = isValidTimezone(configured)
+      ? configured
+      : Timezones.findLocalTimezone()
 
     const startTime = new Timezones(start, timezone)
     const endTime = new Timezones(end, timezone)

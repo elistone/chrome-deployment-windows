@@ -22,25 +22,13 @@ export class Methods {
     return false
   }
 
-  /** Replace the text of the first element with `className`. */
-  static updateText(text: string, className: string): boolean {
-    const reference = Methods.findClass(className)
-    if (reference) {
-      reference.textContent = text
-      return true
-    }
-    return false
-  }
-
-  static updateClassName(setClass: string, className: string): boolean {
-    const reference = Methods.findClass(className)
-    if (reference) {
-      reference.className = setClass
-      return true
-    }
-    return false
-  }
-
+  /**
+   * First element in the document with `className`.
+   *
+   * Only for locating host page insert anchors. The notice's own parts are
+   * held as references from build time - see Notice - because a document-wide
+   * lookup can match an element belonging to the page we injected into.
+   */
   static findClass(className: string): HTMLElement | null {
     const element = document.getElementsByClassName(className)[0]
     return element instanceof HTMLElement ? element : null

@@ -72,7 +72,7 @@ describe('Notice', () => {
       notice = new Notice(resolve(DAYTIME))
       const element = notice.build()
 
-      expect(element.querySelector('#dw-toggle-btn')?.textContent).toBe(
+      expect(element.querySelector('.dw-toggle')?.textContent).toBe(
         'Show details',
       )
       const details = element.querySelector<HTMLElement>('.dw-details')
@@ -87,7 +87,7 @@ describe('Notice', () => {
       notice = new Notice(deployment)
       const element = notice.build()
 
-      expect(element.querySelector('#dw-toggle-btn')).toBeNull()
+      expect(element.querySelector('.dw-toggle')).toBeNull()
       expect(element.querySelector('.dw-details')).toBeNull()
     })
 
@@ -296,7 +296,7 @@ describe('Notice', () => {
       notice = new Notice(resolve(DAYTIME))
       notice.insert()
 
-      const toggle = document.getElementById('dw-toggle-btn')!
+      const toggle = document.querySelector<HTMLElement>('.dw-notification .dw-toggle')!
       const details = document.querySelector<HTMLElement>('.dw-details')!
 
       toggle.click()

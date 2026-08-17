@@ -1,3 +1,4 @@
+import { isValidTimezone } from '../components/Timezones'
 import type { DeploymentWindowsConfig } from './types'
 
 /**
@@ -207,6 +208,14 @@ function validateTime(value: unknown, path: string, errors: Errors): void {
     value.timezone.length === 0
   ) {
     errors.add(join(path, 'timezone'), 'must be a non-empty string')
+  } else if (!isValidTimezone(value.timezone)) {
+    // Caught here so a typo is rejected while the user is looking at the
+    // editor. At runtime an unknown zone makes dayjs throw, which used to take
+    // the whole notice down.
+    errors.add(
+      join(path, 'timezone'),
+      `must be a known IANA timezone (got "${value.timezone}")`,
+    )
   }
 
   for (const extra of Object.keys(value)) {

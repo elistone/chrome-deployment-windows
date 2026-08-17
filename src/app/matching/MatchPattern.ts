@@ -112,8 +112,10 @@ export class MatchPattern {
       return false
     }
 
-    // Chrome matches the path including query and fragment.
-    return this.pathRe.test(`${parsed.pathname}${parsed.search}${parsed.hash}`)
+    // Chrome matches against the path and query string, but ignores the
+    // fragment - it is never sent to a server and plays no part in matching.
+    // Including it made `https://example.com/a` fail against `.../a#section`.
+    return this.pathRe.test(`${parsed.pathname}${parsed.search}`)
   }
 }
 

@@ -5,7 +5,6 @@ import { Timezones } from '../src/app/components/Timezones'
 describe('Timezones', () => {
   afterEach(() => {
     vi.useRealTimers()
-    Timezones.currentDate = null
   })
 
   describe('toOriginalTime', () => {
@@ -118,8 +117,7 @@ describe('Timezones', () => {
 
   describe('getCurrentDate', () => {
     it('zero pads day and month', () => {
-      Timezones.currentDate = '2020/01/05'
-      expect(Timezones.getCurrentDate()).toEqual({
+      expect(Timezones.getCurrentDate('2020/01/05')).toEqual({
         day: '05',
         month: '01',
         year: 2020,
@@ -127,8 +125,7 @@ describe('Timezones', () => {
     })
 
     it('does not pad two digit values', () => {
-      Timezones.currentDate = '2020/11/23'
-      expect(Timezones.getCurrentDate()).toEqual({
+      expect(Timezones.getCurrentDate('2020/11/23')).toEqual({
         day: '23',
         month: '11',
         year: 2020,
@@ -138,7 +135,6 @@ describe('Timezones', () => {
     it('falls back to the system date when unset', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2021-03-09T10:00:00'))
-      Timezones.currentDate = null
       expect(Timezones.getCurrentDate()).toEqual({
         day: '09',
         month: '03',
@@ -149,12 +145,10 @@ describe('Timezones', () => {
 
   describe('getCurrentTime', () => {
     it('formats the supplied time with seconds', () => {
-      Timezones.currentDate = '2020/01/01'
       expect(Timezones.getCurrentTime('09:30')).toBe('09:30:00')
     })
 
     it('honours a custom format', () => {
-      Timezones.currentDate = '2020/01/01'
       expect(Timezones.getCurrentTime('09:30', 'HH:mm')).toBe('09:30')
     })
   })

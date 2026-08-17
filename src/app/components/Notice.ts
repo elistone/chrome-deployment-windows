@@ -13,6 +13,12 @@ export const ICONS = {
 
 /**
  * Builds and injects the in-page notice, then keeps its clock and status fresh.
+ *
+ * Every lookup of the notice's own parts goes through references captured at
+ * build time rather than a document-wide class query. The notice is injected
+ * into pages we do not control, and `document.getElementsByClassName(...)[0]`
+ * would happily return a host page element that happened to share the class -
+ * reading the wrong node, or worse, overwriting it.
  */
 export class Notice {
   readonly deployment: ResolvedDeployment
@@ -23,6 +29,12 @@ export class Notice {
   private toggleHandler: ((event: Event) => void) | null = null
   /** Avoids messaging the service worker every tick when nothing changed. */
   private lastIcon: string | null = null
+
+  // Captured from the built element, never from the document.
+  private timeText: HTMLElement | null = null
+  private statusText: HTMLElement | null = null
+  private details: HTMLElement | null = null
+  private toggle: HTMLElement | null = null
 
   constructor(deployment: ResolvedDeployment) {
     this.deployment = deployment
@@ -35,7 +47,13 @@ export class Notice {
     notice.innerHTML = this.getContent()
     notice.className = this.getDeploymentClass(start, end)
     notice.style.marginBottom = '1.25em'
+
     this.element = notice
+    this.timeText = notice.querySelector('.dw-current-time-text')
+    this.statusText = notice.querySelector('.dw-current-status-text')
+    this.details = notice.querySelector('.dw-details')
+    this.toggle = notice.querySelector('.dw-toggle')
+
     return notice
   }
 
@@ -72,9 +90,8 @@ export class Notice {
       clearInterval(this.realTimeTimer)
       this.realTimeTimer = null
     }
-    const toggle = document.getElementById('dw-toggle-btn')
-    if (toggle && this.toggleHandler) {
-      toggle.removeEventListener('click', this.toggleHandler)
+    if (this.toggle && this.toggleHandler) {
+      this.toggle.removeEventListener('click', this.toggleHandler)
     }
     this.toggleHandler = null
     this.element?.remove()
@@ -105,7 +122,7 @@ export class Notice {
 
     const hasNotes = notesTxt.length > 0
     const showDetails = hasNotes
-      ? `<a href="#" id="dw-toggle-btn" class="dw-toggle">${Methods.i18n('l10nDetailsShow')}</a>`
+      ? `<a href="#" class="dw-toggle">${Methods.i18n('l10nDetailsShow')}</a>`
       : ''
     const textDetails = hasNotes
       ? `<div class="dw-details" style="display: none;"><strong>${Methods.i18n('l10nNotes')}</strong><br><span class="dw-notes">${TextFormatter.toMarkdown(notesTxt)}</span></div>`
@@ -145,28 +162,25 @@ export class Notice {
   }
 
   private enableToggleDetails(): void {
-    const toggle = document.getElementById('dw-toggle-btn')
-    if (!toggle) {
+    if (!this.toggle) {
       return
     }
-    this.toggleHandler = (event: Event) => Notice.toggleDetails(event)
-    toggle.addEventListener('click', this.toggleHandler)
+    this.toggleHandler = (event: Event) => this.toggleDetails(event)
+    this.toggle.addEventListener('click', this.toggleHandler)
   }
 
-  private static toggleDetails(event: Event): void {
+  private toggleDetails(event: Event): void {
     event.preventDefault()
-    const target = event.target as HTMLElement | null
-    const details = Methods.findClass('dw-details')
-    if (!details || !target) {
+    if (!this.details || !this.toggle) {
       return
     }
 
-    if (Methods.isHidden(details)) {
-      details.style.display = 'block'
-      target.textContent = Methods.i18n('l10nDetailsHide')
+    if (Methods.isHidden(this.details)) {
+      this.details.style.display = 'block'
+      this.toggle.textContent = Methods.i18n('l10nDetailsHide')
     } else {
-      details.style.display = 'none'
-      target.textContent = Methods.i18n('l10nDetailsShow')
+      this.details.style.display = 'none'
+      this.toggle.textContent = Methods.i18n('l10nDetailsShow')
     }
   }
 
@@ -174,12 +188,15 @@ export class Notice {
   realTime(): void {
     const { start, end } = this.deployment.timeObj.local
 
-    Methods.updateText(Timezones.getCurrentTime(), 'dw-current-time-text')
-    Methods.updateText(DW.statusText(start, end), 'dw-current-status-text')
-    Methods.updateClassName(
-      this.getDeploymentClass(start, end),
-      'dw-notification',
-    )
+    if (this.timeText) {
+      this.timeText.textContent = Timezones.getCurrentTime()
+    }
+    if (this.statusText) {
+      this.statusText.textContent = DW.statusText(start, end)
+    }
+    if (this.element) {
+      this.element.className = this.getDeploymentClass(start, end)
+    }
 
     this.updateIcon()
   }

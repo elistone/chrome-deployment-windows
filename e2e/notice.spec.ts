@@ -69,7 +69,7 @@ test.describe('in-page notice', () => {
       githubPageHtml(),
     )
 
-    const toggle = page.locator('#dw-toggle-btn')
+    const toggle = page.locator('.dw-notification .dw-toggle')
     const details = page.locator('.dw-details')
 
     await expect(toggle).toHaveText('Show details')
