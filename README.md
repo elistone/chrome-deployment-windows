@@ -43,13 +43,51 @@ How to use the extension can be [found here](/src/documents/HowToUse.md).
 
 ### Making changes
 
+There are two dev modes, and most day-to-day UI work wants the first.
+
+#### `pnpm harness` — no extension install needed
+
+```text
+pnpm harness
+```
+
+Opens <http://localhost:5180> with a plain web app that renders the **real**
+popup, options page and in-page notice against a `localStorage`-backed stand-in
+for the `chrome.*` APIs. Nothing has to be loaded into Chrome, so the
+edit/refresh loop is just a page reload.
+
+The control bar lets you:
+
+* switch the **simulated tab URL** between preset scenarios (window open, window
+  closed, cross-timezone, notes-only, no match) or type any URL,
+* watch which **toolbar icon** the notice is asking for,
+* **reset the config** back to the sample after editing it.
+
+Each surface renders in its own iframe, so the page-level CSS of the popup and
+options page stays isolated exactly as it is in the real extension. The in-page
+notice is injected into a stand-in host page carrying the same anchor classes
+(`.file-navigation`, `.repository-content`, `.mod-header`) the config targets, so
+insertion is genuinely exercised rather than mocked.
+
+The harness lives entirely in `dev/` and is never part of the extension build.
+It cannot replace a real extension context either: the shim installs only when
+`chrome.runtime.id` is absent.
+
+**What the harness cannot tell you**, because there is no extension context:
+the service worker, the real `chrome.storage.sync` (quota, cross-device sync),
+the Manifest V3 content security policy, and content-script injection into real
+third-party pages. Use `pnpm dev` or the e2e suite for those.
+
+#### `pnpm dev` — the real extension, with HMR
+
 ```text
 pnpm dev
 ```
 
-Vite serves the extension with hot module replacement for the popup and options
-pages. Content script changes still need the extension reloaded from
-`chrome://extensions/` and the page refreshed.
+Vite serves the actual extension with hot module replacement for the popup and
+options pages; load `dist` via "Load unpacked" as in [Setup](#setup). Content
+script changes still need the extension reloaded from `chrome://extensions/` and
+the page refreshed.
 
 For a one-off production build, use `pnpm build`.
 
@@ -57,6 +95,7 @@ For a one-off production build, use `pnpm build`.
 
 | Command | What it does |
 | --- | --- |
+| `pnpm harness` | Browser-only dev harness, no extension install needed |
 | `pnpm test` | Unit and component tests (Vitest + Testing Library) |
 | `pnpm test:watch` | The same, in watch mode |
 | `pnpm test:coverage` | Unit tests with a coverage report |
@@ -105,6 +144,7 @@ src/
   styles/                Plain CSS
   documents/HowToUse.md  Rendered inside the options page
 public/                  Copied verbatim to dist/ (icons, _locales)
+dev/                     Browser-only dev harness (never built into the extension)
 tests/                   Vitest unit and component tests
 e2e/                     Playwright end-to-end tests
 scripts/                 Manifest check and release packaging

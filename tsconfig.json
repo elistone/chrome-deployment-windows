@@ -1,17 +1,19 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
-
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
-
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -20,10 +22,13 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-
     "noEmit": true,
     "sourceMap": true,
-    "types": ["chrome", "vitest/globals", "node"]
+    "types": [
+      "chrome",
+      "vitest/globals",
+      "node"
+    ]
   },
   "include": [
     "src/**/*.ts",
@@ -31,7 +36,13 @@
     "tests/**/*.ts",
     "e2e/**/*.ts",
     "scripts/**/*.js",
-    "*.config.ts"
+    "*.config.ts",
+    "dev/**/*.ts",
+    "dev/**/*.tsx"
   ],
-  "exclude": ["node_modules", "dist", "release"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "release"
+  ]
 }

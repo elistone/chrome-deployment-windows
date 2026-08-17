@@ -1,0 +1,123 @@
+/*
+ * Styling for the stand-in host page in the notice harness.
+ *
+ * Includes minimal look-alikes for the GitHub and Jira classes the default
+ * config applies, so the notice is previewed roughly as it will appear in the
+ * wild. These are approximations, not copies of either site's stylesheet.
+ */
+
+body {
+  margin: 0;
+  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial,
+    sans-serif;
+  font-size: 14px;
+  color: #1f2328;
+  background: #ffffff;
+}
+
+.host-chrome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #ebedf0;
+  border: 1px solid #d0d7de;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+}
+
+.host-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c8ced6;
+}
+
+.host-url {
+  margin-left: 10px;
+  padding: 3px 10px;
+  flex: 1;
+  background: #fff;
+  border-radius: 20px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: #57606a;
+}
+
+.host-page {
+  padding: 16px;
+  border: 1px solid #d0d7de;
+  border-radius: 0 0 8px 8px;
+}
+
+.host-header {
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+/* Insert anchors, dimmed so the notice itself stands out. */
+.file-navigation,
+.repository-content,
+.mod-header {
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px dashed #d0d7de;
+  border-radius: 6px;
+  color: #8c959f;
+  font-size: 12px;
+}
+
+.host-empty {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: #fff8c5;
+  border: 1px solid #d4a72c66;
+  color: #4d2d00;
+}
+
+/* --- Approximations of the classes the default config applies --- */
+
+.flash {
+  padding: 16px;
+  border: 1px solid;
+  border-radius: 6px;
+}
+
+.flash-success {
+  background: #dafbe1;
+  border-color: #1a7f37 33;
+  color: #1a7f37;
+}
+
+.flash-error {
+  background: #ffebe9;
+  border-color: #cf222e33;
+  color: #cf222e;
+}
+
+.flash-warn {
+  background: #fff8c5;
+  border-color: #d4a72c66;
+  color: #4d2d00;
+}
+
+.aui-message {
+  padding: 16px;
+  border-radius: 3px;
+}
+
+.aui-message-success {
+  background: #e3fcef;
+  color: #006644;
+}
+
+.aui-message-error {
+  background: #ffebe6;
+  color: #bf2600;
+}
+
+.dw-notification a {
+  color: inherit;
+}
