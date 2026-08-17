@@ -1,14 +1,24 @@
 name: CI
 
+# A branch with an open PR would otherwise be built twice: once for the push
+# and again for the pull_request. Pushes are therefore limited to the trunk,
+# and everything else is covered by its PR.
 on:
   push:
-    branches: [main, '2.x']
+    branches: [main]
   pull_request:
     branches: [main, '2.x']
+  # So long-lived branches without an open PR can still be checked on demand.
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
+env:
+  # corepack fetches the pinned pnpm on first use; without this it can stop to
+  # ask for confirmation.
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: 0
 
 jobs:
   verify:
@@ -16,18 +26,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          # Kept in step with .nvmrc and the engines field.
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
 
       - name: Typecheck
         run: pnpm typecheck
@@ -39,8 +39,8 @@ jobs:
         run: pnpm test:coverage
 
       - name: Upload coverage
-        if: always()
-        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage/
@@ -51,15 +51,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
 
       - name: Build
         run: pnpm build
@@ -74,7 +67,7 @@ jobs:
         run: pnpm check:bundle
 
       - name: Upload unpacked extension
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: extension-unpacked
           path: dist/
@@ -87,15 +80,15 @@ jobs:
     needs: [verify, build]
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Cache the Playwright browser
+        id: playwright-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
@@ -108,7 +101,7 @@ jobs:
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/

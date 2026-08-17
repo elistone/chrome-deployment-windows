@@ -1,0 +1,38 @@
+name: Set up Node and pnpm
+description: >-
+  Installs the pinned Node version, enables pnpm via corepack and installs
+  dependencies with a cached store.
+
+runs:
+  using: composite
+  steps:
+    # Node first, so corepack's shims are created against the version this
+    # repo actually pins rather than whatever the runner image ships.
+    - name: Install Node
+      uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+
+    # corepack is bundled with Node and reads "packageManager" from
+    # package.json, so it resolves the exact pinned pnpm. Using it instead of
+    # pnpm/action-setup means CI downloads no third-party actions at all -
+    # that download is what rate limited (HTTP 429) and failed a run.
+    - name: Enable pnpm
+      shell: bash
+      run: corepack enable
+
+    - name: Locate the pnpm store
+      id: store
+      shell: bash
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+    - name: Restore the pnpm store
+      uses: actions/cache@v6
+      with:
+        path: ${{ steps.store.outputs.path }}
+        key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: ${{ runner.os }}-pnpm-
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
