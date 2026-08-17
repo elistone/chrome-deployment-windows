@@ -1,80 +1,92 @@
-import * as React from "react"
-import {Methods} from "../../app/components/Methods";
-import {TextFormatter} from "../../app/components/TextFormatter";
+import { Component } from 'react'
 
-type Props = {
-    domains: { [key: string]: string[] }
-    details: {}
+import { Methods } from '../../app/components/Methods'
+import { TextFormatter } from '../../app/components/TextFormatter'
+import type { SiteConfig } from '../../app/config/types'
+
+interface SiteInformationProps {
+  domains: Record<string, string[]>
+  details: Record<string, SiteConfig>
 }
 
-class SiteInformation extends React.Component<Props> {
-    /**
-     * on constructor
-     * @param props
-     */
-    constructor(props) {
-        super(props);
-        this.state = {}
+/** Read-only summary of the domains and where the notice gets injected. */
+export class SiteInformation extends Component<SiteInformationProps> {
+  private renderSite(key: string) {
+    const domainUrls = this.props.domains[key] ?? []
+    const site = this.props.details[key]
+
+    // A domain without a matching `sites` entry is valid config but has nothing
+    // to show here, so skip it rather than crashing on undefined.
+    if (!site) {
+      return (
+        <div key={key} className="site-options-information">
+          <h3 className="site-options-title">{TextFormatter.stripTags(key)}</h3>
+          <p>{Methods.i18n('l10nNoDomainInformationSet')}</p>
+        </div>
+      )
     }
 
-    /**
-     * gets a list of site options
-     */
-    siteOptions = () => {
-        return Object.keys(this.props.domains).map(key => {
-            const domainUrls = this.props.domains[key];
+    return (
+      <div key={key} className="site-options-information">
+        <h3 className="site-options-title">{TextFormatter.stripTags(key)}</h3>
 
-            const siteDetails = this.props.details[key];
-            const customClasses = siteDetails['classes'];
-            const insertMethods = siteDetails['insert'];
+        <h4 className="site-options-subtitle">
+          {Methods.i18n('l10nUrlPatterns')}
+        </h4>
+        <ul className="site-options-list site-options-list-urls">
+          {domainUrls.map((url, index) => (
+            <li key={index}>{TextFormatter.stripTags(url)}</li>
+          ))}
+        </ul>
 
-            const urls = domainUrls.map((item, key) =>
-                <li key={key}>{TextFormatter.stripTags(item)}</li>
-            );
+        <h4 className="site-options-subtitle">
+          {Methods.i18n('l10nInsertElements')}
+        </h4>
+        <ul className="site-options-list site-options-list-elements">
+          {(site.insert ?? []).map((item, index) => (
+            <li key={index}>
+              {Methods.i18n('l10nPosition')}:{' '}
+              <span className="mono-text">
+                {TextFormatter.stripTags(item.position)}
+              </span>{' '}
+              | {Methods.i18n('l10nElement')}:{' '}
+              <span className="mono-text">
+                {TextFormatter.stripTags(item.class)}
+              </span>
+            </li>
+          ))}
+        </ul>
 
-            const inserts = insertMethods.map((item, key) =>
-                <li key={key}>{Methods.i18n('l10nPosition')}: <span className="mono-text">{TextFormatter.stripTags(item.position)}</span> | {Methods.i18n('l10nElement')}: <span className="mono-text">{TextFormatter.stripTags(item.class)}</span></li>
-            );
+        <h4 className="site-options-subtitle">
+          {Methods.i18n('l10nCustomClasses')}
+        </h4>
+        <ul className="site-options-list site-options-list-classes">
+          <li className="custom-class custom-class-deploy">
+            {TextFormatter.stripTags(site.classes?.deploy)}
+          </li>
+          <li className="custom-class custom-class-no-deploy">
+            {TextFormatter.stripTags(site.classes?.['no-deploy'])}
+          </li>
+        </ul>
+      </div>
+    )
+  }
 
-            return <div key={TextFormatter.stripTags(key)} className="site-options-information">
-                <h3 className="site-options-title">{TextFormatter.stripTags(key)}</h3>
-                <h4 className="site-options-subtitle">{Methods.i18n('l10nUrlPatterns')}</h4>
-                <ul className="site-options-list site-options-list-urls">
-                    {urls}
-                </ul>
-                <h4 className="site-options-subtitle">{Methods.i18n('l10nInsertElements')}</h4>
-                <ul className="site-options-list site-options-list-elements">
-                    {inserts}
-                </ul>
-                <h4 className="site-options-subtitle">{Methods.i18n('l10nCustomClasses')}</h4>
-                <ul className="site-options-list site-options-list-classes">
-                    <li className="custom-class custom-class-deploy">{TextFormatter.stripTags(customClasses['deploy'])}</li>
-                    <li className="custom-class custom-class-no-deploy">{TextFormatter.stripTags(customClasses['no-deploy'])}</li>
-                </ul>
-            </div>;
-        });
-    }
+  override render() {
+    const keys = Object.keys(this.props.domains ?? {})
 
-    /**
-     * render method
-     */
-    render() {
-        let noInformation = <p />
-        if (Object.keys(this.props.domains).length == 0) {
-            noInformation = <p>{Methods.i18n('l10nNoDomainInformationSet')}</p>;
-        }
-        return (
-            <div className="content-wrapper content-site-information">
-                <div className="flex-row">
-                    <div className="flex-col">
-                        <h2>{Methods.i18n('l10nSiteInformation')}</h2>
-                    </div>
-                </div>
-                {this.siteOptions()}
-                {noInformation}
-            </div>
-        );
-    }
+    return (
+      <div className="content-wrapper content-site-information">
+        <div className="flex-row">
+          <div className="flex-col">
+            <h2>{Methods.i18n('l10nSiteInformation')}</h2>
+          </div>
+        </div>
+        {keys.map((key) => this.renderSite(key))}
+        {keys.length === 0 && <p>{Methods.i18n('l10nNoDomainInformationSet')}</p>}
+      </div>
+    )
+  }
 }
 
-export default SiteInformation;
+export default SiteInformation

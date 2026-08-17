@@ -1,103 +1,167 @@
-import * as expect from 'expect';
-import {Timezones} from "../src/app/components/Timezones";
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-describe('Timezones', function () {
+import { Timezones } from '../src/app/components/Timezones'
 
-    beforeEach('Create new time obj', function () {
-        this.time = new Timezones("12:00", "Europe/London", null,  "2020/01/01");
-    });
+describe('Timezones', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    Timezones.currentDate = null
+  })
 
-    /**
-     * If you set the time the output time is as expected
-     * @test
-     */
-    it('correctly outputs the original time', function () {
-        // args: [time, original_timezone]
-        const timeFormats = [
-            {args: ["01:00", "Europe/Zurich"], expected: "01:00"},
-            {args: ["04:00", "Europe/London"], expected: "04:00"},
-            {args: ["05:15", "Europe/Budapest"], expected: "05:15"},
-            {args: ["13:25", "Asia/Jerusalem"], expected: "13:25"},
-            {args: ["21:30", "Asia/Hong_Kongh"], expected: "21:30"},
-            {args: ["23:45", "America/New_York"], expected: "23:45"},
-        ];
-        timeFormats.forEach(function (test) {
-            const time = new Timezones(test.args[0], test.args[1]);
-            expect(time.toOriginalTime()).toEqual(test.expected);
-        });
-    });
+  describe('toOriginalTime', () => {
+    it('returns the configured time unchanged, whatever the zone', () => {
+      const cases = [
+        { time: '01:00', zone: 'Europe/Zurich' },
+        { time: '04:00', zone: 'Europe/London' },
+        { time: '05:15', zone: 'Europe/Budapest' },
+        { time: '13:25', zone: 'Asia/Jerusalem' },
+        { time: '21:30', zone: 'Asia/Hong_Kong' },
+        { time: '23:45', zone: 'America/New_York' },
+      ]
 
-    /**
-     * If you set a time it converts correct to another timezone
-     * @test
-     */
-    it('converts the set time into the correct timezone', function () {
-        // the set time
-        const setTime = "12:00";
-        const date1 = "2020/01/01";
-        const date2 = "2020/06/01";
-        // args: [original_timezone, local_timezone]
-        // expected: [time]
-        // date
-        const timeConversation = [
-            {args: ["Europe/London", "Africa/Johannesburg"], expected: ["14:00"], date: date1},
-            {args: ["Europe/London", "America/New_York"], expected: ["07:00"], date: date1},
-            {args: ["Europe/London", "America/Los_Angeles"], expected: ["04:00"], date: date1},
-            {args: ["Europe/London", "Asia/Hong_Kong"], expected: ["20:00"], date: date1},
-            {args: ["Europe/London", "Australia/Perth"], expected: ["20:00"], date: date1},
-            {args: ["Europe/London", "Asia/Tokyo"], expected: ["21:00"], date: date1},
-            {args: ["Africa/Johannesburg", "Europe/London"], expected: ["10:00"], date: date1},
-            {args: ["America/New_York", "Europe/London"], expected: ["17:00"], date: date1},
-            {args: ["America/Los_Angeles", "Europe/London"], expected: ["20:00"], date: date1},
-            {args: ["Asia/Hong_Kong", "Europe/London"], expected: ["04:00"], date: date1},
-            {args: ["Australia/Perth", "Europe/London"], expected: ["04:00"], date: date1},
-            {args: ["Asia/Tokyo", "Europe/London"], expected: ["03:00"], date: date1},
+      for (const { time, zone } of cases) {
+        expect(new Timezones(time, zone).toOriginalTime()).toBe(time)
+      }
+    })
+  })
 
-            {args: ["Europe/London", "Africa/Johannesburg"], expected: ["13:00"], date: date2},
-            {args: ["Europe/London", "America/New_York"], expected: ["07:00"], date: date2},
-            {args: ["Europe/London", "America/Los_Angeles"], expected: ["04:00"], date: date2},
-            {args: ["Europe/London", "Asia/Hong_Kong"], expected: ["19:00"], date: date2},
-            {args: ["Europe/London", "Australia/Perth"], expected: ["19:00"], date: date2},
-            {args: ["Europe/London", "Asia/Tokyo"], expected: ["20:00"], date: date2},
-            {args: ["Africa/Johannesburg", "Europe/London"], expected: ["11:00"], date: date2},
-            {args: ["America/New_York", "Europe/London"], expected: ["17:00"], date: date2},
-            {args: ["America/Los_Angeles", "Europe/London"], expected: ["20:00"], date: date2},
-            {args: ["Asia/Hong_Kong", "Europe/London"], expected: ["05:00"], date: date2},
-            {args: ["Australia/Perth", "Europe/London"], expected: ["05:00"], date: date2},
-            {args: ["Asia/Tokyo", "Europe/London"], expected: ["04:00"], date: date2},
-        ];
+  describe('toLocalTime', () => {
+    const winter = '2020/01/01'
+    const summer = '2020/06/01'
 
-        timeConversation.forEach(function (test) {
-            const time = new Timezones(setTime, test.args[0], test.args[1], test.date);
-            const expected = test.expected[0];
-            expect(time.toLocalTime()).toEqual(expected);
-        });
-    });
+    it.each([
+      ['Europe/London', 'Africa/Johannesburg', '14:00', winter],
+      ['Europe/London', 'America/New_York', '07:00', winter],
+      ['Europe/London', 'America/Los_Angeles', '04:00', winter],
+      ['Europe/London', 'Asia/Hong_Kong', '20:00', winter],
+      ['Europe/London', 'Australia/Perth', '20:00', winter],
+      ['Europe/London', 'Asia/Tokyo', '21:00', winter],
+      ['Africa/Johannesburg', 'Europe/London', '10:00', winter],
+      ['America/New_York', 'Europe/London', '17:00', winter],
+      ['America/Los_Angeles', 'Europe/London', '20:00', winter],
+      ['Asia/Hong_Kong', 'Europe/London', '04:00', winter],
+      ['Australia/Perth', 'Europe/London', '04:00', winter],
+      ['Asia/Tokyo', 'Europe/London', '03:00', winter],
+    ])('converts 12:00 %s -> %s = %s (winter)', (from, to, expected, date) => {
+      expect(new Timezones('12:00', from, to, date).toLocalTime()).toBe(expected)
+    })
 
-    /**
-     * Make sure that we get the correct state for a deployment window.
-     */
-    it('can work out if time is in a deployment window', function () {
-        // args: [start_time, end_time, current_time]
-        const deploymentInformation = [
-            {args: ['22:00', '06:00', '12:00'], expected: false},
-            {args: ['22:00', '06:00', '04:00'], expected: true},
-            {args: ['05:00', '22:00', '23:00'], expected: false},
-            {args: ['05:00', '22:00', '12:00'], expected: true},
-            {args: ['00:00', '23:59', '01:00'], expected: true},
-            {args: ['00:00', '23:59', '07:00'], expected: true},
-            {args: ['00:00', '23:59', '11:00'], expected: true},
-            {args: ['00:00', '23:59', '15:00'], expected: true},
-            {args: ['00:00', '23:59', '19:00'], expected: true},
-            {args: ['00:00', '23:59', '22:00'], expected: true},
-            {args: ['10:00', '10:30', '10:31'], expected: false},
-            {args: ['10:00', '10:30', '10:30'], expected: true},
+    it.each([
+      ['Europe/London', 'Africa/Johannesburg', '13:00', summer],
+      ['Europe/London', 'America/New_York', '07:00', summer],
+      ['Europe/London', 'America/Los_Angeles', '04:00', summer],
+      ['Europe/London', 'Asia/Hong_Kong', '19:00', summer],
+      ['Europe/London', 'Australia/Perth', '19:00', summer],
+      ['Europe/London', 'Asia/Tokyo', '20:00', summer],
+      ['Africa/Johannesburg', 'Europe/London', '11:00', summer],
+      ['America/New_York', 'Europe/London', '17:00', summer],
+      ['America/Los_Angeles', 'Europe/London', '20:00', summer],
+      ['Asia/Hong_Kong', 'Europe/London', '05:00', summer],
+      ['Australia/Perth', 'Europe/London', '05:00', summer],
+      ['Asia/Tokyo', 'Europe/London', '04:00', summer],
+    ])(
+      'converts 12:00 %s -> %s = %s (summer, DST applied)',
+      (from, to, expected, date) => {
+        expect(new Timezones('12:00', from, to, date).toLocalTime()).toBe(expected)
+      },
+    )
 
-        ]
+    it('crosses the date line without losing the time-of-day', () => {
+      expect(
+        new Timezones('23:00', 'Pacific/Auckland', 'America/Los_Angeles', winter).toLocalTime(),
+      ).toBe('02:00')
+    })
+  })
 
-        deploymentInformation.forEach(function (test) {
-            const isDeployment = Timezones.isDeploymentWindow(test.args[0], test.args[1], test.args[2]);
-            expect(isDeployment).toEqual(test.expected);
-        });
-    });
-});
+  describe('isDeploymentWindow', () => {
+    it.each([
+      ['22:00', '06:00', '12:00', false],
+      ['22:00', '06:00', '04:00', true],
+      ['05:00', '22:00', '23:00', false],
+      ['05:00', '22:00', '12:00', true],
+      ['00:00', '23:59', '01:00', true],
+      ['00:00', '23:59', '07:00', true],
+      ['00:00', '23:59', '11:00', true],
+      ['00:00', '23:59', '15:00', true],
+      ['00:00', '23:59', '19:00', true],
+      ['00:00', '23:59', '22:00', true],
+      ['10:00', '10:30', '10:31', false],
+      ['10:00', '10:30', '10:30', true],
+    ])('window %s-%s at %s -> %s', (start, end, now, expected) => {
+      expect(Timezones.isDeploymentWindow(start, end, now)).toBe(expected)
+    })
+
+    it('includes both boundaries of a normal window', () => {
+      expect(Timezones.isDeploymentWindow('09:00', '17:00', '09:00')).toBe(true)
+      expect(Timezones.isDeploymentWindow('09:00', '17:00', '17:00')).toBe(true)
+      expect(Timezones.isDeploymentWindow('09:00', '17:00', '08:59')).toBe(false)
+      expect(Timezones.isDeploymentWindow('09:00', '17:00', '17:01')).toBe(false)
+    })
+
+    it('handles a window that wraps past midnight', () => {
+      expect(Timezones.isDeploymentWindow('23:00', '02:00', '23:30')).toBe(true)
+      expect(Timezones.isDeploymentWindow('23:00', '02:00', '00:30')).toBe(true)
+      expect(Timezones.isDeploymentWindow('23:00', '02:00', '01:59')).toBe(true)
+      expect(Timezones.isDeploymentWindow('23:00', '02:00', '12:00')).toBe(false)
+      expect(Timezones.isDeploymentWindow('23:00', '02:00', '22:00')).toBe(false)
+    })
+
+    it('uses the real clock when no time is supplied', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2020-01-01T13:00:00'))
+      expect(Timezones.isDeploymentWindow('09:00', '17:00')).toBe(true)
+
+      vi.setSystemTime(new Date('2020-01-01T20:00:00'))
+      expect(Timezones.isDeploymentWindow('09:00', '17:00')).toBe(false)
+    })
+  })
+
+  describe('getCurrentDate', () => {
+    it('zero pads day and month', () => {
+      Timezones.currentDate = '2020/01/05'
+      expect(Timezones.getCurrentDate()).toEqual({
+        day: '05',
+        month: '01',
+        year: 2020,
+      })
+    })
+
+    it('does not pad two digit values', () => {
+      Timezones.currentDate = '2020/11/23'
+      expect(Timezones.getCurrentDate()).toEqual({
+        day: '23',
+        month: '11',
+        year: 2020,
+      })
+    })
+
+    it('falls back to the system date when unset', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2021-03-09T10:00:00'))
+      Timezones.currentDate = null
+      expect(Timezones.getCurrentDate()).toEqual({
+        day: '09',
+        month: '03',
+        year: 2021,
+      })
+    })
+  })
+
+  describe('getCurrentTime', () => {
+    it('formats the supplied time with seconds', () => {
+      Timezones.currentDate = '2020/01/01'
+      expect(Timezones.getCurrentTime('09:30')).toBe('09:30:00')
+    })
+
+    it('honours a custom format', () => {
+      Timezones.currentDate = '2020/01/01'
+      expect(Timezones.getCurrentTime('09:30', 'HH:mm')).toBe('09:30')
+    })
+  })
+
+  describe('findLocalTimezone', () => {
+    it('returns a usable IANA zone name', () => {
+      expect(Timezones.findLocalTimezone()).toMatch(/^[A-Za-z_]+\/[A-Za-z_+\-/]+$|^UTC$/)
+    })
+  })
+})

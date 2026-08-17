@@ -1,29 +1,26 @@
-import * as React from "react"
+import { Component } from 'react'
 
-type Props = {}
+import { TextFormatter } from '../../app/components/TextFormatter'
+import howToUseMarkdown from '../../documents/HowToUse.md?raw'
 
-class HowToUse extends React.Component<Props> {
-    /**
-     * on constructor
-     * @param props
-     */
-    constructor(props) {
-        super(props);
-        this.state = { }
-    }
-
-    /**
-     * render method
-     */
-    render() {
-        const howToUseMD = require('../../documents/HowToUse.md');
-
-        return (
-            <div className="content-wrapper content-site-information">
-                <div dangerouslySetInnerHTML={{__html: howToUseMD}}/>
-            </div>
-        );
-    }
+/**
+ * Renders the bundled how-to document.
+ *
+ * v1 relied on webpack's markdown-loader to convert this at build time; Vite's
+ * `?raw` import keeps it as source and it is rendered here instead.
+ */
+export class HowToUse extends Component {
+  override render() {
+    return (
+      <div className="content-wrapper content-how-to-use">
+        <div
+          dangerouslySetInnerHTML={{
+            __html: TextFormatter.renderTrustedMarkdown(howToUseMarkdown),
+          }}
+        />
+      </div>
+    )
+  }
 }
 
-export default HowToUse;
+export default HowToUse

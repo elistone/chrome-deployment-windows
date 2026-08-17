@@ -1,214 +1,169 @@
-import match from "url-match-patterns";
-import {Timezones} from "./Timezones";
-import {Methods} from "./Methods";
-import {Config} from "../config/Config";
+import { Config } from '../config/Config'
+import type {
+  DeploymentConfig,
+  DeploymentWindowsConfig,
+  ResolvedDeployment,
+  ResolvedTimes,
+} from '../config/types'
+import { matchesAny } from '../matching/MatchPattern'
+import { Methods } from './Methods'
+import { Timezones } from './Timezones'
 
+const DEFAULT_TIME = '00:00'
+
+/**
+ * Resolves "what, if anything, should be shown for this URL".
+ *
+ * Construction is synchronous and takes an explicit config, which makes the
+ * whole class directly testable. Use {@link DW.create} for the loading variant.
+ */
 export class DW {
+  private readonly config: DeploymentWindowsConfig
+  private readonly currentUrl: string
+  private readonly domainKey: string | null
+  private readonly resolved: ResolvedDeployment | null
 
-    /**
-     * hold access to the current domain key
-     */
-    protected domainKey: string;
+  constructor(config: DeploymentWindowsConfig, url: string) {
+    this.config = config
+    this.currentUrl = url
+    this.domainKey = this.findDomainKey()
+    this.resolved = this.resolveDeployment()
+  }
 
-    /**
-     * current url
-     */
-    protected currentUrl: string;
+  /** Load the config from storage, then resolve against `url`. */
+  static async create(url: string = window.location.href): Promise<DW> {
+    return new DW(await Config.load(), url)
+  }
 
-    /**
-     * the deployment info object
-     */
-    protected deploymentInfo: object;
+  getConfig(): DeploymentWindowsConfig {
+    return this.config
+  }
 
-    /**
-     * config class
-     */
-    private config: Config;
+  getUrl(): string {
+    return this.currentUrl
+  }
 
-    /**
-     * loaded config data
-     */
-    private configData: object;
+  /** The matched domain key (e.g. `github`), or null when nothing matched. */
+  getDomainKey(): string | null {
+    return this.domainKey
+  }
 
+  /** The matched deployment with times/status computed, or null. */
+  getDeploymentInfo(): ResolvedDeployment | null {
+    return this.resolved
+  }
 
-    /**
-     * run checks on current domain or one passed in
-     *
-     * @param url
-     */
-    constructor(url = null) {
-        this.currentUrl = url || window.location.href;
-        this.domainKey = "";
-        this.deploymentInfo = {};
-        this.config = new Config()
+  hasDeployment(): boolean {
+    return this.resolved !== null
+  }
+
+  /** Which configured domain, if any, does the current URL belong to? */
+  private findDomainKey(): string | null {
+    for (const [key, patterns] of Object.entries(this.config.domains ?? {})) {
+      if (matchesAny(patterns, this.currentUrl)) {
+        return key
+      }
+    }
+    return null
+  }
+
+  /**
+   * Find the first deployment whose fragment for the matched domain appears in
+   * the current URL, and build the resolved view of it.
+   */
+  private resolveDeployment(): ResolvedDeployment | null {
+    const domainKey = this.domainKey
+    if (!domainKey) {
+      return null
     }
 
-    /**
-     * Load the config, returns a promise
-     */
-    public loadConfig(): Promise<object> {
-        return this.config.loadConfig()
+    const site = this.config.sites?.[domainKey]
+    if (!site) {
+      // A domain can be matched without a corresponding `sites` entry, in which
+      // case there is nowhere to inject and nothing to render.
+      return null
     }
 
-    /**
-     * continue setup (should be called after loading config)
-     */
-    public setup() {
-        this.configData = this.config.getFullConfig();
-        this.checkDomain();
-        this.checkDeployments();
+    for (const [key, deployment] of Object.entries(
+      this.config.deployments ?? {},
+    )) {
+      const fragment = deployment[domainKey]
+      if (typeof fragment !== 'string' || fragment.length === 0) {
+        continue
+      }
+
+      const caseSensitive = deployment['case-sensitive'] === true
+      const needle = caseSensitive ? fragment : fragment.toLowerCase()
+      const haystack = caseSensitive
+        ? this.currentUrl
+        : this.currentUrl.toLowerCase()
+
+      if (haystack.includes(needle)) {
+        return this.buildResolved(key, deployment, domainKey)
+      }
     }
 
-    /**
-     * returns the config
-     */
-    public getConfig(): object {
-        return this.configData || {};
+    return null
+  }
+
+  private buildResolved(
+    key: string,
+    deployment: DeploymentConfig,
+    domainKey: string,
+  ): ResolvedDeployment {
+    const timeObj = DW.buildTimes(deployment)
+    const { start, end } = timeObj.local
+
+    return {
+      key,
+      name: typeof deployment.name === 'string' ? deployment.name : key,
+      notes: typeof deployment.notes === 'string' ? deployment.notes : '',
+      notesOnly: deployment['notes-only'] === true,
+      caseSensitive: deployment['case-sensitive'] === true,
+      domainKey,
+      domainInfo: this.config.sites[domainKey],
+      timeObj,
+      status: DW.statusText(start, end),
+      canDeploy: DW.canDeploy(start, end),
     }
+  }
 
-    /**
-     * returns the domain key found
-     */
-    public getDomainKey(): string {
-        return this.domainKey || null;
+  /** Build the original/local pair of windows for a deployment. */
+  static buildTimes(deployment: DeploymentConfig): ResolvedTimes {
+    const time = deployment.time
+    const start =
+      typeof time?.start === 'string' && time.start ? time.start : DEFAULT_TIME
+    const end =
+      typeof time?.end === 'string' && time.end ? time.end : DEFAULT_TIME
+    const timezone =
+      typeof time?.timezone === 'string' && time.timezone
+        ? time.timezone
+        : Timezones.findLocalTimezone()
+
+    const startTime = new Timezones(start, timezone)
+    const endTime = new Timezones(end, timezone)
+
+    return {
+      original: {
+        start: startTime.toOriginalTime(),
+        end: endTime.toOriginalTime(),
+        timezone: endTime.getOriginalTimezone(),
+      },
+      local: {
+        start: startTime.toLocalTime(),
+        end: endTime.toLocalTime(),
+        timezone: endTime.getLocalTimezone(),
+      },
     }
+  }
 
+  static canDeploy(startTime: string, endTime: string): boolean {
+    return Timezones.isDeploymentWindow(startTime, endTime)
+  }
 
-    /**
-     * Get's the deployment information and adds in extra information that will be useful.
-     * Such as access the the domain information and time converted to local.
-     */
-    public getDeploymentInfo(): object {
-        let deploymentInfo = this.deploymentInfo;
-
-        if (typeof deploymentInfo === "undefined" || (Object.keys(deploymentInfo).length === 0 && deploymentInfo.constructor === Object)) {
-            return deploymentInfo;
-        }
-
-        const timeObj = this.getTime();
-        const startTime = timeObj['local']['start'];
-        const endTime = timeObj['local']['end'];
-        const config = this.getConfig();
-
-        deploymentInfo['domainKey'] = this.getDomainKey();
-        deploymentInfo['timeObj'] = timeObj;
-        deploymentInfo['status'] = this.getDeploymentStatus(startTime, endTime);
-        deploymentInfo['canDeploy'] = this.canDeploy(startTime, endTime);
-        // @ts-ignore
-        deploymentInfo['domainInfo'] = config.sites[this.getDomainKey()];
-
-        return deploymentInfo;
-    }
-
-
-    /**
-     * Checks the set domain to see if the path contains any deployment information.
-     * By default it will use the domain key that has been found.
-     *
-     * @param domainKey
-     */
-    public checkDeployments(domainKey = null): object {
-        domainKey = domainKey || this.getDomainKey()
-        const config = this.getConfig();
-
-        if (domainKey && config['deployments']) {
-            const configDeployments = config['deployments'];
-            for (const site in configDeployments) {
-                const info = configDeployments[site];
-                if (info.hasOwnProperty(domainKey)) {
-                    let caseSensitive = info['case-sensitive'] || false;
-                    let path = info[domainKey];
-                    let currentUrl = this.currentUrl;
-
-                    if (!caseSensitive) {
-                        path = path.toLowerCase();
-                        currentUrl = currentUrl.toLowerCase();
-                    }
-
-                    if (currentUrl.includes(path)) {
-                        this.deploymentInfo = info;
-                        this.deploymentInfo = this.getDeploymentInfo();
-                        return info;
-                    }
-                }
-            }
-        }
-
-        return {};
-    }
-
-    /**
-     * Pull out the time objs
-     *
-     * @param timeObj
-     */
-    protected getTime(timeObj = null) {
-        const start = timeObj && timeObj['start'] ? timeObj['start'] : (this.deploymentInfo['time'] && this.deploymentInfo['time']['start'] ? this.deploymentInfo['time']['start'] : "00:00");
-        const end = timeObj && timeObj['end'] ? timeObj['end'] : (this.deploymentInfo['time'] && this.deploymentInfo['time']['end'] ? this.deploymentInfo['time']['end'] : "00:00");
-        const timezone = timeObj && timeObj['timezone'] ? timeObj['timezone'] : (this.deploymentInfo['time'] && this.deploymentInfo['time']['timezone'] ? this.deploymentInfo['time']['timezone'] : Timezones.findLocalTimezone());
-
-        const startTime = new Timezones(start, timezone);
-        const endTime = new Timezones(end, timezone);
-        return {
-            "original": {
-                "start": startTime.toOriginalTime(),
-                "end": endTime.toOriginalTime(),
-                "timezone": endTime.getOriginalTimezone(),
-            },
-            "local": {
-                "start": startTime.toLocalTime(),
-                "end": endTime.toLocalTime(),
-                "timezone": endTime.getLocalTimezone(),
-            }
-        }
-    }
-
-    /**
-     * Checks the domains to see if we have a match
-     * If it returns true that means this can display deployment windows
-     */
-    protected checkDomain(): boolean {
-        const config = this.getConfig();
-        // @ts-ignore
-        const domains = config.domains;
-        let found = false;
-
-        for (let key in domains) {
-            const patterns = domains[key];
-            for (let i = 0; i < patterns.length; i++) {
-                const pattern = patterns[i];
-                const hasMatch = match(pattern, this.currentUrl);
-                if (hasMatch) {
-                    found = true
-                    this.domainKey = key;
-                }
-            }
-        }
-
-        return found;
-    }
-
-    /**
-     * Check if can be deployed
-     *
-     * @param startTime
-     * @param endTime
-     */
-    public canDeploy(startTime = null, endTime = null) {
-        const start = startTime || this.deploymentInfo['timeObj']['local']['start'];
-        const end = endTime || this.deploymentInfo['timeObj']['local']['end'];
-        return Timezones.isDeploymentWindow(start, end);
-    }
-
-    /**
-     * Get deployment status text
-     *
-     * @param startTime
-     * @param endTime
-     */
-    public getDeploymentStatus(startTime = null, endTime = null) {
-        const start = startTime || this.deploymentInfo['timeObj']['local']['start'];
-        const end = endTime || this.deploymentInfo['timeObj']['local']['end'];
-        return this.canDeploy(start, end) ? Methods.i18n('l10nDeploymentOpen') : Methods.i18n('l10nDeploymentClosed');
-    }
+  static statusText(startTime: string, endTime: string): string {
+    return DW.canDeploy(startTime, endTime)
+      ? Methods.i18n('l10nDeploymentOpen')
+      : Methods.i18n('l10nDeploymentClosed')
+  }
 }

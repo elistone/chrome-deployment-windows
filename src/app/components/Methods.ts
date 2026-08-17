@@ -1,119 +1,78 @@
 /**
- * Helper methods class
+ * Small DOM / extension-API helpers shared by the content script and UI.
  */
 export class Methods {
-
-    /**
-     * Insets element after
-     *
-     * @param notice
-     * @param className
-     */
-    public static insertAfter(notice, className): boolean {
-        const referenceNode = this.findClass(className);
-        if (referenceNode) {
-            referenceNode.parentNode.insertBefore(notice, referenceNode.nextSibling);
-            return true;
-        }
-        return false;
+  /** Insert `node` immediately after the first element with `className`. */
+  static insertAfter(node: Node, className: string): boolean {
+    const reference = Methods.findClass(className)
+    if (reference?.parentNode) {
+      reference.parentNode.insertBefore(node, reference.nextSibling)
+      return true
     }
+    return false
+  }
 
-    /**
-     * Insets element before
-     *
-     * @param notice
-     * @param className
-     */
-    public static insertBefore(notice, className): boolean {
-        const referenceNode = this.findClass(className);
-        if (referenceNode) {
-            referenceNode.parentNode.insertBefore(notice, referenceNode);
-            return true;
-        }
-        return false;
+  /** Insert `node` immediately before the first element with `className`. */
+  static insertBefore(node: Node, className: string): boolean {
+    const reference = Methods.findClass(className)
+    if (reference?.parentNode) {
+      reference.parentNode.insertBefore(node, reference)
+      return true
     }
+    return false
+  }
 
-    /**
-     * Update the html of an element based upon class name
-     *
-     * @param text
-     * @param className
-     */
-    public static updateHtml(text, className): boolean {
-        const referenceNode = this.findClass(className);
-        if (referenceNode) {
-            referenceNode.innerHTML = text;
-            return true;
-        }
-        return false;
+  /** Replace the text of the first element with `className`. */
+  static updateText(text: string, className: string): boolean {
+    const reference = Methods.findClass(className)
+    if (reference) {
+      reference.textContent = text
+      return true
     }
+    return false
+  }
 
-    /**
-     * update the class name of an element base upon finding an element by class
-     *
-     * @param setClass
-     * @param className
-     */
-    public static updateClassName(setClass, className): boolean {
-        const referenceNode = this.findClass(className);
-        if (referenceNode) {
-            referenceNode.className = setClass;
-            return true;
-        }
-        return false;
+  static updateClassName(setClass: string, className: string): boolean {
+    const reference = Methods.findClass(className)
+    if (reference) {
+      reference.className = setClass
+      return true
     }
+    return false
+  }
 
-    /**
-     * Helper method to find class
-     *
-     * @param className
-     */
-    public static findClass(className: string) {
-        const elm = document.getElementsByClassName(className)[0];
-        if (typeof elm !== "undefined") {
-            return elm as HTMLElement;
-        }
-        return false;
-    }
+  static findClass(className: string): HTMLElement | null {
+    const element = document.getElementsByClassName(className)[0]
+    return element instanceof HTMLElement ? element : null
+  }
 
-    /**
-     * States if an element is hidden or not
-     *
-     * @param elem
-     */
-    public static isHidden(elem): boolean {
-        return window.getComputedStyle(elem).display === "none" || window.getComputedStyle(elem).visibility === "hidden";
-    }
+  static isHidden(element: HTMLElement): boolean {
+    const style = window.getComputedStyle(element)
+    return style.display === 'none' || style.visibility === 'hidden'
+  }
 
-    /**
-     * Helper method that helps prevent errors when reloading.
-     *
-     * @param string
-     */
-    public static i18n(string: string) {
-        if (typeof chrome.i18n === 'undefined') {
-            return '';
-        }
-        try {
-            return chrome.i18n.getMessage(string);
-        } catch (e) {
-            return 'Translation lost, please reload.';
-        }
+  /**
+   * Localised message lookup.
+   *
+   * Guarded because the content script keeps running in pages that were open
+   * when the extension was reloaded, at which point chrome.* is torn down.
+   */
+  static i18n(key: string): string {
+    try {
+      return chrome?.i18n?.getMessage(key) ?? ''
+    } catch {
+      return 'Translation lost, please reload.'
     }
+  }
 
-    /**
-     * Helper method to update icons, prevent errors when reloading.
-     *
-     * @param icon
-     */
-    public static updateIcon(icon: string) {
-        if (typeof chrome.runtime === 'undefined') {
-            return '';
-        }
-        try {
-            chrome.runtime.sendMessage({"newIconPath": icon});
-        } catch (e) {
-            return '';
-        }
+  /** Ask the service worker to swap the toolbar icon. Never throws. */
+  static updateIcon(icon: string): void {
+    try {
+      void chrome?.runtime?.sendMessage({ newIconPath: icon })?.catch(() => {
+        // The worker may be asleep or the extension reloaded; nothing to do.
+      })
+    } catch {
+      // chrome.* is gone after an extension reload - ignore.
     }
+  }
 }

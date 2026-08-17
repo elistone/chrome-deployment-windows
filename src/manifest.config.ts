@@ -1,0 +1,61 @@
+import { defineManifest } from '@crxjs/vite-plugin'
+
+import pkg from '../package.json' with { type: 'json' }
+
+/**
+ * Manifest V3.
+ *
+ * Notable differences from the V2 manifest this replaced:
+ *  - `background.scripts` + `persistent: true` became a single `service_worker`,
+ *    which is ephemeral. Nothing may be cached in module scope across
+ *    invocations - see src/app/background.ts.
+ *  - `browser_action` became `action` (and `chrome.browserAction` -> `chrome.action`).
+ *  - Host access moved out of `permissions` into `host_permissions`.
+ *  - `content_security_policy` became an object keyed by context.
+ *
+ * Icon paths are runtime paths: everything under public/ is copied to the root
+ * of dist/ by Vite, so public/icons/default/icon16.png is served as
+ * icons/default/icon16.png.
+ */
+export default defineManifest({
+  manifest_version: 3,
+  name: 'Deployment windows',
+  version: pkg.version,
+  description:
+    'Apply reminders on to sites to give information about deployment windows.',
+  default_locale: 'en',
+
+  icons: {
+    16: 'icons/default/icon16.png',
+    48: 'icons/default/icon48.png',
+    128: 'icons/default/icon128.png',
+  },
+
+  action: {
+    default_title: 'Deployment windows',
+    default_popup: 'src/ui/popup.html',
+  },
+
+  options_page: 'src/ui/options.html',
+
+  background: {
+    service_worker: 'src/app/background.ts',
+    type: 'module',
+  },
+
+  permissions: ['storage', 'tabs'],
+
+  host_permissions: ['https://*/*'],
+
+  content_security_policy: {
+    extension_pages: "script-src 'self'; object-src 'self'",
+  },
+
+  content_scripts: [
+    {
+      matches: ['https://*/*'],
+      js: ['src/app/content.ts'],
+      run_at: 'document_idle',
+    },
+  ],
+})
