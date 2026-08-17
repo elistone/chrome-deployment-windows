@@ -65,7 +65,13 @@ jobs:
         run: pnpm build
 
       - name: Check the built manifest is valid MV3
-        run: node scripts/check-manifest.js
+        run: pnpm check:manifest
+
+      # The build succeeds even when dev/ is imported from src/, so this is the
+      # only thing standing between a stray import and shipping the harness's
+      # fake chrome API to users.
+      - name: Check no dev-harness code leaked into the build
+        run: pnpm check:bundle
 
       - name: Upload unpacked extension
         uses: actions/upload-artifact@v4

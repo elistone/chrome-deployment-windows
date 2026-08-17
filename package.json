@@ -25,7 +25,8 @@
     "test:e2e": "pnpm build && playwright test",
     "test:e2e:ui": "playwright test --ui",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
-    "check:manifest": "node scripts/check-manifest.js"
+    "check:manifest": "node scripts/check-manifest.js",
+    "check:bundle": "node scripts/check-bundle.js"
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",

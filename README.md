@@ -122,9 +122,15 @@ pnpm package
 Builds, then writes `release/deployment-windows-v<version>.zip`, ready to upload.
 Source maps are excluded from the zip.
 
-`pnpm check:manifest` validates the built manifest separately — it is also run in
-CI, and catches Manifest V2 constructs creeping back in or the manifest pointing
-at files the build did not emit.
+Two build checks run in CI and can be run locally:
+
+* `pnpm check:manifest` — catches Manifest V2 constructs creeping back in, a CSP
+  that permits `unsafe-eval`, or the manifest pointing at files the build did not
+  emit.
+* `pnpm check:bundle` — fails the build if any dev-harness code reaches `dist/`.
+  Importing `dev/` from `src/` builds perfectly happily, so without this a stray
+  import would ship the harness's fake `chrome` API to users. It checks both
+  sentinel identifiers and source-map `sources`, so a rename cannot slip past.
 
 ## Project layout
 
