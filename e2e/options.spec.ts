@@ -6,8 +6,14 @@ async function openOptions(
 ) {
   const page = await context.newPage()
   await page.goto(`chrome-extension://${extensionId}/src/ui/options.html`)
-  await expect(page.getByRole('heading', { name: 'Deployment windows config' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Deployment windows config' }),
+  ).toBeVisible()
   return page
+}
+
+async function enterEditMode(page: import('@playwright/test').Page) {
+  await page.getByLabel('Edit mode').check()
 }
 
 test.describe('options page', () => {
@@ -34,33 +40,120 @@ test.describe('options page', () => {
     expect(errors).toEqual([])
   })
 
-  test('opens on site information', async ({ context, extensionId }) => {
+  test('shows deployments and sites together, with live status', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await openOptions(context, extensionId)
 
+    await expect(page.getByRole('heading', { name: 'Always open project' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Notes only project' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'github' })).toBeVisible()
     await expect(page.getByText('*://*.github.com/*')).toBeVisible()
-    await expect(page.getByText('flash flash-success')).toBeVisible()
+
+    const openCard = page.locator('article', {
+      has: page.getByRole('heading', { name: 'Always open project' }),
+    })
+    await expect(openCard).toHaveAttribute('data-status', 'open')
+    await expect(openCard.getByText('Deployment window open')).toBeVisible()
   })
 
-  test('shows the configured deployments', async ({ context, extensionId }) => {
+  test('adds a deployment through the form and the notice picks it up', async ({
+    context,
+    extensionId,
+    openStubbedPage,
+  }) => {
+    const page = await openOptions(context, extensionId)
+    await enterEditMode(page)
+
+    await page.getByRole('button', { name: 'Add deployment' }).click()
+
+    const dialog = page.getByRole('dialog', { name: 'New deployment' })
+    await dialog.getByLabel(/^Name/).fill('Added from the UI')
+    await dialog.getByLabel('github').fill('acme/added')
+    // A window that straddles now, so the notice reports it open.
+    await dialog.getByLabel(/^Opens/).fill('00:00')
+    await dialog.getByLabel(/^Closes/).fill('23:59')
+    await dialog.getByLabel(/^Timezone/).fill(
+      await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone),
+    )
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+
+    await expect(page.getByRole('heading', { name: 'Added from the UI' })).toBeVisible()
+
+    const site = await openStubbedPage(
+      'https://github.com/acme/added',
+      githubPageHtml(),
+    )
+    await expect(site.locator('.dw-notification')).toContainText('Added from the UI')
+  })
+
+  test('refuses to save an entry that could never match a page', async ({
+    context,
+    extensionId,
+  }) => {
+    const page = await openOptions(context, extensionId)
+    await enterEditMode(page)
+
+    await page.getByRole('button', { name: 'Add deployment' }).click()
+    await page.getByRole('dialog').getByLabel(/^Name/).fill('No fragment')
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await expect(page.getByText(/at least one site/)).toBeVisible()
+  })
+
+  test('deletes a deployment and offers an undo', async ({
+    context,
+    extensionId,
+  }) => {
+    const page = await openOptions(context, extensionId)
+    await enterEditMode(page)
+
+    const card = page.locator('article', {
+      has: page.getByRole('heading', { name: 'Notes only project' }),
+    })
+    await card.getByRole('button', { name: /^Delete/ }).click()
+    await card.getByRole('button', { name: /Delete this\?/ }).click()
+
+    await expect(
+      page.getByRole('heading', { name: 'Notes only project' }),
+    ).toBeHidden()
+
+    await page.getByRole('button', { name: 'Undo' }).click()
+    await expect(
+      page.getByRole('heading', { name: 'Notes only project' }),
+    ).toBeVisible()
+  })
+
+  test('switches between light and dark, and remembers it', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await openOptions(context, extensionId)
 
-    await page.getByRole('button', { name: 'Deployment Windows' }).click()
+    await page.getByRole('button', { name: 'Dark' }).click()
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 
-    await expect(page.getByText('Always open project')).toBeVisible()
-    await expect(page.getByText('Notes only project')).toBeVisible()
-    await expect(page.getByRole('columnheader', { name: 'github (url key)' })).toBeVisible()
+    // Reopening reads the stored preference before the first paint.
+    const reopened = await openOptions(context, extensionId)
+    await expect(reopened.locator('html')).toHaveAttribute('data-theme', 'dark')
+
+    await reopened.getByRole('button', { name: 'System' }).click()
+    await expect(reopened.locator('html')).not.toHaveAttribute('data-theme', 'dark')
   })
 
-  test('renders the how-to document', async ({ context, extensionId }) => {
+  test('opens the how-to document from the header', async ({
+    context,
+    extensionId,
+  }) => {
     const page = await openOptions(context, extensionId)
 
     await page.getByRole('button', { name: 'How to use' }).click()
 
-    await expect(
-      page.getByRole('heading', { name: 'Using the extension' }),
-    ).toBeVisible()
-    await expect(page.locator('table').first()).toBeVisible()
+    const dialog = page.getByRole('dialog', { name: 'How to use' })
+    await expect(dialog.getByRole('heading', { name: 'Quick start' })).toBeVisible()
+    await expect(dialog.locator('table').first()).toBeVisible()
   })
 
   test('the CodeMirror editor mounts and shows the config', async ({
@@ -69,7 +162,7 @@ test.describe('options page', () => {
   }) => {
     const page = await openOptions(context, extensionId)
 
-    await page.getByRole('button', { name: 'Edit / Import / Export' }).click()
+    await page.getByRole('button', { name: /JSON config/ }).click()
 
     const editor = page.locator('.cm-editor')
     await expect(editor).toBeVisible()
@@ -82,14 +175,14 @@ test.describe('options page', () => {
     extensionId,
   }) => {
     const page = await openOptions(context, extensionId)
-    await page.getByRole('button', { name: 'Edit / Import / Export' }).click()
+    await page.getByRole('button', { name: /JSON config/ }).click()
 
     const content = page.locator('.cm-content')
     await content.click()
     await page.keyboard.press('ControlOrMeta+a')
     await page.keyboard.type('{"domains": {}, "sites": {}}')
 
-    await page.getByRole('button', { name: 'Save' }).click()
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
 
     await expect(page.getByRole('alert')).toContainText('deployments')
     // The stored config must be untouched.
@@ -106,10 +199,10 @@ test.describe('options page', () => {
     openStubbedPage,
   }) => {
     const page = await openOptions(context, extensionId)
-    await page.getByRole('button', { name: 'Edit / Import / Export' }).click()
+    await page.getByRole('button', { name: /JSON config/ }).click()
 
     const next = e2eConfig()
-    next.deployments.always.name = 'Renamed via options'
+    next.deployments.always.name = 'Renamed via json'
 
     const content = page.locator('.cm-content')
     await content.click()
@@ -117,8 +210,8 @@ test.describe('options page', () => {
     // insertText avoids CodeMirror's bracket auto-closing mangling the json.
     await page.keyboard.insertText(JSON.stringify(next))
 
-    await page.getByRole('button', { name: 'Save' }).click()
-    await expect(page.getByRole('button', { name: 'Saved!' })).toBeVisible()
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Renamed via json' })).toBeVisible()
 
     // The content script reads the same storage, so a fresh page reflects it.
     const site = await openStubbedPage(
@@ -126,7 +219,7 @@ test.describe('options page', () => {
       githubPageHtml(),
     )
     await expect(site.locator('.dw-notification')).toContainText(
-      'Renamed via options',
+      'Renamed via json',
     )
   })
 })

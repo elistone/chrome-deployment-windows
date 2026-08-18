@@ -1,0 +1,294 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { act, render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+
+import DeploymentCard, {
+  statusFor,
+} from '../src/ui/components/dashboard/DeploymentCard'
+import SiteCard from '../src/ui/components/dashboard/SiteCard'
+import HowToUse from '../src/ui/components/HowToUse'
+import { testConfig } from './helpers/fixtures'
+
+const DOMAINS = ['github', 'jira']
+
+/** Midday in New York, which the tests are pinned to. */
+function atMidday() {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date('2024-06-03T12:00:00'))
+}
+
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+function renderDeployment(key: string, editing = false) {
+  const config = testConfig()
+  const handlers = {
+    onEdit: vi.fn(),
+    onDuplicate: vi.fn(),
+    onDelete: vi.fn(),
+  }
+  const view = render(
+    <DeploymentCard
+      configKey={key}
+      deployment={config.deployments[key]}
+      domainKeys={DOMAINS}
+      editing={editing}
+      {...handlers}
+    />,
+  )
+  return { ...view, ...handlers }
+}
+
+describe('statusFor', () => {
+  it('reports open inside the window', () => {
+    // 09:00-17:00 Europe/London is 04:00-12:00 in New York.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2024-06-03T10:00:00'))
+    expect(statusFor(testConfig().deployments.daytime)).toBe('open')
+  })
+
+  it('reports closed outside it', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2024-06-03T18:00:00'))
+    expect(statusFor(testConfig().deployments.daytime)).toBe('closed')
+  })
+
+  it('reports notes for a notes-only entry, whatever the time', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2024-06-03T18:00:00'))
+    expect(statusFor(testConfig().deployments.notesOnly)).toBe('notes')
+  })
+
+  it('flags an entry with no window rather than calling it closed', () => {
+    // Without times it resolves to 00:00-00:00, so a plain red "closed" would
+    // be technically true and completely unhelpful.
+    expect(statusFor(testConfig().deployments.untimed)).toBe('unset')
+  })
+})
+
+describe('DeploymentCard', () => {
+  it('shows the name, key and configured window', () => {
+    atMidday()
+    renderDeployment('daytime')
+
+    expect(screen.getByRole('heading', { name: 'Daytime project' })).toBeInTheDocument()
+    expect(screen.getByText('daytime')).toBeInTheDocument()
+    expect(screen.getByText('09:00 – 17:00')).toBeInTheDocument()
+    expect(screen.getByText('Europe/London')).toBeInTheDocument()
+  })
+
+  it('also shows the window in the viewer timezone', () => {
+    atMidday()
+    renderDeployment('daytime')
+
+    expect(screen.getByText('Your timezone')).toBeInTheDocument()
+    expect(screen.getByText('04:00 – 12:00')).toBeInTheDocument()
+    expect(screen.getByText('America/New_York')).toBeInTheDocument()
+  })
+
+  it('shows the live status', () => {
+    atMidday()
+    renderDeployment('daytime')
+    expect(screen.getByText('Deployment window open')).toBeInTheDocument()
+  })
+
+  it('lists a fragment per site, marking the ones not set', () => {
+    atMidday()
+    const { container } = renderDeployment('daytime')
+    const chips = container.querySelectorAll('.dw-chip')
+
+    expect(chips[0].textContent).toContain('acme/daytime')
+    expect(chips[1].textContent).toContain('not set')
+  })
+
+  it('renders notes as markdown', () => {
+    atMidday()
+    const { container } = renderDeployment('daytime')
+    expect(container.querySelector('.dw-card-notes strong')?.textContent).toBe('two')
+  })
+
+  it('explains why an entry with no window always reads as closed', () => {
+    renderDeployment('untimed')
+    expect(screen.getByText(/always reads as closed/)).toBeInTheDocument()
+  })
+
+  it('marks a case sensitive entry', () => {
+    renderDeployment('cased')
+    expect(screen.getByText('Case sensitive')).toBeInTheDocument()
+  })
+
+  it('does not render markup supplied in a name', () => {
+    const config = testConfig()
+    const { container } = render(
+      <DeploymentCard
+        configKey="evil"
+        deployment={{ name: '<img src=x onerror=alert(1)>', github: 'acme/x' }}
+        domainKeys={DOMAINS}
+        editing={false}
+        onEdit={vi.fn()}
+        onDuplicate={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    )
+    expect(container.querySelector('img')).toBeNull()
+    expect(config.deployments.daytime).toBeDefined()
+  })
+
+  describe('edit mode', () => {
+    it('hides the actions while not editing', () => {
+      atMidday()
+      renderDeployment('daytime')
+      expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
+    })
+
+    it('shows edit, duplicate and delete while editing', () => {
+      atMidday()
+      renderDeployment('daytime', true)
+      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /Delete Daytime project/ }),
+      ).toBeInTheDocument()
+    })
+
+    it('calls back on edit and duplicate', async () => {
+      const user = userEvent.setup()
+      const { onEdit, onDuplicate } = renderDeployment('daytime', true)
+
+      await user.click(screen.getByRole('button', { name: 'Edit' }))
+      await user.click(screen.getByRole('button', { name: 'Duplicate' }))
+
+      expect(onEdit).toHaveBeenCalledOnce()
+      expect(onDuplicate).toHaveBeenCalledOnce()
+    })
+
+    it('needs two clicks to delete', async () => {
+      const user = userEvent.setup()
+      const { onDelete } = renderDeployment('daytime', true)
+
+      await user.click(screen.getByRole('button', { name: /^Delete/ }))
+      expect(onDelete).not.toHaveBeenCalled()
+
+      await user.click(screen.getByRole('button', { name: /Delete this\?/ }))
+      expect(onDelete).toHaveBeenCalledOnce()
+    })
+
+    it('can be backed out of', async () => {
+      const user = userEvent.setup()
+      const { onDelete } = renderDeployment('daytime', true)
+
+      await user.click(screen.getByRole('button', { name: /^Delete/ }))
+      await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+      expect(onDelete).not.toHaveBeenCalled()
+      expect(screen.getByRole('button', { name: /^Delete/ })).toBeInTheDocument()
+    })
+
+    it('disarms itself so a stray click cannot be completed later', async () => {
+      // shouldAdvanceTime keeps userEvent's own internal waits working while
+      // still letting the disarm timer be jumped forward.
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      renderDeployment('daytime', true)
+
+      await user.click(screen.getByRole('button', { name: /^Delete/ }))
+      expect(screen.getByText('Delete this?')).toBeInTheDocument()
+
+      await act(() => vi.advanceTimersByTimeAsync(5000))
+
+      expect(screen.queryByText('Delete this?')).not.toBeInTheDocument()
+    })
+  })
+})
+
+describe('SiteCard', () => {
+  const config = testConfig()
+
+  const renderSite = (key: string, editing = false, overrides = {}) =>
+    render(
+      <SiteCard
+        configKey={key}
+        patterns={config.domains[key]}
+        site={config.sites[key]}
+        usedBy={2}
+        editing={editing}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        {...overrides}
+      />,
+    )
+
+  it('shows the key and how many deployments use it', () => {
+    renderSite('github')
+    expect(screen.getByRole('heading', { name: 'github' })).toBeInTheDocument()
+    expect(screen.getByText(/2 deployments/)).toBeInTheDocument()
+  })
+
+  it('uses the singular for one deployment', () => {
+    renderSite('github', false, { usedBy: 1 })
+    expect(screen.getByText(/1 deployment$/)).toBeInTheDocument()
+  })
+
+  it('lists the url patterns', () => {
+    renderSite('github')
+    expect(screen.getByText('*://*.github.com/*')).toBeInTheDocument()
+  })
+
+  it('lists the insert locations with their positions', () => {
+    const { container } = renderSite('github')
+    const list = container.querySelectorAll('.dw-card-section')[1]
+
+    expect(within(list as HTMLElement).getByText('After')).toBeInTheDocument()
+    expect(within(list as HTMLElement).getByText('.file-navigation')).toBeInTheDocument()
+    expect(within(list as HTMLElement).getByText('Before')).toBeInTheDocument()
+  })
+
+  it('lists the styling classes under readable labels', () => {
+    renderSite('github')
+    expect(screen.getByText('Window open')).toBeInTheDocument()
+    expect(screen.getByText('flash flash-success')).toBeInTheDocument()
+    expect(screen.getByText('Notes only')).toBeInTheDocument()
+  })
+
+  it('omits the notes class when it is not configured', () => {
+    renderSite('jira')
+    expect(screen.queryByText('Notes only')).not.toBeInTheDocument()
+  })
+
+  it('does not crash on a domain with no matching site entry', () => {
+    renderSite('github', false, { site: undefined })
+    expect(screen.getByText('No site information has been set.')).toBeInTheDocument()
+  })
+
+  it('exposes edit and delete only while editing', async () => {
+    const user = userEvent.setup()
+    const onEdit = vi.fn()
+    renderSite('github', true, { onEdit })
+
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    expect(onEdit).toHaveBeenCalledOnce()
+  })
+})
+
+describe('HowToUse', () => {
+  it('renders the bundled document', () => {
+    const { container } = render(<HowToUse />)
+    expect(
+      screen.getByRole('heading', { name: 'Using the extension' }),
+    ).toBeInTheDocument()
+    expect(container.querySelector('table')).not.toBeNull()
+  })
+
+  it('keeps json examples readable rather than entity encoded', () => {
+    const { container } = render(<HowToUse />)
+    const code = container.querySelector('pre code')?.textContent ?? ''
+    expect(code).toContain('"domains"')
+    expect(code).not.toContain('&#34;')
+  })
+
+  it('leads with the UI workflow rather than the json', () => {
+    render(<HowToUse />)
+    expect(screen.getByRole('heading', { name: 'Quick start' })).toBeInTheDocument()
+  })
+})

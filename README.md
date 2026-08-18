@@ -20,7 +20,14 @@ The extension aims to be flexible in what can be displayed, however it is still 
 
 ## Using the extension
 
-How to use the extension can be [found here](/src/documents/HowToUse.md).
+Everything is configured on the extension's options page, which is a single
+dashboard: every deployment and site is visible at once with its live status,
+and an **Edit mode** switch reveals the controls for adding, changing and
+removing entries. The raw JSON config is still there, collapsed at the bottom,
+for copying a setup between machines.
+
+The full guide is [found here](/src/documents/HowToUse.md), and is also
+available from the "How to use" link in the options page header.
 
 ## Working on the extension
 
@@ -146,8 +153,13 @@ src/
   ui/
     popup.html/.tsx      Browser action popup
     options.html/.tsx    Options page
-    components/          React components for both pages
-  styles/                Plain CSS
+    theme.ts             Light / dark / system preference
+    components/
+      common/            Modal, toggle, field, toasts, status pill, icons
+      dashboard/         Options page cards, forms and the JSON panel
+  styles/
+    tokens.css           Design tokens, light and dark
+    options.css          Options page layout
   documents/HowToUse.md  Rendered inside the options page
 public/                  Copied verbatim to dist/ (icons, _locales)
 dev/                     Browser-only dev harness (never built into the extension)

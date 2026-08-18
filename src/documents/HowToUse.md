@@ -1,149 +1,160 @@
-# Table of contents
-* [Using the extension](#using-the-extension)
-    * [Config](#config)
-    * [Parameters](#parameters)
+# Using the extension
+
+The extension shows a notice on the pages you already work in - a repository, a
+board, a ticket - telling you whether that project can be deployed right now.
+
+Everything below is configured on this options page. Nothing needs to be edited
+by hand unless you want to.
+
+* [Quick start](#quick-start)
+* [Sites](#sites)
+* [Deployments](#deployments)
+* [Editing the JSON directly](#editing-the-json-directly)
+* [Reference](#reference)
 
 ---
 
-# Using the extension
+## Quick start
 
-The extension comes with simple options allowing you to configure when and how a deployment notice is displayed.
+1. Turn on **Edit mode**, top right.
+2. Check the **Sites** section. GitHub and Jira are set up out of the box; add
+   your own if you use something else.
+3. Add a **Deployment** for each project you want a notice on. Give it a name,
+   the hours it can be deployed, and the part of the URL that identifies it.
+4. Turn Edit mode back off. Open one of those pages and the notice appears.
 
-## Config
+Each card shows its live status, so this page doubles as an at-a-glance view of
+what is open right now.
 
-Below is an example of the config you will find in the options page.
+---
+
+## Sites
+
+A site is a place the notice can appear. It answers two questions: which pages
+count, and where on the page the notice goes.
+
+**URL patterns** decide which pages count. They are
+[Chrome match patterns](https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns),
+so `*://*.github.com/*` covers GitHub and every subdomain of it, over both http
+and https.
+
+**Where to insert** is a list of class names taken from the site's own HTML. The
+notice is placed at the first one that exists on the page, so putting a reliable
+fallback lower down the list is worthwhile - it is never inserted twice.
+
+**Styling** reuses the host site's own classes, which is why the notice looks
+like it belongs there. `flash flash-success` is GitHub's green banner;
+`aui-message aui-message-error` is Atlassian's red one. The notes class is
+optional and only applies to notes-only entries.
+
+The site's **key** matters: deployments store their URL fragment under it. Renaming
+a site here updates every deployment that referenced it.
+
+---
+
+## Deployments
+
+A deployment is one project. It is either:
+
+* a **deployment window** - opening and closing times in a chosen timezone, shown
+  converted into the viewer's own timezone; or
+* **notes only** - no window, no status, just a message. Useful for a freeze.
+
+A window may run past midnight. `23:00` to `02:00` is a three hour window, not an
+inverted one.
+
+**URL fragments** are what tie a deployment to a page. If a site's patterns say
+"we are on GitHub", the fragment says "and this is the project". The fragment for
+`https://github.com/acme/checkout` is `acme/checkout`. Leave a site blank to skip
+it.
+
+Fragments are matched as substrings, and the most specific one wins - `acme/web`
+and `acme/web-admin` can both exist without shadowing each other. Matching
+ignores capitalisation unless **case sensitive** is turned on.
+
+**Notes** accept Markdown. On the page they sit behind "Show details" so the
+notice stays small.
+
+---
+
+## Editing the JSON directly
+
+The **JSON config** panel at the bottom holds the same configuration as raw JSON.
+Use it to copy a setup between machines, share one with a team, or make a bulk
+change faster than clicking through forms.
+
+Paste a whole config in and press Save. It is checked before anything is written,
+so an invalid config is rejected rather than half applied.
+
+---
+
+## Reference
+
+The stored config has three parts: `domains`, `sites` and `deployments`.
 
 ```json
 {
     "domains": {
-        "github": [
-            "*://*.github.com/*"
-        ],
-        "jira": [
-            "*://*.atlassian.net/*"
-        ]
+        "github": ["*://*.github.com/*"]
     },
     "sites": {
         "github": {
             "insert": [
-                {
-                    "class": "file-navigation",
-                    "position": "after"
-                },
-                {
-                    "class": "repository-content",
-                    "position": "before"
-                }
+                { "class": "file-navigation", "position": "after" },
+                { "class": "repository-content", "position": "before" }
             ],
             "classes": {
                 "deploy": "flash flash-success",
                 "no-deploy": "flash flash-error"
             }
-        },
-        "jira": {
-            "insert": [
-                {
-                    "class": "mod-header",
-                    "position": "before"
-                }
-            ],
-            "classes": {
-                "deploy": "aui-message aui-message-success",
-                "no-deploy": "aui-message aui-message-error"
-            }
         }
     },
     "deployments": {
-          "chrome-deployment-windows": {
-                "name": "chrome-deployment-windows",
-                "github": "elistone/chrome-deployment-windows",
-                "jira": "",
-                "time": {
-                    "start": "23:00",
-                    "end": "10:00",
-                    "timezone": "Europe/Paris"
-                },
-                "notes": "An example of some extra notes I want to have displayed."
-           }
+        "checkout": {
+            "name": "Checkout",
+            "github": "acme/checkout",
+            "time": {
+                "start": "23:00",
+                "end": "02:00",
+                "timezone": "Europe/Paris"
+            },
+            "notes": "Deploys need **two** approvals."
+        }
     }
 }
 ```
 
-The config file has three parts:
-
-* domains
-* sites
-* deployments
-
-### Domains
-
-Domains are the start of the trigger, you assign a domain a `key` example `github` then pass it an array of [match patterns](https://developer.chrome.com/extensions/match_patterns).
-If a match patten has been found in a tab deployments will be checked for any information.
-
-### Sites
-
-Sites work with the domains, here you can define where on a website to inject the notice, and the classes that get applied.
-If there are multiple places to insert it will work it's way down the list, and first is found will be inserted. It can be not insert into multiple places on the same screen.
-
-### Deployments
-
-Deployments are where you will put all the information about the deployment window and what url's trigger on each domain.
-
-```json
-{
-    "chrome-deployment-windows": {
-        "name": "chrome-deployment-windows",
-        "github": "elistone/chrome-deployment-windows",
-        "jira": "",
-        "time": {
-            "start": "23:00",
-            "end": "10:00",
-            "timezone": "Europe/Paris"
-        },
-        "notes": "An example of some extra notes I want to have displayed."
-    }
-}
-```
-
-For the example above there are two domains `key` items,  `github` & `jira`. 
-The part listed after is what is picked up to notify we are on that domain.
-
-Take this  `"github": "elistone/chrome-deployment-windows"`, we already know that the deployment url for github is `*://*.github.com/*` so the extension knows you are on github or not.
-This part lets it know which page you are on. So when you visit: `https://github.com/elistone/chrome-deployment-windows` everything can be combined, and a notice will be displayed.
-
-## Parameters
-
-**Domains** 
+**Domains**
 
 Option | Type | Description
 ------ | ---- | -----------
-key|string|Unique key related to the domain
-urls|array[match_patterns]|Array of [match patterns](https://developer.chrome.com/extensions/match_patterns) for the domain
+key|string|Unique key for the site, shared with `sites` and used by deployments
+urls|array[match_pattern]|[Match patterns](https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns) for the site
 
 **Sites**
 
 Option | Type | Description
 ------ | ---- | -----------
 key|string|Unique key that must match a domain
-insert|array[insert_data]|Array of all the locations to try and insert, first place found will stop the searching
-insert.insert_data.class|string|A class name to look up in the dom
-insert.insert_data.position|string[before\|after]|Specify if the notice should be placed before or after the found class name
-classes|object[class_data]|Object containing the information about classes to style the notice
-classes.class_data.deploy|string|Classes to apply on deployment open
-classes.class_data.no-deploy|string|Classes to apply on deployment closed
-classes.class_data.notes|string|An optional parameter that will apply classes if set to notes only
+insert|array[insert_data]|Locations to try, in order; the first one found is used
+insert.insert_data.class|string|A class name to look up in the page
+insert.insert_data.position|string[before\|after]|Whether the notice goes before or after that element
+classes|object[class_data]|Classes applied to the notice itself
+classes.class_data.deploy|string|Applied while the window is open
+classes.class_data.no-deploy|string|Applied while the window is closed
+classes.class_data.notes|string|Optional; applied instead for notes-only entries
 
 **Deployments**
 
 Option | Type | Description
 ------ | ---- | -----------
-key|string|Unique key that for a deployment
-name|string|Name of the deployment, will be displayed on the notice and popup
-notes|string|Notes will be displayed on the notice and popup
-case-sensitive|boolean|An optional parameter to enable case sensitivity for urls and domain keys, is set default _false_ by default
-notes-only|boolean|An optional parameter to enable only showing of notes, is set to _false_ by default
-time|object[time_data]|Object containing the information the deployment window
-time.time_data.start|time[24]|Time in 24 hours when the deployment window starts
-time.time_data.end|time[24]|Time in 24 hours when the deployment window closes
-time.time_data.timezone|string|A valid time zone, uses moment.js [time zone list](https://gist.github.com/diogocapela/12c6617fc87607d11fd62d2a4f42b02a)
-_domain_|string|The domain will be a key matching one of the domains e.g. `github` you can then add the rest of the url for it to match e.g. `elistone/chrome-deployment-windows`
+key|string|Unique key for the deployment
+name|string|Shown as the title of the notice and popup
+notes|string|Markdown, shown behind "Show details"
+&lt;site key&gt;|string|URL fragment identifying this project on that site
+case-sensitive|boolean|Match the fragment exactly, including capitals; _false_ by default
+notes-only|boolean|Show only the notes, with no window or status; _false_ by default
+time|object[time_data]|The deployment window
+time.time_data.start|time[24]|24 hour time the window opens, e.g. `09:00`
+time.time_data.end|time[24]|24 hour time the window closes; may be earlier than the start to run past midnight
+time.time_data.timezone|string|An [IANA timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) such as `Europe/London`

@@ -1,8 +1,4 @@
 {
-  "l10nHello": {
-    "message": "Hello, React!",
-    "description": "Hello text for the popup."
-  },
   "l10nDeploymentClosed": {
     "message": "Deployment window closed",
     "description": "Statement that the deployment window has closed."
@@ -55,10 +51,6 @@
     "message": "No deployment information for this domain.",
     "description": "There is no information for this domain."
   },
-  "l10nNoInformationSet": {
-    "message": "No deployment information has been set.",
-    "description": "There is no information for this set."
-  },
   "l10nNoDomainInformationSet": {
     "message": "No site information has been set.",
     "description": "There is site information"
@@ -66,18 +58,6 @@
   "l10nDeploymentWindowsConfig": {
     "message": "Deployment windows config",
     "description": "Deployment windows options"
-  },
-  "l10nSiteInformation": {
-    "message": "Site Information",
-    "description": "Site Information title"
-  },
-  "l10nDeploymentWindows": {
-    "message": "Deployment Windows",
-    "description": "Deployment Windows title"
-  },
-  "l10nImportExport": {
-    "message": "Edit / Import / Export",
-    "description": "Edit / Import / Export title"
   },
   "l10nHowToUse": {
     "message": "How to use",
@@ -107,32 +87,392 @@
     "message": "Name",
     "description": "name"
   },
-  "l10nTrue": {
-    "message": "True",
-    "description": "true"
+  "l10nOptionsSubtitle": {
+    "message": "Choose where the deployment notice appears, and when deploys are allowed.",
+    "description": "Subtitle under the options page title."
   },
-  "l10nFalse": {
-    "message": "False",
-    "description": "false"
+  "l10nOverview": {
+    "message": "Overview",
+    "description": "Label for the summary figures."
   },
-  "l10nNoName": {
-    "message": "No name set",
-    "description": "No name set"
+  "l10nEditMode": {
+    "message": "Edit mode",
+    "description": "Switch that reveals the editing controls."
   },
-  "l10nNoNotes": {
-    "message": "No notes set",
-    "description": "No notes set"
+  "l10nTheme": {
+    "message": "Theme",
+    "description": "Label for the light/dark switch."
   },
-  "l10nNoTimeStart": {
-    "message": "Start not set",
-    "description": "Start not set"
+  "l10nThemeLight": {
+    "message": "Light",
+    "description": "Light theme option."
   },
-  "l10nNoTimeEnd": {
-    "message": "End not set",
-    "description": "Start not set"
+  "l10nThemeDark": {
+    "message": "Dark",
+    "description": "Dark theme option."
   },
-  "l10nNoTimeTimezone": {
-    "message": "Timezone not set",
-    "description": "Timezone not set"
+  "l10nThemeSystem": {
+    "message": "System",
+    "description": "Follow the operating system theme."
+  },
+  "l10nClose": {
+    "message": "Close",
+    "description": "Close a dialog."
+  },
+  "l10nFilter": {
+    "message": "Filter",
+    "description": "Label for the filter box."
+  },
+  "l10nFilterPlaceholder": {
+    "message": "Filter by name, key or URL",
+    "description": "Placeholder for the filter box."
+  },
+  "l10nNoMatches": {
+    "message": "Nothing matches that filter.",
+    "description": "Shown when the filter excludes everything."
+  },
+  "l10nDeployments": {
+    "message": "Deployments",
+    "description": "Deployments section title."
+  },
+  "l10nSites": {
+    "message": "Sites",
+    "description": "Sites section title."
+  },
+  "l10nOpenNow": {
+    "message": "Open now",
+    "description": "Count of deployment windows currently open."
+  },
+  "l10nDeploymentOne": {
+    "message": "deployment",
+    "description": "Singular noun, follows a count."
+  },
+  "l10nDeploymentMany": {
+    "message": "deployments",
+    "description": "Plural noun, follows a count."
+  },
+  "l10nNotConfigured": {
+    "message": "not set",
+    "description": "Placeholder where no URL fragment is configured."
+  },
+  "l10nNoWindowSet": {
+    "message": "No window set",
+    "description": "Status for a deployment with no times."
+  },
+  "l10nNoWindowSetHint": {
+    "message": "Without times this always reads as closed. Edit it to add a deployment window, or mark it notes only.",
+    "description": "Explains the no-window status."
+  },
+  "l10nNoDeploymentsYet": {
+    "message": "No deployments yet",
+    "description": "Empty deployments section."
+  },
+  "l10nNoDeploymentsYetHint": {
+    "message": "Add one for each project you want a notice on.",
+    "description": "Empty deployments hint."
+  },
+  "l10nNoSitesYet": {
+    "message": "No sites yet",
+    "description": "Empty sites section."
+  },
+  "l10nNoSitesYetHint": {
+    "message": "A site says which pages the notice can appear on, and where it goes.",
+    "description": "Empty sites hint."
+  },
+  "l10nAddDeployment": {
+    "message": "Add deployment",
+    "description": "Create a deployment."
+  },
+  "l10nAddSite": {
+    "message": "Add site",
+    "description": "Create a site."
+  },
+  "l10nNewDeployment": {
+    "message": "New deployment",
+    "description": "Title of the create deployment dialog."
+  },
+  "l10nEditDeployment": {
+    "message": "Edit deployment",
+    "description": "Title of the edit deployment dialog."
+  },
+  "l10nNewSite": {
+    "message": "New site",
+    "description": "Title of the create site dialog."
+  },
+  "l10nEditSite": {
+    "message": "Edit site",
+    "description": "Title of the edit site dialog."
+  },
+  "l10nEdit": {
+    "message": "Edit",
+    "description": "Edit an entry."
+  },
+  "l10nDelete": {
+    "message": "Delete",
+    "description": "Delete an entry."
+  },
+  "l10nDeleteYes": {
+    "message": "Yes, delete",
+    "description": "Confirm a delete."
+  },
+  "l10nConfirmDelete": {
+    "message": "Delete this?",
+    "description": "Asks for confirmation before deleting."
+  },
+  "l10nDuplicate": {
+    "message": "Duplicate",
+    "description": "Copy an entry into a new one."
+  },
+  "l10nCopySuffix": {
+    "message": "copy",
+    "description": "Appended to the name of a duplicated entry."
+  },
+  "l10nSave": {
+    "message": "Save",
+    "description": "Save changes."
+  },
+  "l10nCancel": {
+    "message": "Cancel",
+    "description": "Discard changes."
+  },
+  "l10nRemove": {
+    "message": "Remove",
+    "description": "Remove a row from a repeating list."
+  },
+  "l10nUndo": {
+    "message": "Undo",
+    "description": "Undo the last change."
+  },
+  "l10nSaved": {
+    "message": "Saved",
+    "description": "Confirmation that changes were stored."
+  },
+  "l10nAdded": {
+    "message": "Added",
+    "description": "Confirmation that a new entry was stored."
+  },
+  "l10nDeleted": {
+    "message": "Deleted",
+    "description": "Confirmation that an entry was removed."
+  },
+  "l10nRestored": {
+    "message": "Restored",
+    "description": "Confirmation that an undo was applied."
+  },
+  "l10nSaveFailed": {
+    "message": "Could not save. Your changes were not stored.",
+    "description": "Storage write failed."
+  },
+  "l10nDeploymentFormHint": {
+    "message": "One project, and when it can be deployed.",
+    "description": "Description of the deployment dialog."
+  },
+  "l10nKey": {
+    "message": "Key",
+    "description": "The config key for an entry."
+  },
+  "l10nKeyHint": {
+    "message": "A unique id used in the stored config. Filled in from the name.",
+    "description": "Hint for the key field."
+  },
+  "l10nNameHint": {
+    "message": "Shown as the title of the notice and the popup.",
+    "description": "Hint for the name field."
+  },
+  "l10nNotesHint": {
+    "message": "Markdown is supported. Shown behind \"Show details\" on the page.",
+    "description": "Hint for the notes field."
+  },
+  "l10nNotesOnlyHint": {
+    "message": "Show only the notes, with no deployment window or status. Use it for a freeze.",
+    "description": "Hint for the notes-only switch."
+  },
+  "l10nCaseSensitiveHint": {
+    "message": "Match the URL exactly, including capitals. Off by default.",
+    "description": "Hint for the case sensitive switch."
+  },
+  "l10nWindowStart": {
+    "message": "Opens",
+    "description": "Start of a deployment window."
+  },
+  "l10nWindowEnd": {
+    "message": "Closes",
+    "description": "End of a deployment window."
+  },
+  "l10nTimezone": {
+    "message": "Timezone",
+    "description": "Timezone field label."
+  },
+  "l10nTimeHint": {
+    "message": "24 hour times. A window may close earlier than it opens to run past midnight.",
+    "description": "Hint for the window times."
+  },
+  "l10nTimezoneHint": {
+    "message": "The timezone these times are written in. Everyone sees them converted to their own.",
+    "description": "Hint for the timezone field."
+  },
+  "l10nUseMyTimezone": {
+    "message": "Use mine",
+    "description": "Fill the timezone field with the local timezone."
+  },
+  "l10nUrlFragments": {
+    "message": "URL fragments",
+    "description": "Per-site URL fragment fields."
+  },
+  "l10nUrlFragmentsHint": {
+    "message": "The part of the URL that identifies this project on each site. Leave a site blank to skip it.",
+    "description": "Hint for the URL fragments."
+  },
+  "l10nUrlFragmentPlaceholder": {
+    "message": "acme/checkout",
+    "description": "Example URL fragment."
+  },
+  "l10nSiteFormHint": {
+    "message": "Where the notice can appear, and how it looks there.",
+    "description": "Description of the site dialog."
+  },
+  "l10nSiteKey": {
+    "message": "Site key",
+    "description": "The config key for a site."
+  },
+  "l10nSiteKeyHint": {
+    "message": "How deployments refer to this site, for example github.",
+    "description": "Hint for the site key."
+  },
+  "l10nPattern": {
+    "message": "Pattern",
+    "description": "A single URL match pattern."
+  },
+  "l10nAddPattern": {
+    "message": "Add pattern",
+    "description": "Add another URL pattern row."
+  },
+  "l10nUrlPatternsHint": {
+    "message": "Chrome match patterns, for example *://*.github.com/*",
+    "description": "Hint for the URL patterns."
+  },
+  "l10nInsertHint": {
+    "message": "The notice is placed at the first of these that exists on the page.",
+    "description": "Hint for the insert locations."
+  },
+  "l10nAddInsert": {
+    "message": "Add location",
+    "description": "Add another insert location row."
+  },
+  "l10nPositionBefore": {
+    "message": "Before",
+    "description": "Insert before the element."
+  },
+  "l10nPositionAfter": {
+    "message": "After",
+    "description": "Insert after the element."
+  },
+  "l10nClassesHint": {
+    "message": "Classes from the site's own stylesheet, so the notice matches it.",
+    "description": "Hint for the custom classes."
+  },
+  "l10nClassDeploy": {
+    "message": "Window open",
+    "description": "Class applied while the window is open."
+  },
+  "l10nClassNoDeploy": {
+    "message": "Window closed",
+    "description": "Class applied while the window is closed."
+  },
+  "l10nClassNotes": {
+    "message": "Notes only",
+    "description": "Class applied to notes-only entries."
+  },
+  "l10nClassNotesHint": {
+    "message": "Optional. Falls back to the two above.",
+    "description": "Hint for the notes class."
+  },
+  "l10nRequired": {
+    "message": "Required",
+    "description": "A required field was left blank."
+  },
+  "l10nKeyFormat": {
+    "message": "Use letters, numbers, dashes or underscores.",
+    "description": "Invalid key format."
+  },
+  "l10nDuplicateKey": {
+    "message": "That key is already in use.",
+    "description": "Duplicate key."
+  },
+  "l10nReservedKey": {
+    "message": "That key is reserved. Pick another.",
+    "description": "Key clashes with a deployment field."
+  },
+  "l10nInvalidTime": {
+    "message": "Use a 24 hour time, such as 09:00.",
+    "description": "Invalid time."
+  },
+  "l10nInvalidTimezone": {
+    "message": "Unknown timezone.",
+    "description": "Invalid IANA timezone."
+  },
+  "l10nInvalidPattern": {
+    "message": "Not a valid match pattern.",
+    "description": "Invalid Chrome match pattern."
+  },
+  "l10nPatternRequired": {
+    "message": "Add at least one URL pattern.",
+    "description": "No URL patterns given."
+  },
+  "l10nInsertRequired": {
+    "message": "Add at least one place to insert the notice.",
+    "description": "No insert locations given."
+  },
+  "l10nFragmentRequired": {
+    "message": "Add a URL fragment for at least one site, or this can never match a page.",
+    "description": "No URL fragments given."
+  },
+  "l10nNotesRequired": {
+    "message": "A notes only entry needs some notes.",
+    "description": "Notes-only without notes."
+  },
+  "l10nJsonTitle": {
+    "message": "JSON config",
+    "description": "Title of the raw config panel."
+  },
+  "l10nJsonHint": {
+    "message": "Everything above as raw JSON. Copy it between machines, or paste a whole config in.",
+    "description": "Description of the raw config panel."
+  },
+  "l10nCopy": {
+    "message": "Copy",
+    "description": "Copy the config to the clipboard."
+  },
+  "l10nCopied": {
+    "message": "Copied",
+    "description": "The config was copied."
+  },
+  "l10nCopyFailed": {
+    "message": "Could not copy",
+    "description": "The clipboard was unavailable."
+  },
+  "l10nDownload": {
+    "message": "Download",
+    "description": "Download the config as a file."
+  },
+  "l10nDownloadFailed": {
+    "message": "Could not download",
+    "description": "The download failed."
+  },
+  "l10nImportFile": {
+    "message": "Import file",
+    "description": "Load a config from a file."
+  },
+  "l10nRevert": {
+    "message": "Revert",
+    "description": "Discard edits in the JSON editor."
+  },
+  "l10nUnsaved": {
+    "message": "Unsaved",
+    "description": "The JSON editor has unsaved edits."
+  },
+  "l10nInvalidJson": {
+    "message": "Invalid JSON:",
+    "description": "Prefix for a JSON parse error."
   }
 }

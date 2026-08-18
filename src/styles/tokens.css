@@ -1,0 +1,154 @@
+/**
+ * Design tokens for the extension UI.
+ *
+ * Every colour used by the options page and popup resolves through one of
+ * these variables, so the light and dark palettes are defined once here and
+ * nothing downstream needs a media query of its own.
+ *
+ * `data-theme` is set on <html> by the theme controller. The bare :root block
+ * is light, and the prefers-color-scheme block only applies when no explicit
+ * choice has been made - `data-theme="light"` deliberately wins over a dark
+ * system setting, which is the whole point of offering the switch.
+ */
+
+:root {
+  --dw-font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --dw-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+
+  --dw-radius-sm: 6px;
+  --dw-radius: 10px;
+  --dw-radius-lg: 16px;
+
+  --dw-space-1: 4px;
+  --dw-space-2: 8px;
+  --dw-space-3: 12px;
+  --dw-space-4: 16px;
+  --dw-space-5: 24px;
+  --dw-space-6: 32px;
+  --dw-space-7: 48px;
+
+  --dw-transition: 140ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- light ---------- */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --dw-bg: #f5f6f8;
+  --dw-bg-veil: rgba(16, 20, 26, 0.45);
+  --dw-surface: #ffffff;
+  --dw-surface-2: #f2f4f7;
+  --dw-surface-3: #e9edf3;
+
+  --dw-text: #131720;
+  --dw-text-muted: #59616f;
+  --dw-text-faint: #838c9b;
+
+  --dw-border: #e2e6ed;
+  --dw-border-strong: #cdd4df;
+  --dw-focus: #4f46e5;
+
+  --dw-accent: #4f46e5;
+  --dw-accent-hover: #4338ca;
+  --dw-accent-text: #ffffff;
+  --dw-accent-soft: #eef0ff;
+  --dw-accent-soft-text: #3730a3;
+
+  --dw-success: #0e7c50;
+  --dw-success-soft: #e4f5ec;
+  --dw-danger: #bd2e46;
+  --dw-danger-soft: #fdebee;
+  --dw-warn: #8a5a00;
+  --dw-warn-soft: #fdf1dc;
+
+  --dw-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --dw-shadow: 0 1px 3px rgba(16, 24, 40, 0.1), 0 1px 2px rgba(16, 24, 40, 0.06);
+  --dw-shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.14),
+    0 2px 8px rgba(16, 24, 40, 0.08);
+}
+
+/* ---------- dark ---------- */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --dw-bg: #0d1017;
+  --dw-bg-veil: rgba(2, 4, 8, 0.6);
+  --dw-surface: #151a23;
+  --dw-surface-2: #1b212c;
+  --dw-surface-3: #222a36;
+
+  --dw-text: #e7ebf2;
+  --dw-text-muted: #9aa4b4;
+  --dw-text-faint: #6f7a8a;
+
+  --dw-border: #262e3b;
+  --dw-border-strong: #364152;
+  --dw-focus: #8b91ff;
+
+  --dw-accent: #6f76f5;
+  --dw-accent-hover: #838aff;
+  --dw-accent-text: #ffffff;
+  --dw-accent-soft: rgba(111, 118, 245, 0.16);
+  --dw-accent-soft-text: #b3b8ff;
+
+  --dw-success: #45cf8b;
+  --dw-success-soft: rgba(69, 207, 139, 0.14);
+  --dw-danger: #ff7089;
+  --dw-danger-soft: rgba(255, 112, 137, 0.14);
+  --dw-warn: #f0b12f;
+  --dw-warn-soft: rgba(240, 177, 47, 0.14);
+
+  --dw-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --dw-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --dw-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+/*
+ * "System" is represented by the absence of data-theme, so the OS preference
+ * only ever applies when the user has not chosen for themselves.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+
+    --dw-bg: #0d1017;
+    --dw-bg-veil: rgba(2, 4, 8, 0.6);
+    --dw-surface: #151a23;
+    --dw-surface-2: #1b212c;
+    --dw-surface-3: #222a36;
+
+    --dw-text: #e7ebf2;
+    --dw-text-muted: #9aa4b4;
+    --dw-text-faint: #6f7a8a;
+
+    --dw-border: #262e3b;
+    --dw-border-strong: #364152;
+    --dw-focus: #8b91ff;
+
+    --dw-accent: #6f76f5;
+    --dw-accent-hover: #838aff;
+    --dw-accent-text: #ffffff;
+    --dw-accent-soft: rgba(111, 118, 245, 0.16);
+    --dw-accent-soft-text: #b3b8ff;
+
+    --dw-success: #45cf8b;
+    --dw-success-soft: rgba(69, 207, 139, 0.14);
+    --dw-danger: #ff7089;
+    --dw-danger-soft: rgba(255, 112, 137, 0.14);
+    --dw-warn: #f0b12f;
+    --dw-warn-soft: rgba(240, 177, 47, 0.14);
+
+    --dw-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --dw-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --dw-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.45);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dw-transition: 0ms;
+  }
+}
