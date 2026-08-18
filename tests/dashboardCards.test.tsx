@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import DeploymentCard, {
@@ -100,6 +100,31 @@ describe('DeploymentCard', () => {
 
     expect(chips[0].textContent).toContain('acme/daytime')
     expect(chips[1].textContent).toContain('not set')
+  })
+
+  it('puts the configured sites before the gaps', () => {
+    // Config order put the gaps first as often as not, which pushed the
+    // fragments that actually matter to the end of the row.
+    atMidday()
+    const config = testConfig()
+    const { container } = render(
+      <DeploymentCard
+        configKey="daytime"
+        deployment={config.deployments.daytime}
+        // github is configured, the other two are not.
+        domainKeys={['unset-a', 'github', 'unset-b']}
+        editing={false}
+        onEdit={vi.fn()}
+        onDuplicate={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    )
+
+    const chips = [...container.querySelectorAll('.dw-chip')]
+    expect(chips[0].textContent).toContain('acme/daytime')
+    expect(chips.slice(1).every((chip) => chip.textContent?.includes('not set'))).toBe(
+      true,
+    )
   })
 
   it('renders notes as markdown', () => {
@@ -225,6 +250,66 @@ describe('SiteCard', () => {
     expect(screen.getByText(/2 deployments/)).toBeInTheDocument()
   })
 
+  it('names the host its patterns cover', () => {
+    renderSite('github')
+    expect(screen.getByText('github.com')).toBeInTheDocument()
+  })
+
+  it('says so when the patterns name no particular host', () => {
+    renderSite('github', false, { patterns: ['*://*/*'] })
+    expect(screen.getByText('any host')).toBeInTheDocument()
+  })
+
+  it('carries the brand hue for a recognisable host', () => {
+    const { container } = renderSite('github')
+    expect(container.querySelector('article')).toHaveStyle({
+      '--dw-site-hue': '220',
+    })
+  })
+
+  it('gives two different sites different hues', () => {
+    const first = renderSite('github').container.querySelector('article')
+    const second = renderSite('jira').container.querySelector('article')
+
+    expect(first?.getAttribute('style')).not.toBe(
+      second?.getAttribute('style'),
+    )
+  })
+
+  describe('favicon', () => {
+    it('uses the icon Chrome already has cached', () => {
+      const { container } = renderSite('github')
+      const icon = container.querySelector('img.dw-site-avatar')
+
+      expect(icon).toHaveAttribute(
+        'src',
+        expect.stringContaining('/_favicon/'),
+      )
+      // Decorative: the site name is right beside it.
+      expect(icon).toHaveAttribute('alt', '')
+    })
+
+    it('falls back to initials when the icon will not load', () => {
+      const { container } = renderSite('github')
+      fireEvent.error(container.querySelector('img.dw-site-avatar')!)
+
+      expect(container.querySelector('img.dw-site-avatar')).toBeNull()
+      expect(container.querySelector('.dw-site-avatar')?.textContent).toBe('G')
+    })
+
+    it('falls back to initials outside an extension page', () => {
+      const original = globalThis.chrome
+      // @ts-expect-error - the harness and a torn down page both look like this
+      delete globalThis.chrome
+      try {
+        const { container } = renderSite('github')
+        expect(container.querySelector('img')).toBeNull()
+      } finally {
+        globalThis.chrome = original
+      }
+    })
+  })
+
   it('uses the singular for one deployment', () => {
     renderSite('github', false, { usedBy: 1 })
     expect(screen.getByText(/1 deployment$/)).toBeInTheDocument()
@@ -242,6 +327,18 @@ describe('SiteCard', () => {
     expect(within(list as HTMLElement).getByText('After')).toBeInTheDocument()
     expect(within(list as HTMLElement).getByText('.file-navigation')).toBeInTheDocument()
     expect(within(list as HTMLElement).getByText('Before')).toBeInTheDocument()
+  })
+
+  it('pairs every label with its value, so the columns line up', () => {
+    const { container } = renderSite('github')
+    const rows = container.querySelectorAll('.dw-defs .dw-def')
+
+    // Two insert locations plus three styling classes.
+    expect(rows).toHaveLength(5)
+    for (const row of rows) {
+      expect(row.querySelector('dt')).not.toBeNull()
+      expect(row.querySelector('dd')).not.toBeNull()
+    }
   })
 
   it('lists the styling classes under readable labels', () => {

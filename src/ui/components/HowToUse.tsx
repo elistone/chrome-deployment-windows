@@ -32,6 +32,7 @@ export function HowToUseDialog({ onClose }: { onClose: () => void }) {
   return (
     <Modal
       title={Methods.i18n('l10nHowToUse')}
+      description={Methods.i18n('l10nHowToUseSubtitle')}
       onClose={onClose}
       size="wide"
       footer={

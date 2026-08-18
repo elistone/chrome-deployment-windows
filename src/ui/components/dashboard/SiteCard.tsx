@@ -1,8 +1,16 @@
+import { useState, type CSSProperties } from 'react'
+
 import { Methods } from '../../../app/components/Methods'
 import { TextFormatter } from '../../../app/components/TextFormatter'
 import type { SiteConfig } from '../../../app/config/types'
 import ConfirmDelete from '../common/ConfirmDelete'
-import { GlobeIcon, PencilIcon } from '../common/Icons'
+import { PencilIcon } from '../common/Icons'
+import {
+  faviconUrl,
+  siteHost,
+  siteHue,
+  siteInitials,
+} from './siteBranding'
 
 interface SiteCardProps {
   configKey: string
@@ -15,6 +23,39 @@ interface SiteCardProps {
   onDelete: () => void
 }
 
+/**
+ * The site's own favicon, from Chrome's cache.
+ *
+ * Falls back to initials in the site's accent colour whenever there is no icon
+ * to show - outside an extension page, or for a site the browser has never
+ * visited - so the card never has a hole in it.
+ */
+function SiteFavicon({ host, name }: { host: string | null; name: string }) {
+  const [failed, setFailed] = useState(false)
+  const url = faviconUrl(host)
+
+  if (!url || failed) {
+    // Initials come from the site key rather than the host: it is what the
+    // card is titled with, and it is the name the user chose.
+    return (
+      <span className="dw-site-avatar" aria-hidden="true">
+        {siteInitials(name)}
+      </span>
+    )
+  }
+
+  return (
+    <img
+      className="dw-site-avatar dw-site-avatar-image"
+      src={url}
+      alt=""
+      width={20}
+      height={20}
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
 export function SiteCard({
   configKey,
   patterns,
@@ -24,6 +65,7 @@ export function SiteCard({
   onEdit,
   onDelete,
 }: SiteCardProps) {
+  const host = siteHost(patterns)
   const classes = site?.classes
   const styling: [string, string | undefined][] = [
     ['l10nClassDeploy', classes?.deploy],
@@ -32,20 +74,30 @@ export function SiteCard({
   ]
 
   return (
-    <article className="dw-card">
+    <article
+      className="dw-card dw-site-card"
+      // Only the hue is set here; the stylesheet turns it into a pair of
+      // colours that stay legible in both themes.
+      style={{ '--dw-site-hue': siteHue(configKey, host) } as CSSProperties}
+    >
       <header className="dw-card-head">
-        <div className="dw-card-heading">
-          <h3 className="dw-card-title">
-            <GlobeIcon size={16} />
-            {TextFormatter.stripTags(configKey)}
-          </h3>
-          <span className="dw-card-key">
-            {usedBy}{' '}
-            {Methods.i18n(
-              usedBy === 1 ? 'l10nDeploymentOne' : 'l10nDeploymentMany',
-            )}
-          </span>
+        <div className="dw-site-identity">
+          <SiteFavicon host={host} name={configKey} />
+          <div className="dw-card-heading">
+            <h3 className="dw-card-title">
+              {TextFormatter.stripTags(configKey)}
+            </h3>
+            <span className="dw-card-key">
+              {host ?? Methods.i18n('l10nAnyHost')}
+            </span>
+          </div>
         </div>
+        <span className="dw-site-count">
+          {usedBy}{' '}
+          {Methods.i18n(
+            usedBy === 1 ? 'l10nDeploymentOne' : 'l10nDeploymentMany',
+          )}
+        </span>
       </header>
 
       {!site ? (
@@ -71,40 +123,43 @@ export function SiteCard({
             <h4 className="dw-card-section-title">
               {Methods.i18n('l10nInsertElements')}
             </h4>
-            <ul className="dw-list">
+            {/* A two column grid rather than inline pills, so the class names
+                line up down the card instead of starting wherever the label
+                before them happened to end. */}
+            <dl className="dw-defs">
               {(site.insert ?? []).map((entry, index) => (
-                <li key={index}>
-                  <span className="dw-tag">
+                <div className="dw-def" key={index}>
+                  <dt>
                     {Methods.i18n(
                       entry.position === 'before'
                         ? 'l10nPositionBefore'
                         : 'l10nPositionAfter',
                     )}
-                  </span>
-                  <span className="dw-mono">
+                  </dt>
+                  <dd className="dw-mono">
                     .{TextFormatter.stripTags(entry.class)}
-                  </span>
-                </li>
+                  </dd>
+                </div>
               ))}
-            </ul>
+            </dl>
           </section>
 
           <section className="dw-card-section">
             <h4 className="dw-card-section-title">
               {Methods.i18n('l10nCustomClasses')}
             </h4>
-            <ul className="dw-list">
+            <dl className="dw-defs">
               {styling.map(([labelKey, value]) =>
                 value ? (
-                  <li key={labelKey}>
-                    <span className="dw-tag">{Methods.i18n(labelKey)}</span>
-                    <span className="dw-mono">
+                  <div className="dw-def" key={labelKey}>
+                    <dt>{Methods.i18n(labelKey)}</dt>
+                    <dd className="dw-mono">
                       {TextFormatter.stripTags(value)}
-                    </span>
-                  </li>
+                    </dd>
+                  </div>
                 ) : null,
               )}
-            </ul>
+            </dl>
           </section>
         </>
       )}

@@ -163,8 +163,89 @@ body {
   color: var(--dw-text-faint);
 }
 
+.dw-stat-hint {
+  margin-top: 1px;
+  font-size: 0.74rem;
+  color: var(--dw-text-faint);
+}
+
 .dw-stat-open .dw-stat-value {
   color: var(--dw-success);
+}
+
+/* ------------------------------------------------------------------ */
+/* site cards                                                          */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Each site carries a hue - its brand's where the host is recognisable, a
+ * stable hash of the name otherwise - set inline as --dw-site-hue. Only the
+ * hue travels: saturation and lightness are chosen here, per theme, so an
+ * accent is never legible in one theme and invisible in the other.
+ */
+.dw-site-card {
+  --dw-site-accent: hsl(var(--dw-site-hue, 220) 50% 38%);
+  --dw-site-soft: hsl(var(--dw-site-hue, 220) 60% 96%);
+  --dw-site-border: hsl(var(--dw-site-hue, 220) 45% 84%);
+
+  border-left: 3px solid var(--dw-site-accent);
+}
+
+:root[data-theme='dark'] .dw-site-card {
+  --dw-site-accent: hsl(var(--dw-site-hue, 220) 70% 72%);
+  --dw-site-soft: hsl(var(--dw-site-hue, 220) 35% 18%);
+  --dw-site-border: hsl(var(--dw-site-hue, 220) 30% 32%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .dw-site-card {
+  --dw-site-accent: hsl(var(--dw-site-hue, 220) 70% 72%);
+  --dw-site-soft: hsl(var(--dw-site-hue, 220) 35% 18%);
+  --dw-site-border: hsl(var(--dw-site-hue, 220) 30% 32%);
+  }
+}
+
+.dw-site-card .dw-card-head {
+  align-items: center;
+}
+
+.dw-site-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-3);
+  min-width: 0;
+}
+
+.dw-site-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--dw-site-accent);
+  background: var(--dw-site-soft);
+  border: 1px solid var(--dw-site-border);
+  border-radius: 9px;
+}
+
+.dw-site-avatar-image {
+  padding: 5px;
+  object-fit: contain;
+}
+
+.dw-site-count {
+  flex: none;
+  padding: 3px 9px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--dw-site-accent);
+  background: var(--dw-site-soft);
+  border: 1px solid var(--dw-site-border);
+  border-radius: 999px;
 }
 
 /* ------------------------------------------------------------------ */
@@ -208,6 +289,19 @@ body {
   justify-content: space-between;
   gap: var(--dw-space-4);
   margin-bottom: var(--dw-space-4);
+}
+
+.dw-section-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.dw-section-subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--dw-text-faint);
 }
 
 .dw-section-title {
@@ -395,16 +489,35 @@ body {
   overflow-wrap: anywhere;
 }
 
-.dw-tag {
-  flex: none;
-  padding: 1px 7px;
+/*
+ * Label/value pairs that line up down the card. An inline pill followed by the
+ * value left every row starting in a different place, which made a list of
+ * class names much harder to read than it needed to be.
+ */
+.dw-defs {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: var(--dw-space-3);
+  row-gap: 5px;
+  margin: 0;
+}
+
+.dw-def {
+  display: contents;
+}
+
+.dw-defs dt {
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--dw-text-muted);
-  background: var(--dw-surface-2);
-  border-radius: 999px;
+  color: var(--dw-text-faint);
+  padding-top: 2px;
+}
+
+.dw-defs dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 /* ------------------------------------------------------------------ */
@@ -874,7 +987,7 @@ body {
 .dw-repeat-row {
   display: grid;
   grid-template-columns: 1fr auto;
-  align-items: end;
+  align-items: start;
   gap: var(--dw-space-3);
 }
 
@@ -882,8 +995,14 @@ body {
   grid-template-columns: minmax(110px, 0.5fr) 1fr auto;
 }
 
+/*
+ * Line the remove button up with the input beside it rather than with the
+ * bottom of the field: only some rows carry a hint, so bottom alignment left
+ * the buttons at different heights down the list.
+ */
 .dw-repeat-row .dw-icon-button {
-  margin-bottom: var(--dw-space-4);
+  align-self: start;
+  margin-top: var(--dw-field-label-offset);
 }
 
 /* ------------------------------------------------------------------ */

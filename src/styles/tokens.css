@@ -30,6 +30,12 @@
   --dw-space-7: 48px;
 
   --dw-transition: 140ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /*
+   * Height of a field label plus its gap, so a control that sits beside a
+   * labelled input can be pushed down to meet it.
+   */
+  --dw-field-label-offset: 27px;
 }
 
 /* ---------- light ---------- */

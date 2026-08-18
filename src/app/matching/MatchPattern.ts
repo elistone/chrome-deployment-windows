@@ -50,11 +50,20 @@ export class MatchPattern {
   private readonly hostRe: RegExp
   private readonly pathRe: RegExp
 
+  /**
+   * The host as written, including any leading `*.`.
+   *
+   * Kept because the options UI wants to name the site a pattern covers, and
+   * re-parsing the pattern elsewhere would put the grammar in two places.
+   */
+  readonly host: string
+
   constructor(public readonly pattern: string) {
     if (pattern === ALL_URLS) {
       this.schemes = SUPPORTED_SCHEMES
       this.hostRe = /^.*$/
       this.pathRe = /^.*$/
+      this.host = '*'
       return
     }
 
@@ -67,6 +76,7 @@ export class MatchPattern {
     }
 
     const [, scheme, host, path] = parts
+    this.host = host
 
     if (scheme === '*') {
       this.schemes = WILDCARD_SCHEMES

@@ -31,6 +31,31 @@ export function statusFor(deployment: DeploymentConfig): StatusTone {
   return DW.canDeploy(local.start, local.end) ? 'open' : 'closed'
 }
 
+/**
+ * The sites this deployment is configured for, then the ones it is not.
+ *
+ * Config order put the gaps first as often as not, which pushed the fragments
+ * that actually matter to the end of the row - and gets worse the more sites
+ * are configured.
+ */
+function orderedFragments(
+  deployment: DeploymentConfig,
+  domainKeys: string[],
+): { domainKey: string; fragment: string }[] {
+  const entries = domainKeys.map((domainKey) => {
+    const value = deployment[domainKey]
+    return {
+      domainKey,
+      fragment: typeof value === 'string' ? value : '',
+    }
+  })
+
+  return [
+    ...entries.filter((entry) => entry.fragment),
+    ...entries.filter((entry) => !entry.fragment),
+  ]
+}
+
 export function DeploymentCard({
   configKey,
   deployment,
@@ -98,23 +123,21 @@ export function DeploymentCard({
       )}
 
       <ul className="dw-chips">
-        {domainKeys.map((domainKey) => {
-          const fragment = deployment[domainKey]
-          const present = typeof fragment === 'string' && fragment.length > 0
-          return (
+        {orderedFragments(deployment, domainKeys).map(
+          ({ domainKey, fragment }) => (
             <li
               key={domainKey}
-              className={`dw-chip${present ? '' : ' dw-chip-empty'}`}
+              className={`dw-chip${fragment ? '' : ' dw-chip-empty'}`}
             >
               <span className="dw-chip-key">{domainKey}</span>
               <span className="dw-chip-value">
-                {present
+                {fragment
                   ? TextFormatter.stripTags(fragment)
                   : Methods.i18n('l10nNotConfigured')}
               </span>
             </li>
-          )
-        })}
+          ),
+        )}
         {deployment['case-sensitive'] === true && (
           <li className="dw-chip dw-chip-flag">
             {Methods.i18n('l10nCaseSensitive')}

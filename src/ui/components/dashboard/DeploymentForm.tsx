@@ -161,6 +161,7 @@ export function DeploymentForm({
             <div className="dw-form-grid dw-form-grid-2">
               <Field
                 label={Methods.i18n('l10nWindowStart')}
+                hint={Methods.i18n('l10nWindowStartHint')}
                 error={shown('start')}
                 required
               >
@@ -178,6 +179,7 @@ export function DeploymentForm({
 
               <Field
                 label={Methods.i18n('l10nWindowEnd')}
+                hint={Methods.i18n('l10nWindowEndHint')}
                 error={shown('end')}
                 required
               >
@@ -242,8 +244,18 @@ export function DeploymentForm({
             <p className="dw-empty-inline">{Methods.i18n('l10nNoSitesYet')}</p>
           ) : (
             <div className="dw-form-grid">
-              {domainKeys.map((domainKey) => (
-                <Field key={domainKey} label={domainKey}>
+              {domainKeys.map((domainKey, index) => (
+                <Field
+                  key={domainKey}
+                  label={domainKey}
+                  // Once per fieldset rather than once per site: the same
+                  // sentence under every input is noise, not help.
+                  hint={
+                    index === 0
+                      ? Methods.i18n('l10nUrlFragmentFieldHint')
+                      : undefined
+                  }
+                >
                   {({ id }) => (
                     <input
                       id={id}

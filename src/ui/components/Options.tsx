@@ -224,14 +224,23 @@ export function Options() {
             <span className="dw-stat-label">
               {Methods.i18n('l10nDeployments')}
             </span>
+            <span className="dw-stat-hint">
+              {Methods.i18n('l10nDeploymentsStatHint')}
+            </span>
           </div>
           <div className="dw-stat dw-stat-open">
             <span className="dw-stat-value">{openCount}</span>
             <span className="dw-stat-label">{Methods.i18n('l10nOpenNow')}</span>
+            <span className="dw-stat-hint">
+              {Methods.i18n('l10nOpenNowStatHint')}
+            </span>
           </div>
           <div className="dw-stat">
             <span className="dw-stat-value">{domainKeys.length}</span>
             <span className="dw-stat-label">{Methods.i18n('l10nSites')}</span>
+            <span className="dw-stat-hint">
+              {Methods.i18n('l10nSitesStatHint')}
+            </span>
           </div>
         </section>
 
@@ -251,9 +260,14 @@ export function Options() {
 
         <section className="dw-section" aria-labelledby="dw-deployments-title">
           <div className="dw-section-head">
-            <h2 className="dw-section-title" id="dw-deployments-title">
-              {Methods.i18n('l10nDeployments')}
-            </h2>
+            <div className="dw-section-heading">
+              <h2 className="dw-section-title" id="dw-deployments-title">
+                {Methods.i18n('l10nDeployments')}
+              </h2>
+              <p className="dw-section-subtitle">
+                {Methods.i18n('l10nDeploymentsSubtitle')}
+              </p>
+            </div>
             {editing && (
               <button
                 type="button"
@@ -315,9 +329,14 @@ export function Options() {
 
         <section className="dw-section" aria-labelledby="dw-sites-title">
           <div className="dw-section-head">
-            <h2 className="dw-section-title" id="dw-sites-title">
-              {Methods.i18n('l10nSites')}
-            </h2>
+            <div className="dw-section-heading">
+              <h2 className="dw-section-title" id="dw-sites-title">
+                {Methods.i18n('l10nSites')}
+              </h2>
+              <p className="dw-section-subtitle">
+                {Methods.i18n('l10nSitesSubtitle')}
+              </p>
+            </div>
             {editing && (
               <button
                 type="button"

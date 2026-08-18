@@ -58,6 +58,28 @@ test.describe('options page', () => {
     await expect(openCard.getByText('Deployment window open')).toBeVisible()
   })
 
+  test('labels each site with its host and its own favicon', async ({
+    context,
+    extensionId,
+  }) => {
+    const page = await openOptions(context, extensionId)
+
+    const card = page.locator('article', {
+      has: page.getByRole('heading', { name: 'github' }),
+    })
+
+    // Exact, because the pattern below it also contains the host.
+    await expect(card.getByText('github.com', { exact: true })).toBeVisible()
+    // Served by the favicon permission from Chrome's own cache, so nothing
+    // leaves the machine to render this.
+    await expect(card.locator('img')).toHaveAttribute(
+      'src',
+      /^chrome-extension:\/\/.+\/_favicon\/\?pageUrl=/,
+    )
+    // Each site gets its own hue, brand where the host is recognisable.
+    await expect(card).toHaveAttribute('style', /--dw-site-hue:\s*220/)
+  })
+
   test('adds a deployment through the form and the notice picks it up', async ({
     context,
     extensionId,

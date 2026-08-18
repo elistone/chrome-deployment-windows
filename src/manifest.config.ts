@@ -43,7 +43,11 @@ export default defineManifest({
     type: 'module',
   },
 
-  permissions: ['storage', 'tabs'],
+  // `favicon` serves chrome-extension://<id>/_favicon/, which reads the icons
+  // Chrome has already cached. The options page uses it to label each site, and
+  // it is what keeps that from becoming a network request to every configured
+  // host - or worse, to a third party favicon service.
+  permissions: ['storage', 'tabs', 'favicon'],
 
   host_permissions: ['https://*/*'],
 

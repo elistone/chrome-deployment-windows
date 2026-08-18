@@ -132,6 +132,8 @@ export function SiteForm({
             <div className="dw-repeat-row" key={index}>
               <Field
                 label={`${Methods.i18n('l10nPattern')} ${index + 1}`}
+                // Shown once, on the first row, so repeating rows stay compact.
+                hint={index === 0 ? Methods.i18n('l10nPatternRowHint') : undefined}
                 error={shown(`pattern.${index}`)}
               >
                 {({ id, describedBy }) => (
@@ -186,7 +188,10 @@ export function SiteForm({
 
           {draft.insert.map((entry, index) => (
             <div className="dw-repeat-row" key={index}>
-              <Field label={Methods.i18n('l10nPosition')}>
+              <Field
+                label={Methods.i18n('l10nPosition')}
+                hint={index === 0 ? Methods.i18n('l10nPositionHint') : undefined}
+              >
                 {({ id }) => (
                   <select
                     id={id}
@@ -207,7 +212,10 @@ export function SiteForm({
                   </select>
                 )}
               </Field>
-              <Field label={Methods.i18n('l10nElement')}>
+              <Field
+                label={Methods.i18n('l10nElement')}
+                hint={index === 0 ? Methods.i18n('l10nElementHint') : undefined}
+              >
                 {({ id }) => (
                   <input
                     id={id}
@@ -266,6 +274,7 @@ export function SiteForm({
           <div className="dw-form-grid dw-form-grid-3">
             <Field
               label={Methods.i18n('l10nClassDeploy')}
+              hint={Methods.i18n('l10nClassDeployHint')}
               error={shown('deploy')}
               required
             >
@@ -284,6 +293,7 @@ export function SiteForm({
 
             <Field
               label={Methods.i18n('l10nClassNoDeploy')}
+              hint={Methods.i18n('l10nClassNoDeployHint')}
               error={shown('noDeploy')}
               required
             >

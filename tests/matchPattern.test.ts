@@ -128,6 +128,20 @@ describe('MatchPattern', () => {
     })
   })
 
+  describe('host', () => {
+    // Exposed so the options UI can name the site a pattern covers without
+    // re-implementing the grammar.
+    it.each([
+      ['*://*.github.com/*', '*.github.com'],
+      ['https://gitlab.com/*', 'gitlab.com'],
+      ['http://localhost/*', 'localhost'],
+      ['*://*/*', '*'],
+      ['<all_urls>', '*'],
+    ])('reads the host of %s as %s', (pattern, expected) => {
+      expect(new MatchPattern(pattern).host).toBe(expected)
+    })
+  })
+
   describe('matchesAny', () => {
     it('is true when any pattern matches', () => {
       const patterns = ['*://*.github.com/*', '*://*.atlassian.net/*']

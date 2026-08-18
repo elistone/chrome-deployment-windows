@@ -474,5 +474,65 @@
   "l10nInvalidJson": {
     "message": "Invalid JSON:",
     "description": "Prefix for a JSON parse error."
+  },
+  "l10nDeploymentsSubtitle": {
+    "message": "One per project. Each card shows whether it can be deployed right now.",
+    "description": "Subtitle for the deployments section."
+  },
+  "l10nSitesSubtitle": {
+    "message": "Where a notice can appear, and how it looks once it is there.",
+    "description": "Subtitle for the sites section."
+  },
+  "l10nDeploymentsStatHint": {
+    "message": "configured in total",
+    "description": "Explains the deployments count."
+  },
+  "l10nOpenNowStatHint": {
+    "message": "window open at this moment",
+    "description": "Explains the open count."
+  },
+  "l10nSitesStatHint": {
+    "message": "places a notice can appear",
+    "description": "Explains the sites count."
+  },
+  "l10nHowToUseSubtitle": {
+    "message": "A guide to everything on this page, and to the config behind it.",
+    "description": "Description of the how-to dialog."
+  },
+  "l10nWindowStartHint": {
+    "message": "When deploying becomes allowed.",
+    "description": "Hint for the window start time."
+  },
+  "l10nWindowEndHint": {
+    "message": "Set this earlier than the opening time to run past midnight.",
+    "description": "Hint for the window end time."
+  },
+  "l10nUrlFragmentFieldHint": {
+    "message": "Matched anywhere in the URL, so a repository path or a ticket prefix both work.",
+    "description": "Hint for the url fragment fields."
+  },
+  "l10nPatternRowHint": {
+    "message": "A * scheme covers both http and https; a leading *. covers every subdomain.",
+    "description": "Hint for the url pattern rows."
+  },
+  "l10nPositionHint": {
+    "message": "Whether the notice goes above or below that element.",
+    "description": "Hint for the insert position."
+  },
+  "l10nElementHint": {
+    "message": "A class name from the page, without the leading dot.",
+    "description": "Hint for the insert element."
+  },
+  "l10nClassDeployHint": {
+    "message": "Applied while the window is open.",
+    "description": "Hint for the deploy class."
+  },
+  "l10nClassNoDeployHint": {
+    "message": "Applied while the window is closed.",
+    "description": "Hint for the no-deploy class."
+  },
+  "l10nAnyHost": {
+    "message": "any host",
+    "description": "Shown when a site pattern names no particular host."
   }
 }

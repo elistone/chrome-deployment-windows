@@ -127,13 +127,6 @@ export const ClockIcon = (props: IconProps) => (
   </Icon>
 )
 
-export const GlobeIcon = (props: IconProps) => (
-  <Icon {...props}>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18Z" />
-  </Icon>
-)
-
 export const NoteIcon = (props: IconProps) => (
   <Icon {...props}>
     <path d="M5 3h9l5 5v13H5z" />
