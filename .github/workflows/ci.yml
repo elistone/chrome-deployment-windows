@@ -35,6 +35,11 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # Every visible label goes through chrome.i18n, and a missing message
+      # renders as nothing, so this failing loudly beats a blank control.
+      - name: Check the message catalogue matches the source
+        run: pnpm check:locales
+
       - name: Unit and component tests
         run: pnpm test:coverage
 

@@ -129,8 +129,14 @@ pnpm package
 Builds, then writes `release/deployment-windows-v<version>.zip`, ready to upload.
 Source maps are excluded from the zip.
 
-Two build checks run in CI and can be run locally:
+Three build checks run in CI and can be run locally:
 
+* `pnpm check:locales` — every visible label goes through `chrome.i18n`, and a
+  missing message renders as nothing at all, so this fails the build if a key is
+  used without being defined (or defined and no longer used). Note that Chrome
+  caches `_locales` for a loaded unpacked extension: after a rebuild that adds
+  messages, reload the extension at `chrome://extensions` or the new labels will
+  fall back to a humanised version of their key.
 * `pnpm check:manifest` — catches Manifest V2 constructs creeping back in, a CSP
   that permits `unsafe-eval`, or the manifest pointing at files the build did not
   emit.

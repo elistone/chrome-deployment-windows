@@ -66,8 +66,16 @@ describe('Methods', () => {
       expect(Methods.i18n('l10nStatus')).toBe('Status')
     })
 
-    it('returns an empty string for an unknown key', () => {
-      expect(Methods.i18n('nope')).toBe('')
+    it('falls back to a readable version of an unknown key', () => {
+      // Every label in the UI comes through here, so an empty string turns a
+      // stale message catalogue into a page of blank controls. Approximate
+      // wording is recoverable; nothing at all is not.
+      expect(Methods.i18n('l10nAddSomething')).toBe('Add something')
+      expect(Methods.i18n('l10nNoWindowSetHere')).toBe('No window set here')
+    })
+
+    it('returns the key itself when there is nothing to humanise', () => {
+      expect(Methods.i18n('l10n')).toBe('l10n')
     })
 
     it('survives chrome.i18n throwing after an extension reload', () => {

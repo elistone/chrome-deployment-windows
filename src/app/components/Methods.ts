@@ -44,13 +44,34 @@ export class Methods {
    *
    * Guarded because the content script keeps running in pages that were open
    * when the extension was reloaded, at which point chrome.* is torn down.
+   *
+   * A missing message resolves to an empty string, and since every visible
+   * label in the UI comes through here that turned an out of date catalogue
+   * into a page of blank controls rather than anything diagnosable. Chrome
+   * caches _locales for the loaded extension, so a rebuilt unpacked extension
+   * that has not been reloaded hits exactly that. The key is humanised instead:
+   * approximate wording beats no wording. check-locales.js is what stops a
+   * genuinely missing message reaching a build.
    */
   static i18n(key: string): string {
     try {
-      return chrome?.i18n?.getMessage(key) ?? ''
+      return chrome?.i18n?.getMessage(key) || Methods.humaniseKey(key)
     } catch {
       return 'Translation lost, please reload.'
     }
+  }
+
+  /** `l10nAddDeployment` -> `Add deployment`. */
+  private static humaniseKey(key: string): string {
+    const words = key
+      .replace(/^l10n/, '')
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .trim()
+
+    if (!words) {
+      return key
+    }
+    return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase()
   }
 
   /** Ask the service worker to swap the toolbar icon. Never throws. */
