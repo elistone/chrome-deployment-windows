@@ -1,64 +1,267 @@
+@import './base.css';
+
+/**
+ * Toolbar popup styling.
+ *
+ * The same visual language as the options dashboard - one status-tinted card,
+ * the same pill, the same rendered notes - at the size of a browser popup.
+ * Chrome sizes the popup to its content, so the width is fixed here and the
+ * height is left to grow with the notes.
+ */
+
+html {
+  background: var(--dw-surface);
+}
+
 body {
-    font-size: 10px;
-    min-width: 350px;
-    margin: 0;
-    padding: 0;
+  width: 340px;
+  margin: 0;
+  /* The panel fills the popup, so any height Chrome adds beyond the content
+     has to be the panel's own colour rather than the page background. */
+  background: var(--dw-surface);
+  color: var(--dw-text);
+  font-family: var(--dw-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 {
-    padding: 0;
-    margin: 0 0 0.2em;
+/*
+ * Status drives one pair of variables and everything downstream reads them,
+ * so the accent only has to be chosen once.
+ */
+.dw-popup {
+  --dw-popup-accent: var(--dw-text-faint);
+  --dw-popup-accent-soft: var(--dw-surface-2);
+
+  display: flex;
+  flex-direction: column;
+  background: var(--dw-surface);
 }
 
-table {
-    width: 100%;
-    font-size: 1.3em;
-    line-height: 1.8em;
-    margin-bottom: 0.9em;
-    padding: 1em;
+.dw-popup[data-status='open'] {
+  --dw-popup-accent: var(--dw-success);
+  --dw-popup-accent-soft: var(--dw-success-soft);
 }
 
-table tbody {
-    vertical-align: baseline;
+.dw-popup[data-status='closed'] {
+  --dw-popup-accent: var(--dw-danger);
+  --dw-popup-accent-soft: var(--dw-danger-soft);
 }
 
-table tr td:first-child {
-    font-weight: bold;
+.dw-popup[data-status='notes'],
+.dw-popup[data-status='unset'] {
+  --dw-popup-accent: var(--dw-warn);
+  --dw-popup-accent-soft: var(--dw-warn-soft);
 }
 
-.notes-section {
-    padding: 0.7em 1.4em;
+/* ------------------------------------------------------------------ */
+/* header                                                              */
+/* ------------------------------------------------------------------ */
+
+.dw-popup-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-space-2);
+  padding: var(--dw-space-4);
+  background: var(--dw-popup-accent-soft);
+  border-top: 3px solid var(--dw-popup-accent);
+  border-bottom: 1px solid var(--dw-border);
 }
 
-.notice-message {
-    padding: 0.7em 1.4em;
-    font-size: 1.5em;
-    background: gray;
-    color: white;
+.dw-popup-site {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--dw-text-muted);
+  overflow-wrap: anywhere;
 }
 
-.popup-deployment-info h1.popup-title {
-    padding: 1em;
+.dw-popup-favicon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--dw-accent-soft-text);
+  background: var(--dw-accent-soft);
 }
 
-.popup-deployment-info .status {
-    font-weight: bold;
+.dw-popup-favicon-image {
+  background: none;
 }
 
-.popup-deployment-info.can-deploy .status {
-    color: rgb(23, 111, 44);
+.dw-popup-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-3);
 }
 
-.popup-deployment-info.can-not-deploy .status {
-    color: rgb(158, 28, 35);
+.dw-popup-title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 650;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
-.popup-deployment-info.can-deploy h1.popup-title {
-    background-color: #dcffe4;
-    border-bottom: 1px solid rgba(23, 111, 44, .2);
+/* Pushed to the end of the row whether or not there is a host beside it. */
+.dw-popup-meta .dw-pill {
+  margin-left: auto;
+  background: var(--dw-surface);
 }
 
-.popup-deployment-info.can-not-deploy h1.popup-title {
-    background-color: #ffe3e6;
-    border-bottom: 1px solid rgba(158, 28, 35, .2);
+/* ------------------------------------------------------------------ */
+/* body                                                                */
+/* ------------------------------------------------------------------ */
+
+.dw-popup-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-space-4);
+  padding: var(--dw-space-4);
+}
+
+.dw-popup-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-space-3);
+  margin: 0;
+}
+
+.dw-popup-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--dw-space-3);
+}
+
+.dw-popup-row dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dw-text-faint);
+  padding-top: 2px;
+}
+
+.dw-popup-row dd {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  margin: 0;
+  text-align: right;
+}
+
+/* The window must never be split across two lines; the zone below it may. */
+.dw-popup-row dd .dw-mono {
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dw-popup-row-subtle .dw-mono {
+  color: var(--dw-text-muted);
+}
+
+.dw-popup-zone {
+  font-size: 0.72rem;
+  color: var(--dw-text-faint);
+}
+
+.dw-popup-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--dw-space-2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dw-text-faint);
+}
+
+.dw-popup-notes {
+  padding-top: var(--dw-space-4);
+  border-top: 1px solid var(--dw-border);
+}
+
+/* Notes carry the whole message for a notes-only entry, so there is no rule
+   above them to separate them from. */
+.dw-popup-notes-only {
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* messages                                                            */
+/* ------------------------------------------------------------------ */
+
+.dw-popup-message {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-space-1);
+  padding: var(--dw-space-5) var(--dw-space-4);
+  text-align: center;
+}
+
+.dw-popup-message p {
+  margin: 0;
+}
+
+.dw-popup-message-title {
+  font-weight: 600;
+}
+
+.dw-popup-message-hint {
+  font-size: 0.82rem;
+  color: var(--dw-text-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* footer                                                              */
+/* ------------------------------------------------------------------ */
+
+.dw-popup-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dw-space-2);
+  padding: var(--dw-space-2) var(--dw-space-3);
+  background: var(--dw-surface-2);
+  border-top: 1px solid var(--dw-border);
+}
+
+.dw-popup-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--dw-text-muted);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--dw-radius-sm);
+  cursor: pointer;
+  transition: background var(--dw-transition), color var(--dw-transition);
+}
+
+.dw-popup-button:hover {
+  color: var(--dw-text);
+  background: var(--dw-surface-3);
+}
+
+.dw-popup-button-icon {
+  padding: 6px;
 }

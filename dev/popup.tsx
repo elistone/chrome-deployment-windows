@@ -9,7 +9,10 @@ installChromeShim()
 ensureSeeded()
 
 const { default: Popup } = await import('../src/ui/components/Popup')
+const { applyTheme, loadTheme } = await import('../src/ui/theme')
 await import('../src/styles/popup.css')
+
+applyTheme(await loadTheme())
 
 const container = document.getElementById('root')!
 createRoot(container).render(

@@ -41,10 +41,16 @@ test.describe('popup', () => {
       'https://github.com/acme/always',
     )
 
-    await expect(page.locator('.popup-title')).toHaveText('Always open project')
-    await expect(page.locator('.popup-deployment-info')).toHaveClass(/can-deploy/)
-    await expect(page.locator('.status')).toHaveText('Deployment window open')
-    await expect(page.locator('table')).toBeVisible()
+    await expect(page.locator('.dw-popup-title')).toHaveText(
+      'Always open project',
+    )
+    await expect(page.locator('.dw-popup')).toHaveAttribute(
+      'data-status',
+      'open',
+    )
+    await expect(page.locator('.dw-pill')).toHaveText('Deployment window open')
+    await expect(page.locator('.dw-popup-rows')).toBeVisible()
+    await expect(page.locator('.dw-popup-site')).toContainText('github.com')
   })
 
   test('shows the closed status outside the window', async ({
@@ -57,11 +63,14 @@ test.describe('popup', () => {
       'https://github.com/acme/never',
     )
 
-    await expect(page.locator('.popup-title')).toHaveText('Always closed project')
-    await expect(page.locator('.popup-deployment-info')).toHaveClass(
-      /can-not-deploy/,
+    await expect(page.locator('.dw-popup-title')).toHaveText(
+      'Always closed project',
     )
-    await expect(page.locator('.status')).toHaveText('Deployment window closed')
+    await expect(page.locator('.dw-popup')).toHaveAttribute(
+      'data-status',
+      'closed',
+    )
+    await expect(page.locator('.dw-pill')).toHaveText('Deployment window closed')
   })
 
   test('renders notes as markdown', async ({ context, extensionId }) => {
@@ -71,10 +80,10 @@ test.describe('popup', () => {
       'https://github.com/acme/always',
     )
 
-    await expect(page.locator('.notes-section strong')).toHaveText('two')
+    await expect(page.locator('.dw-popup-notes strong')).toHaveText('two')
   })
 
-  test('hides the table for a notes-only deployment', async ({
+  test('hides the window rows for a notes-only deployment', async ({
     context,
     extensionId,
   }) => {
@@ -84,9 +93,13 @@ test.describe('popup', () => {
       'https://github.com/acme/notes',
     )
 
-    await expect(page.locator('.popup-title')).toHaveText('Notes only project')
-    await expect(page.locator('table')).toHaveCount(0)
-    await expect(page.locator('.notes-section')).toContainText('Frozen until Q3.')
+    await expect(page.locator('.dw-popup-title')).toHaveText(
+      'Notes only project',
+    )
+    await expect(page.locator('.dw-popup-rows')).toHaveCount(0)
+    await expect(page.locator('.dw-popup-notes')).toContainText(
+      'Frozen until Q3.',
+    )
   })
 
   test('reports when there is nothing configured for the tab', async ({
@@ -99,9 +112,27 @@ test.describe('popup', () => {
       'https://github.com/acme/unconfigured',
     )
 
-    await expect(page.locator('.notice-message')).toHaveText(
+    await expect(page.locator('.dw-popup-message-title')).toHaveText(
       'No deployment information for this domain.',
     )
+  })
+
+  test('opens in the theme chosen on the options page', async ({
+    context,
+    extensionId,
+  }) => {
+    const settings = await context.newPage()
+    await settings.goto(`chrome-extension://${extensionId}/src/ui/options.html`)
+    await settings.getByRole('button', { name: 'Dark' }).click()
+    await settings.close()
+
+    const page = await popupFor(
+      context,
+      extensionId,
+      'https://github.com/acme/always',
+    )
+
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   })
 })
 

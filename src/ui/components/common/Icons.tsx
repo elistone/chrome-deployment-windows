@@ -133,3 +133,11 @@ export const NoteIcon = (props: IconProps) => (
     <path d="M14 3v5h5M9 13h6M9 17h4" />
   </Icon>
 )
+
+export const SettingsIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
+    <circle cx="16" cy="7" r="2" />
+    <circle cx="8" cy="17" r="2" />
+  </Icon>
+)

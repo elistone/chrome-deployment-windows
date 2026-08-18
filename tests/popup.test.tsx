@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 
 import Popup from '../src/ui/components/Popup'
 import { Config } from '../src/app/config/Config'
@@ -23,19 +24,29 @@ describe('Popup', () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     vi.setSystemTime(new Date('2024-06-03T12:00:00'))
 
-    await renderPopupFor('https://github.com/acme/daytime')
+    const { container } = await renderPopupFor('https://github.com/acme/daytime')
 
     expect(await screen.findByText('Daytime project')).toBeInTheDocument()
     expect(screen.getByText('Deployment window')).toBeInTheDocument()
     // Tests run in America/New_York, so the configured London window is shown
     // alongside its converted local equivalent.
-    expect(screen.getByText('09:00 - 17:00')).toBeInTheDocument()
-    expect(screen.getByText('(Europe/London)')).toBeInTheDocument()
-    expect(screen.getByText('04:00 - 12:00')).toBeInTheDocument()
-    expect(screen.getByText('(America/New_York)')).toBeInTheDocument()
+    expect(screen.getByText('09:00 – 17:00')).toBeInTheDocument()
+    expect(screen.getByText('Europe/London')).toBeInTheDocument()
+    expect(screen.getByText('04:00 – 12:00')).toBeInTheDocument()
+    expect(screen.getByText('America/New_York')).toBeInTheDocument()
     expect(screen.getByText('Deployment window open')).toBeInTheDocument()
+    expect(container.querySelector('.dw-popup')).toHaveAttribute(
+      'data-status',
+      'open',
+    )
 
     vi.useRealTimers()
+  })
+
+  it('names the host the window was matched against', async () => {
+    await renderPopupFor('https://github.com/acme/daytime')
+
+    expect(await screen.findByText('github.com')).toBeInTheDocument()
   })
 
   it('marks the popup as closed outside the window', async () => {
@@ -44,9 +55,12 @@ describe('Popup', () => {
 
     const { container } = await renderPopupFor('https://github.com/acme/daytime')
 
-    expect(await screen.findByText('Deployment window closed')).toBeInTheDocument()
-    expect(container.querySelector('.popup-deployment-info')).toHaveClass(
-      'can-not-deploy',
+    expect(
+      await screen.findByText('Deployment window closed'),
+    ).toBeInTheDocument()
+    expect(container.querySelector('.dw-popup')).toHaveAttribute(
+      'data-status',
+      'closed',
     )
 
     vi.useRealTimers()
@@ -56,16 +70,19 @@ describe('Popup', () => {
     const { container } = await renderPopupFor('https://github.com/acme/daytime')
 
     await screen.findByText('Daytime project')
-    expect(container.querySelector('.notes-section strong')?.textContent).toBe(
+    expect(container.querySelector('.dw-popup-notes strong')?.textContent).toBe(
       'two',
     )
   })
 
-  it('hides the window table for a notes-only deployment', async () => {
-    const { container } = await renderPopupFor('https://github.com/acme/notes-only')
+  it('hides the window rows for a notes-only deployment', async () => {
+    const { container } = await renderPopupFor(
+      'https://github.com/acme/notes-only',
+    )
 
     expect(await screen.findByText('Notes only project')).toBeInTheDocument()
-    expect(container.querySelector('table')).toBeNull()
+    expect(container.querySelector('.dw-popup-rows')).toBeNull()
+    expect(screen.getByText('Notes only')).toBeInTheDocument()
     expect(screen.getByText('Frozen until Q3.')).toBeInTheDocument()
   })
 
@@ -74,6 +91,11 @@ describe('Popup', () => {
 
     expect(
       await screen.findByText('No deployment information for this domain.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Nothing on this page matches a configured site and deployment.',
+      ),
     ).toBeInTheDocument()
   })
 
@@ -106,8 +128,29 @@ describe('Popup', () => {
 
     const { container } = render(<Popup />)
 
-    // The tag is removed outright, leaving only its surrounding text.
+    // The tag is removed outright, leaving only its surrounding text. The one
+    // img on the page is the favicon, which the popup renders itself.
     expect(await screen.findByText('Proj live')).toBeInTheDocument()
-    expect(container.querySelector('img')).toBeNull()
+    expect(container.querySelector('.dw-popup-title img')).toBeNull()
+    expect(container.querySelector('img[src="x"]')).toBeNull()
+  })
+
+  it('opens the options page from the footer', async () => {
+    const user = userEvent.setup()
+    await renderPopupFor('https://github.com/acme/daytime')
+
+    await user.click(screen.getByRole('button', { name: 'Open settings' }))
+
+    expect(chrome.runtime.openOptionsPage).toHaveBeenCalled()
+  })
+
+  it('cycles the shared theme preference from the footer', async () => {
+    const user = userEvent.setup()
+    await renderPopupFor('https://github.com/acme/daytime')
+
+    await user.click(await screen.findByRole('button', { name: /^Theme:/ }))
+
+    expect(document.documentElement.dataset.theme).toBe('light')
+    expect(chrome.storage.sync.set).toHaveBeenCalledWith({ THEME: 'light' })
   })
 })

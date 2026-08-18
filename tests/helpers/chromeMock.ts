@@ -100,6 +100,7 @@ export function installChromeMock(): void {
     runtime: {
       // Extension-relative URLs, as chrome resolves them on an extension page.
       getURL: vi.fn((path: string) => `chrome-extension://test-extension${path}`),
+      openOptionsPage: vi.fn(async () => {}),
       sendMessage: vi.fn(async (message: unknown) => {
         state.sentMessages.push(message)
         return { error: false }

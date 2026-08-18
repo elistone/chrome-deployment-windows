@@ -26,6 +26,11 @@ and an **Edit mode** switch reveals the controls for adding, changing and
 removing entries. The raw JSON config is still there, collapsed at the bottom,
 for copying a setup between machines.
 
+The toolbar popup answers the same question for whichever page you are on:
+whether the window is open right now, when it opens in both its own timezone
+and yours, and any notes attached to it. It follows the light/dark choice made
+on the options page, and can be switched from its own footer.
+
 The full guide is [found here](/src/documents/HowToUse.md), and is also
 available from the "How to use" link in the options page header.
 
@@ -165,7 +170,9 @@ src/
       dashboard/         Options page cards, forms and the JSON panel
   styles/
     tokens.css           Design tokens, light and dark
+    base.css             Primitives shared by both extension pages
     options.css          Options page layout
+    popup.css            Popup layout
   documents/HowToUse.md  Rendered inside the options page
 public/                  Copied verbatim to dist/ (icons, _locales)
 dev/                     Browser-only dev harness (never built into the extension)

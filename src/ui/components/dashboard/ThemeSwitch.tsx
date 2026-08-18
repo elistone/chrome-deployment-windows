@@ -1,15 +1,6 @@
 import { Methods } from '../../../app/components/Methods'
 import { THEME_CHOICES, type ThemeChoice } from '../../theme'
-import { MoonIcon, SunIcon, SystemIcon } from '../common/Icons'
-
-const META: Record<
-  ThemeChoice,
-  { labelKey: string; Icon: typeof SunIcon }
-> = {
-  light: { labelKey: 'l10nThemeLight', Icon: SunIcon },
-  dark: { labelKey: 'l10nThemeDark', Icon: MoonIcon },
-  system: { labelKey: 'l10nThemeSystem', Icon: SystemIcon },
-}
+import { THEME_META } from '../common/themeMeta'
 
 interface ThemeSwitchProps {
   choice: ThemeChoice
@@ -31,7 +22,7 @@ export function ThemeSwitch({ choice, onChange }: ThemeSwitchProps) {
       aria-label={Methods.i18n('l10nTheme')}
     >
       {THEME_CHOICES.map((option) => {
-        const { labelKey, Icon } = META[option]
+        const { labelKey, Icon } = THEME_META[option]
         const label = Methods.i18n(labelKey)
         return (
           <button

@@ -115,6 +115,11 @@ export function installChromeShim(): void {
     },
 
     runtime: {
+      // The harness has no extension pages, so the options page is just
+      // another page of the dev server.
+      async openOptionsPage() {
+        window.open('./options.html', '_blank')
+      },
       async sendMessage(message: unknown) {
         const iconPath = (message as { newIconPath?: string })?.newIconPath
         if (typeof iconPath === 'string') {

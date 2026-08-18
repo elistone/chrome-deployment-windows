@@ -51,6 +51,10 @@
     "message": "No deployment information for this domain.",
     "description": "There is no information for this domain."
   },
+  "l10nNoInformationHint": {
+    "message": "Nothing on this page matches a configured site and deployment.",
+    "description": "Explains why the popup has nothing to show."
+  },
   "l10nNoDomainInformationSet": {
     "message": "No site information has been set.",
     "description": "There is site information"
@@ -62,6 +66,10 @@
   "l10nHowToUse": {
     "message": "How to use",
     "description": "How to use"
+  },
+  "l10nOpenSettings": {
+    "message": "Open settings",
+    "description": "Popup link through to the options page."
   },
   "l10nCustomClasses": {
     "message": "Custom classes",
