@@ -1,7 +1,5 @@
 import { NoticeManager } from './components/NoticeManager'
 
-import '../styles/content.css'
-
 /**
  * Content script entry point.
  *

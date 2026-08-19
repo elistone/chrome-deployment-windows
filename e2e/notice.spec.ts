@@ -15,7 +15,11 @@ test.describe('in-page notice', () => {
 
     const notice = page.locator('.dw-notification')
     await expect(notice).toBeVisible()
-    await expect(notice).toContainText('Always open project')
+    // The notice draws inside a shadow root, which Playwright's css engine
+    // pierces; the page's own stylesheet cannot.
+    await expect(page.locator('.dw-notification .name')).toHaveText(
+      'Always open project',
+    )
 
     // It should land immediately after .file-navigation, the first insert rule.
     const previous = notice.locator('xpath=preceding-sibling::*[1]')
@@ -30,9 +34,9 @@ test.describe('in-page notice', () => {
       githubPageHtml(),
     )
 
-    const notice = page.locator('.dw-notification')
-    await expect(notice).toHaveClass(/flash-success/)
-    await expect(page.locator('.dw-current-status-text')).toHaveText(
+    const notice = page.locator('.dw-notification .notice')
+    await expect(notice).toHaveAttribute('data-status', 'open')
+    await expect(page.locator('.status-text')).toHaveText(
       'Deployment window open',
     )
   })
@@ -45,9 +49,9 @@ test.describe('in-page notice', () => {
       githubPageHtml(),
     )
 
-    const notice = page.locator('.dw-notification')
-    await expect(notice).toHaveClass(/flash-error/)
-    await expect(page.locator('.dw-current-status-text')).toHaveText(
+    const notice = page.locator('.dw-notification .notice')
+    await expect(notice).toHaveAttribute('data-status', 'closed')
+    await expect(page.locator('.status-text')).toHaveText(
       'Deployment window closed',
     )
   })
@@ -58,7 +62,7 @@ test.describe('in-page notice', () => {
       githubPageHtml(),
     )
 
-    const clock = page.locator('.dw-current-time-text')
+    const clock = page.locator('.clock')
     const first = await clock.textContent()
     await expect(clock).not.toHaveText(first ?? '', { timeout: 5000 })
   })
@@ -69,8 +73,8 @@ test.describe('in-page notice', () => {
       githubPageHtml(),
     )
 
-    const toggle = page.locator('.dw-notification .dw-toggle')
-    const details = page.locator('.dw-details')
+    const toggle = page.locator('.dw-notification .toggle')
+    const details = page.locator('.dw-notification .details')
 
     await expect(toggle).toHaveText('Show details')
     await expect(details).toBeHidden()
@@ -79,7 +83,7 @@ test.describe('in-page notice', () => {
     await expect(details).toBeVisible()
     await expect(toggle).toHaveText('Hide details')
     // The notes are markdown, so '**two**' renders as bold.
-    await expect(details.locator('.dw-notes strong')).toHaveText('two')
+    await expect(details.locator('.notes strong')).toHaveText('two')
 
     await toggle.click()
     await expect(details).toBeHidden()
@@ -93,12 +97,18 @@ test.describe('in-page notice', () => {
       githubPageHtml(),
     )
 
-    const notice = page.locator('.dw-notification')
-    await expect(notice).toContainText('Notes only project')
-    await expect(notice).toContainText('Frozen until Q3.')
-    await expect(notice).toHaveClass(/flash-warn/)
-    await expect(page.locator('.dw-deployment-time')).toHaveCount(0)
-    await expect(page.locator('.dw-current-status')).toHaveCount(0)
+    await expect(page.locator('.dw-notification .name')).toHaveText(
+      'Notes only project',
+    )
+    await expect(page.locator('.dw-notification .notes')).toContainText(
+      'Frozen until Q3.',
+    )
+    await expect(page.locator('.dw-notification .notice')).toHaveAttribute(
+      'data-status',
+      'notes',
+    )
+    await expect(page.locator('.dw-notification .rows')).toHaveCount(0)
+    await expect(page.locator('.dw-notification .pill')).toHaveCount(0)
   })
 
   test('falls back to the second insert location', async ({
@@ -144,7 +154,7 @@ test.describe('in-page notice', () => {
       'https://github.com/acme/always',
       githubPageHtml(),
     )
-    await expect(page.locator('.dw-notification')).toContainText(
+    await expect(page.locator('.dw-notification .name')).toHaveText(
       'Always open project',
     )
 
@@ -156,7 +166,7 @@ test.describe('in-page notice', () => {
         '<div class="file-navigation">file navigation</div>'
     })
 
-    await expect(page.locator('.dw-notification')).toContainText(
+    await expect(page.locator('.dw-notification .name')).toHaveText(
       'Notes only project',
     )
     await expect(page.locator('.dw-notification')).toHaveCount(1)

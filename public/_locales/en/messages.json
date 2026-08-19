@@ -19,10 +19,6 @@
     "message": "Current time",
     "description": "What is the current time."
   },
-  "l10nStatus": {
-    "message": "Status",
-    "description": "What is the current status."
-  },
   "l10nNotes": {
     "message": "Notes",
     "description": "Any notes about the project."
@@ -71,13 +67,41 @@
     "message": "Open settings",
     "description": "Popup link through to the options page."
   },
-  "l10nCustomClasses": {
-    "message": "Custom classes",
-    "description": "Custom classes title"
-  },
   "l10nInsertElements": {
     "message": "Insert elements",
     "description": "Insert elements title"
+  },
+  "l10nSpacing": {
+    "message": "Spacing",
+    "description": "Section for the notice spacing overrides."
+  },
+  "l10nSpacingHint": {
+    "message": "Optional. The notice brings its own styling; these only adjust how it sits on this site.",
+    "description": "Hint above the spacing fields."
+  },
+  "l10nMargin": {
+    "message": "Margin",
+    "description": "Space outside the notice."
+  },
+  "l10nMarginHint": {
+    "message": "Space around the notice, such as 1.25rem 0.",
+    "description": "Hint for the margin field."
+  },
+  "l10nPadding": {
+    "message": "Padding",
+    "description": "Space inside the notice."
+  },
+  "l10nPaddingHint": {
+    "message": "Space inside it, such as 14px 18px.",
+    "description": "Hint for the padding field."
+  },
+  "l10nMaxWidth": {
+    "message": "Max width",
+    "description": "Widest the notice will be drawn."
+  },
+  "l10nMaxWidthHint": {
+    "message": "How wide it may get before it stops growing. It stays centred.",
+    "description": "Hint for the max width field."
   },
   "l10nUrlPatterns": {
     "message": "URL patterns",
@@ -375,26 +399,6 @@
     "message": "After",
     "description": "Insert after the element."
   },
-  "l10nClassesHint": {
-    "message": "Classes from the site's own stylesheet, so the notice matches it.",
-    "description": "Hint for the custom classes."
-  },
-  "l10nClassDeploy": {
-    "message": "Window open",
-    "description": "Class applied while the window is open."
-  },
-  "l10nClassNoDeploy": {
-    "message": "Window closed",
-    "description": "Class applied while the window is closed."
-  },
-  "l10nClassNotes": {
-    "message": "Notes only",
-    "description": "Class applied to notes-only entries."
-  },
-  "l10nClassNotesHint": {
-    "message": "Optional. Falls back to the two above.",
-    "description": "Hint for the notes class."
-  },
   "l10nRequired": {
     "message": "Required",
     "description": "A required field was left blank."
@@ -418,6 +422,10 @@
   "l10nInvalidTimezone": {
     "message": "Unknown timezone.",
     "description": "Invalid IANA timezone."
+  },
+  "l10nInvalidLength": {
+    "message": "Use a CSS length, such as 1rem, 12px or 0.",
+    "description": "Error for a spacing value that is not a CSS length."
   },
   "l10nInvalidPattern": {
     "message": "Not a valid match pattern.",
@@ -530,14 +538,6 @@
   "l10nElementHint": {
     "message": "A class name from the page, without the leading dot. A CSS selector works too, such as #repository-container-header.",
     "description": "Hint for the insert element."
-  },
-  "l10nClassDeployHint": {
-    "message": "Applied while the window is open.",
-    "description": "Hint for the deploy class."
-  },
-  "l10nClassNoDeployHint": {
-    "message": "Applied while the window is closed.",
-    "description": "Hint for the no-deploy class."
   },
   "l10nAnyHost": {
     "message": "any host",

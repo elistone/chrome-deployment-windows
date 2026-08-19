@@ -44,8 +44,6 @@ function siteDraft(overrides: Partial<SiteDraft> = {}): SiteDraft {
     key: 'github',
     patterns: ['*://*.github.com/*'],
     insert: [{ class: 'file-navigation', position: 'after' }],
-    deploy: 'flash flash-success',
-    noDeploy: 'flash flash-error',
     ...overrides,
   }
 }
@@ -205,8 +203,18 @@ describe('site drafts', () => {
 
     expect(draft.patterns).toEqual(['*://*.github.com/*'])
     expect(draft.insert).toHaveLength(2)
-    expect(draft.deploy).toBe('flash flash-success')
-    expect(draft.notes).toBe('flash flash-warn')
+    expect(draft.margin).toBe('')
+    expect(draft.maxWidth).toBe('')
+  })
+
+  it('reads the spacing overrides into the draft', () => {
+    const config = testConfig()
+    config.sites.github.style = { margin: '2rem 0', maxWidth: '640px' }
+    const draft = toSiteDraft('github', config.domains.github, config.sites.github)
+
+    expect(draft.margin).toBe('2rem 0')
+    expect(draft.padding).toBe('')
+    expect(draft.maxWidth).toBe('640px')
   })
 
   it('starts an empty draft with one blank row of each kind', () => {
@@ -218,12 +226,17 @@ describe('site drafts', () => {
   it('writes a draft back to the stored shape', () => {
     expect(fromSiteDraft(siteDraft())).toEqual({
       insert: [{ class: 'file-navigation', position: 'after' }],
-      classes: { deploy: 'flash flash-success', 'no-deploy': 'flash flash-error' },
     })
   })
 
-  it('omits an empty notes class rather than storing a blank one', () => {
-    expect('notes' in fromSiteDraft(siteDraft()).classes).toBe(false)
+  it('leaves style off entirely when nothing was overridden', () => {
+    expect('style' in fromSiteDraft(siteDraft())).toBe(false)
+  })
+
+  it('writes only the spacing values that were filled in', () => {
+    expect(fromSiteDraft(siteDraft({ maxWidth: ' 720px ' })).style).toEqual({
+      maxWidth: '720px',
+    })
   })
 
   it('drops blank rows on the way out', () => {
@@ -272,13 +285,19 @@ describe('site drafts', () => {
       expect(errors.insert).toMatch(/at least one place/)
     })
 
-    it('requires both status classes', () => {
+    it('accepts spacing values that are css lengths', () => {
       const errors = validateSiteDraft(
-        siteDraft({ deploy: '', noDeploy: '' }),
+        siteDraft({ margin: '1rem 0', padding: '8px', maxWidth: '60%' }),
         [],
       )
-      expect(errors.deploy).toBe('Required')
-      expect(errors.noDeploy).toBe('Required')
+      expect(errors.margin).toBeUndefined()
+      expect(errors.padding).toBeUndefined()
+      expect(errors.maxWidth).toBeUndefined()
+    })
+
+    it('rejects a spacing value that is not a css length', () => {
+      const errors = validateSiteDraft(siteDraft({ margin: 'huge' }), [])
+      expect(errors.margin).toMatch(/CSS length/)
     })
 
     it('rejects a key that would collide with a deployment field', () => {
@@ -331,7 +350,7 @@ describe('config edits', () => {
         fromSiteDraft(siteDraft({ key: 'gitlab' })),
       )
       expect(next.domains.gitlab).toEqual(['*://gitlab.com/*'])
-      expect(next.sites.gitlab.classes.deploy).toBe('flash flash-success')
+      expect(next.sites.gitlab.insert[0].class).toBe('file-navigation')
     })
 
     it('carries deployment fragments across a rename', () => {

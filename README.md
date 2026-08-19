@@ -79,7 +79,8 @@ Each surface renders in its own iframe, so the page-level CSS of the popup and
 options page stays isolated exactly as it is in the real extension. The in-page
 notice is injected into a stand-in host page carrying anchor classes
 (`.file-navigation`, `.repository-content`, `.mod-header`), so insertion is
-genuinely exercised rather than mocked.
+genuinely exercised rather than mocked. The notice draws inside a shadow root,
+so it looks the same there as it does on a real page.
 
 The harness lives entirely in `dev/` and is never part of the extension build.
 It cannot replace a real extension context either: the shim installs only when
@@ -173,6 +174,7 @@ src/
     base.css             Primitives shared by both extension pages
     options.css          Options page layout
     popup.css            Popup layout
+    notice.css           In-page notice, adopted into its shadow root
   documents/HowToUse.md  Rendered inside the options page
 public/                  Copied verbatim to dist/ (icons, _locales)
 dev/                     Browser-only dev harness (never built into the extension)

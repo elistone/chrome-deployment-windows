@@ -10,16 +10,25 @@ export interface InsertLocation {
   position: InsertPosition
 }
 
-export interface SiteClasses {
-  deploy: string
-  'no-deploy': string
-  /** Optional override applied when a deployment is flagged notes-only. */
-  notes?: string
+/**
+ * Per-site spacing for the notice.
+ *
+ * The notice brings its own styling now, but every host page puts it in a
+ * slightly different place, so the gap around it is worth being able to nudge.
+ * Values are CSS lengths, checked before they are applied.
+ */
+export interface SiteStyle {
+  /** Space outside the notice, e.g. `1.5rem 0`. */
+  margin?: string
+  /** Space inside it. */
+  padding?: string
+  /** Overrides the default reading width. */
+  maxWidth?: string
 }
 
 export interface SiteConfig {
   insert: InsertLocation[]
-  classes: SiteClasses
+  style?: SiteStyle
 }
 
 export interface DeploymentTime {

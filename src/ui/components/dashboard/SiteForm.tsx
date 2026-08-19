@@ -268,61 +268,60 @@ export function SiteForm({
         </fieldset>
 
         <fieldset className="dw-fieldset">
-          <legend>{Methods.i18n('l10nCustomClasses')}</legend>
-          <p className="dw-fieldset-hint">{Methods.i18n('l10nClassesHint')}</p>
+          <legend>{Methods.i18n('l10nSpacing')}</legend>
+          <p className="dw-fieldset-hint">{Methods.i18n('l10nSpacingHint')}</p>
 
           <div className="dw-form-grid dw-form-grid-3">
             <Field
-              label={Methods.i18n('l10nClassDeploy')}
-              hint={Methods.i18n('l10nClassDeployHint')}
-              error={shown('deploy')}
-              required
+              label={Methods.i18n('l10nMargin')}
+              hint={Methods.i18n('l10nMarginHint')}
+              error={shown('margin')}
             >
               {({ id, describedBy }) => (
                 <input
                   id={id}
                   className="dw-input dw-mono"
                   type="text"
-                  placeholder="flash flash-success"
-                  value={draft.deploy}
+                  placeholder="1.25rem 0"
+                  value={draft.margin}
                   aria-describedby={describedBy}
-                  onChange={(event) => update({ deploy: event.target.value })}
+                  onChange={(event) => update({ margin: event.target.value })}
                 />
               )}
             </Field>
 
             <Field
-              label={Methods.i18n('l10nClassNoDeploy')}
-              hint={Methods.i18n('l10nClassNoDeployHint')}
-              error={shown('noDeploy')}
-              required
+              label={Methods.i18n('l10nPadding')}
+              hint={Methods.i18n('l10nPaddingHint')}
+              error={shown('padding')}
             >
               {({ id, describedBy }) => (
                 <input
                   id={id}
                   className="dw-input dw-mono"
                   type="text"
-                  placeholder="flash flash-error"
-                  value={draft.noDeploy}
+                  placeholder="14px 18px"
+                  value={draft.padding}
                   aria-describedby={describedBy}
-                  onChange={(event) => update({ noDeploy: event.target.value })}
+                  onChange={(event) => update({ padding: event.target.value })}
                 />
               )}
             </Field>
 
             <Field
-              label={Methods.i18n('l10nClassNotes')}
-              hint={Methods.i18n('l10nClassNotesHint')}
+              label={Methods.i18n('l10nMaxWidth')}
+              hint={Methods.i18n('l10nMaxWidthHint')}
+              error={shown('maxWidth')}
             >
               {({ id, describedBy }) => (
                 <input
                   id={id}
                   className="dw-input dw-mono"
                   type="text"
-                  placeholder="flash flash-warn"
-                  value={draft.notes}
+                  placeholder="960px"
+                  value={draft.maxWidth}
                   aria-describedby={describedBy}
-                  onChange={(event) => update({ notes: event.target.value })}
+                  onChange={(event) => update({ maxWidth: event.target.value })}
                 />
               )}
             </Field>

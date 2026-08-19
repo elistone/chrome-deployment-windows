@@ -107,7 +107,7 @@ test.describe('options page', () => {
       'https://github.com/acme/added',
       githubPageHtml(),
     )
-    await expect(site.locator('.dw-notification')).toContainText('Added from the UI')
+    await expect(site.locator('.dw-notification .name')).toHaveText('Added from the UI')
   })
 
   test('refuses to save an entry that could never match a page', async ({
@@ -240,7 +240,7 @@ test.describe('options page', () => {
       'https://github.com/acme/always',
       githubPageHtml(),
     )
-    await expect(site.locator('.dw-notification')).toContainText(
+    await expect(site.locator('.dw-notification .name')).toHaveText(
       'Renamed via json',
     )
   })

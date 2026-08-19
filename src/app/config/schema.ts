@@ -124,26 +124,44 @@ function validateInsert(value: unknown, path: string, errors: Errors): void {
   })
 }
 
-function validateClasses(value: unknown, path: string, errors: Errors): void {
+/**
+ * CSS lengths, and only CSS lengths.
+ *
+ * These end up on the notice as inline custom properties. A browser would
+ * discard anything malformed rather than act on it, but a config is also
+ * something people read and copy between machines, so a typo is worth naming
+ * where it was made instead of silently doing nothing.
+ */
+const CSS_LENGTH = /^(auto|0|[+-]?(\d+\.?\d*|\.\d+)(px|em|rem|%|vh|vw|ch|pt))$/
+
+export function isCssSpacing(value: string): boolean {
+  const parts = value.trim().split(/\s+/)
+  if (parts.length === 0 || parts.length > 4) {
+    return false
+  }
+  return parts.every((part) => CSS_LENGTH.test(part))
+}
+
+function validateStyle(value: unknown, path: string, errors: Errors): void {
   if (!isPlainObject(value)) {
     errors.type(path, 'object')
     return
   }
 
-  for (const key of ['deploy', 'no-deploy']) {
+  for (const key of ['margin', 'padding', 'maxWidth']) {
     if (!(key in value)) {
-      errors.required(path, key)
-    } else if (typeof value[key] !== 'string') {
+      continue
+    }
+    const entry = value[key]
+    if (typeof entry !== 'string') {
       errors.type(join(path, key), 'string')
+    } else if (entry.length > 0 && !isCssSpacing(entry)) {
+      errors.add(join(path, key), 'must be a CSS length, such as 1rem or 12px')
     }
   }
 
-  if ('notes' in value && typeof value.notes !== 'string') {
-    errors.type(join(path, 'notes'), 'string')
-  }
-
   for (const key of Object.keys(value)) {
-    if (key !== 'deploy' && key !== 'no-deploy' && key !== 'notes') {
+    if (key !== 'margin' && key !== 'padding' && key !== 'maxWidth') {
       errors.add(path, `must NOT have additional properties ('${key}')`)
     }
   }
@@ -168,14 +186,15 @@ function validateSites(value: unknown, path: string, errors: Errors): void {
       validateInsert(site.insert, join(at, 'insert'), errors)
     }
 
-    if (!('classes' in site)) {
-      errors.required(at, 'classes')
-    } else {
-      validateClasses(site.classes, join(at, 'classes'), errors)
+    if ('style' in site) {
+      validateStyle(site.style, join(at, 'style'), errors)
     }
 
     for (const extra of Object.keys(site)) {
-      if (extra !== 'insert' && extra !== 'classes') {
+      // `classes` is v1's styling, which the notice no longer borrows. It is
+      // still accepted so that an existing config validates, and Config drops
+      // it on load rather than failing someone's whole setup over it.
+      if (extra !== 'insert' && extra !== 'style' && extra !== 'classes') {
         errors.add(at, `must NOT have additional properties ('${extra}')`)
       }
     }

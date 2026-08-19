@@ -14,6 +14,20 @@ function resolve(url: string): ResolvedDeployment {
   return info
 }
 
+/** The notice renders into a shadow root, so nothing is in the page's tree. */
+function inside(host: Element | null | undefined): ShadowRoot {
+  const root = (host as HTMLElement | null)?.shadowRoot
+  if (!root) {
+    throw new Error('the notice has no shadow root')
+  }
+  return root
+}
+
+/** The live notice on the page. */
+function onPage(): ShadowRoot {
+  return inside(document.querySelector('.dw-notification'))
+}
+
 const DAYTIME = 'https://github.com/acme/daytime'
 const NOTES_ONLY = 'https://github.com/acme/notes-only'
 
@@ -37,91 +51,158 @@ describe('Notice', () => {
       vi.setSystemTime(new Date('2024-06-03T12:00:00'))
 
       notice = new Notice(resolve(DAYTIME))
-      const element = notice.build()
+      const root = inside(notice.build())
 
-      expect(element.querySelector('.dw-current-name')?.textContent).toBe(
-        'Daytime project',
+      expect(root.querySelector('.name')?.textContent).toBe('Daytime project')
+      const rows = [...root.querySelectorAll('.row')].map(
+        (row) => row.textContent?.replace(/\s+/g, ' ').trim(),
       )
-      expect(element.querySelector('.dw-deployment-time')?.textContent).toContain(
-        '09:00 - 17:00',
-      )
-      expect(element.querySelector('.dw-deployment-time')?.textContent).toContain(
-        'Europe/London',
-      )
-      expect(element.querySelector('.dw-local-time')).not.toBeNull()
-      expect(element.querySelector('.dw-current-status-text')?.textContent).toBe(
+      expect(rows[0]).toContain('09:00 – 17:00')
+      expect(rows[0]).toContain('Europe/London')
+      expect(rows[1]).toContain('04:00 – 12:00')
+      expect(rows[1]).toContain('America/New_York')
+      expect(root.querySelector('.status-text')?.textContent).toBe(
         'Deployment window open',
       )
     })
 
-    it('applies the deploy class while the window is open', () => {
+    it('keeps its own styling inside the shadow root', () => {
+      notice = new Notice(resolve(DAYTIME))
+      const host = notice.build()
+
+      // Nothing is added to the page's own tree, and nothing the page styles
+      // can reach what is drawn.
+      expect(host.shadowRoot?.querySelector('style')).not.toBeNull()
+      expect(host.querySelector('.notice')).toBeNull()
+      expect(host.className).toBe('dw-notification')
+    })
+
+    it('marks itself open while the window is open', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2024-06-03T12:00:00'))
       notice = new Notice(resolve(DAYTIME))
-      expect(notice.build().className).toBe('dw-notification flash flash-success')
+      const root = inside(notice.build())
+      expect(root.querySelector('.notice')).toHaveAttribute(
+        'data-status',
+        'open',
+      )
     })
 
-    it('applies the no-deploy class while the window is closed', () => {
+    it('marks itself closed while the window is closed', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2024-06-03T22:00:00'))
       notice = new Notice(resolve(DAYTIME))
-      expect(notice.build().className).toBe('dw-notification flash flash-error')
+      const root = inside(notice.build())
+      expect(root.querySelector('.notice')).toHaveAttribute(
+        'data-status',
+        'closed',
+      )
+    })
+
+    it('follows the host page theme rather than the extension one', () => {
+      const matchMedia = vi.fn().mockReturnValue({ matches: true })
+      vi.stubGlobal('matchMedia', matchMedia)
+
+      notice = new Notice(resolve(DAYTIME))
+      expect(notice.build().dataset.theme).toBe('dark')
+
+      vi.unstubAllGlobals()
     })
 
     it('renders notes as markdown behind a toggle', () => {
       notice = new Notice(resolve(DAYTIME))
-      const element = notice.build()
+      const root = inside(notice.build())
 
-      expect(element.querySelector('.dw-toggle')?.textContent).toBe(
-        'Show details',
+      expect(root.querySelector('.toggle')?.textContent).toBe('Show details')
+      expect(root.querySelector('.details')).toHaveAttribute(
+        'data-open',
+        'false',
       )
-      const details = element.querySelector<HTMLElement>('.dw-details')
-      expect(details?.style.display).toBe('none')
       // The markdown '**two**' inside the notes body, not the "Notes" heading.
-      expect(details?.querySelector('.dw-notes strong')?.textContent).toBe('two')
+      expect(root.querySelector('.notes strong')?.textContent).toBe('two')
     })
 
     it('omits the toggle entirely when there are no notes', () => {
       const deployment = resolve(DAYTIME)
       deployment.notes = ''
       notice = new Notice(deployment)
-      const element = notice.build()
+      const root = inside(notice.build())
 
-      expect(element.querySelector('.dw-toggle')).toBeNull()
-      expect(element.querySelector('.dw-details')).toBeNull()
+      expect(root.querySelector('.toggle')).toBeNull()
+      expect(root.querySelector('.details')).toBeNull()
+    })
+
+    describe('spacing', () => {
+      it('applies the site overrides as custom properties', () => {
+        const deployment = resolve(DAYTIME)
+        deployment.domainInfo.style = {
+          margin: '2rem 0',
+          padding: '10px',
+          maxWidth: '640px',
+        }
+        notice = new Notice(deployment)
+        const host = notice.build()
+
+        expect(host.style.getPropertyValue('--dw-notice-margin')).toBe('2rem 0')
+        expect(host.style.getPropertyValue('--dw-notice-padding')).toBe('10px')
+        expect(host.style.getPropertyValue('--dw-notice-max-width')).toBe(
+          '640px',
+        )
+      })
+
+      it('sets nothing at all when the site has no overrides', () => {
+        notice = new Notice(resolve(DAYTIME))
+        expect(notice.build().getAttribute('style')).toBeNull()
+      })
+
+      it('ignores a value that is not a css length', () => {
+        const deployment = resolve(DAYTIME)
+        deployment.domainInfo.style = {
+          margin: 'red; position: fixed',
+          padding: 'url(https://example.com)',
+        }
+        notice = new Notice(deployment)
+        const host = notice.build()
+
+        expect(host.style.getPropertyValue('--dw-notice-margin')).toBe('')
+        expect(host.style.getPropertyValue('--dw-notice-padding')).toBe('')
+      })
     })
 
     describe('notes-only', () => {
       it('shows notes without any window or status', () => {
         notice = new Notice(resolve(NOTES_ONLY))
-        const element = notice.build()
+        const root = inside(notice.build())
 
-        expect(element.querySelector('.dw-current-name')?.textContent).toBe(
+        expect(root.querySelector('.name')?.textContent).toBe(
           'Notes only project',
         )
-        expect(element.querySelector('.dw-deployment-time')).toBeNull()
-        expect(element.querySelector('.dw-current-status')).toBeNull()
-        expect(element.querySelector('.dw-notes')?.textContent).toContain(
+        expect(root.querySelector('.rows')).toBeNull()
+        expect(root.querySelector('.pill')).toBeNull()
+        expect(root.querySelector('.notes')?.textContent).toContain(
           'Frozen until Q3.',
         )
       })
 
       it('shows the notes immediately rather than behind a toggle', () => {
         notice = new Notice(resolve(NOTES_ONLY))
-        const details = notice.build().querySelector<HTMLElement>('.dw-details')
-        expect(details?.style.display).toBe('')
+        const root = inside(notice.build())
+
+        expect(root.querySelector('.details')).toHaveAttribute(
+          'data-open',
+          'true',
+        )
+        // Nothing to toggle: hiding the notes would leave an empty notice.
+        expect(root.querySelector('.toggle')).toBeNull()
       })
 
-      it('uses the notes class override when configured', () => {
+      it('carries the notes tone', () => {
         notice = new Notice(resolve(NOTES_ONLY))
-        expect(notice.build().className).toBe('dw-notification flash flash-warn')
-      })
-
-      it('falls back to the deploy/no-deploy class without an override', () => {
-        const deployment = resolve(NOTES_ONLY)
-        delete deployment.domainInfo.classes.notes
-        notice = new Notice(deployment)
-        expect(notice.build().className).toMatch(/flash flash-(success|error)$/)
+        const root = inside(notice.build())
+        expect(root.querySelector('.notice')).toHaveAttribute(
+          'data-status',
+          'notes',
+        )
       })
     })
 
@@ -129,19 +210,17 @@ describe('Notice', () => {
       const deployment = resolve(DAYTIME)
       deployment.name = '<img src=x onerror=alert(1)>'
       notice = new Notice(deployment)
-      const element = notice.build()
+      const root = inside(notice.build())
 
-      expect(element.querySelector('img')).toBeNull()
-      expect(element.querySelector('.dw-current-name')?.textContent).not.toContain(
-        '<img',
-      )
+      expect(root.querySelector('img')).toBeNull()
+      expect(root.querySelector('.name')?.textContent).not.toContain('<img')
     })
 
     it('does not emit a script tag from notes', () => {
       const deployment = resolve(DAYTIME)
       deployment.notes = '<script>alert(1)</script>'
       notice = new Notice(deployment)
-      expect(notice.build().querySelector('script')).toBeNull()
+      expect(inside(notice.build()).querySelector('script')).toBeNull()
     })
   })
 
@@ -202,8 +281,7 @@ describe('Notice', () => {
       notice = new Notice(resolve(DAYTIME))
       notice.insert()
 
-      const clock = () =>
-        document.querySelector('.dw-current-time-text')?.textContent
+      const clock = () => onPage().querySelector('.clock')?.textContent
       expect(clock()).toBe('12:00:00')
 
       // advanceTimersByTime moves the fake clock as well as firing the timer.
@@ -214,7 +292,7 @@ describe('Notice', () => {
       expect(clock()).toBe('12:00:02')
     })
 
-    it('flips status and classes when the window closes', () => {
+    it('flips status and tone when the window closes', () => {
       // The fixture window is 09:00-17:00 Europe/London, which is 04:00-12:00
       // in the America/New_York timezone the tests are pinned to.
       vi.useFakeTimers()
@@ -223,18 +301,35 @@ describe('Notice', () => {
       notice = new Notice(resolve(DAYTIME))
       notice.insert()
 
-      const element = document.querySelector('.dw-notification')!
-      expect(element.className).toBe('dw-notification flash flash-success')
+      expect(onPage().querySelector('.notice')).toHaveAttribute(
+        'data-status',
+        'open',
+      )
 
       vi.setSystemTime(new Date('2024-06-03T13:30:00'))
       vi.advanceTimersByTime(1000)
 
-      expect(
-        document.querySelector('.dw-current-status-text')?.textContent,
-      ).toBe('Deployment window closed')
-      expect(
-        document.querySelector('.dw-notification')?.className,
-      ).toBe('dw-notification flash flash-error')
+      expect(onPage().querySelector('.status-text')?.textContent).toBe(
+        'Deployment window closed',
+      )
+      expect(onPage().querySelector('.notice')).toHaveAttribute(
+        'data-status',
+        'closed',
+      )
+      // Marked for the one animation that is not decoration: the moment the
+      // window changed under you.
+      expect(onPage().querySelector('.notice')).toHaveAttribute('data-flip')
+    })
+
+    it('marks nothing on a tick that changed nothing', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T11:00:00'))
+
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+      vi.advanceTimersByTime(3000)
+
+      expect(onPage().querySelector('.notice')).not.toHaveAttribute('data-flip')
     })
 
     it('does not let a crafted status string inject markup', () => {
@@ -246,10 +341,10 @@ describe('Notice', () => {
       notice.insert()
       vi.advanceTimersByTime(1000)
 
-      expect(document.querySelector('.dw-current-status-text img')).toBeNull()
-      expect(
-        document.querySelector('.dw-current-status-text')?.textContent,
-      ).toBe('<img src=x>')
+      expect(onPage().querySelector('.status-text img')).toBeNull()
+      expect(onPage().querySelector('.status-text')?.textContent).toBe(
+        '<img src=x>',
+      )
     })
   })
 
@@ -296,16 +391,34 @@ describe('Notice', () => {
       notice = new Notice(resolve(DAYTIME))
       notice.insert()
 
-      const toggle = document.querySelector<HTMLElement>('.dw-notification .dw-toggle')!
-      const details = document.querySelector<HTMLElement>('.dw-details')!
+      const root = onPage()
+      const toggle = root.querySelector<HTMLElement>('.toggle')!
+      const details = root.querySelector<HTMLElement>('.details')!
 
       toggle.click()
-      expect(details.style.display).toBe('block')
+      expect(details.dataset.open).toBe('true')
+      expect(toggle.getAttribute('aria-expanded')).toBe('true')
       expect(toggle.textContent).toBe('Hide details')
 
       toggle.click()
-      expect(details.style.display).toBe('none')
+      expect(details.dataset.open).toBe('false')
+      expect(toggle.getAttribute('aria-expanded')).toBe('false')
       expect(toggle.textContent).toBe('Show details')
+    })
+
+    it('does not stack a second listener when re-inserted', () => {
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+      // What a single page app does to us: the notice is torn out and put back.
+      notice.element?.remove()
+      notice.insert()
+
+      const root = onPage()
+      root.querySelector<HTMLElement>('.toggle')!.click()
+
+      expect(root.querySelector<HTMLElement>('.details')?.dataset.open).toBe(
+        'true',
+      )
     })
   })
 
@@ -319,12 +432,9 @@ describe('Notice', () => {
       expect(document.querySelector('.dw-notification')).not.toBeNull()
 
       local.destroy()
-
       expect(document.querySelector('.dw-notification')).toBeNull()
-      expect(local.inserted).toBe(false)
 
       const before = chromeMock().sentMessages.length
-      vi.setSystemTime(new Date('2024-06-03T22:00:00'))
       vi.advanceTimersByTime(10_000)
       expect(chromeMock().sentMessages).toHaveLength(before)
     })

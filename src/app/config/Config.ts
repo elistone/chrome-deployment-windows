@@ -1,4 +1,4 @@
-import type { DeploymentWindowsConfig } from './types'
+import type { DeploymentWindowsConfig, SiteConfig } from './types'
 
 export const STORAGE_KEYS = {
   domains: 'DOMAINS',
@@ -28,21 +28,37 @@ export function defaultConfig(): DeploymentWindowsConfig {
           // has no repository header, so fall back to the whole page body.
           { class: '.application-main', position: 'before' },
         ],
-        classes: {
-          deploy: 'flash flash-success',
-          'no-deploy': 'flash flash-error',
-        },
       },
       jira: {
         insert: [{ class: 'mod-header', position: 'before' }],
-        classes: {
-          deploy: 'aui-message aui-message-success',
-          'no-deploy': 'aui-message aui-message-error',
-        },
       },
     },
     deployments: {},
   }
+}
+
+/**
+ * Drop v1's `classes` from a stored site.
+ *
+ * The notice used to be styled by borrowing the host site's own classes, which
+ * meant it looked like whatever that site's CSS happened to do and broke every
+ * time the site changed. It now brings its own styling, so those values have
+ * nowhere to go. They are dropped on load rather than rejected, so an existing
+ * config keeps working and quietly loses the dead key the next time it is
+ * saved.
+ */
+function migrateSites(
+  sites: DeploymentWindowsConfig['sites'],
+): DeploymentWindowsConfig['sites'] {
+  const migrated: DeploymentWindowsConfig['sites'] = {}
+  for (const [key, site] of Object.entries(sites)) {
+    if (!site || typeof site !== 'object') {
+      continue
+    }
+    const { insert, style } = site as SiteConfig
+    migrated[key] = style ? { insert, style } : { insert }
+  }
+  return migrated
 }
 
 function isEmpty(value: object | undefined | null): boolean {
@@ -82,7 +98,7 @@ export class Config {
 
     return {
       domains: domains ?? {},
-      sites: sites ?? {},
+      sites: migrateSites(sites ?? {}),
       deployments: deployments ?? {},
     }
   }

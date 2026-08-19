@@ -20,17 +20,9 @@ describe('config schema', () => {
             { class: 'file-navigation', position: 'after' },
             { class: 'repository-content', position: 'before' },
           ],
-          classes: {
-            deploy: 'flash flash-success',
-            'no-deploy': 'flash flash-error',
-          },
         },
         jira: {
           insert: [{ class: 'mod-header', position: 'before' }],
-          classes: {
-            deploy: 'aui-message aui-message-success',
-            'no-deploy': 'aui-message aui-message-error',
-          },
         },
       },
       deployments: {
@@ -47,9 +39,26 @@ describe('config schema', () => {
     expect(isValidConfig(example)).toBe(true)
   })
 
-  it('accepts the optional notes class override', () => {
+  it('still accepts a v1 config carrying its classes', () => {
+    // The notice no longer borrows them, but rejecting the key would fail the
+    // whole config of everyone who has not saved since.
+    const config = defaultConfig() as unknown as {
+      sites: Record<string, Record<string, unknown>>
+    }
+    config.sites.github.classes = {
+      deploy: 'flash flash-success',
+      'no-deploy': 'flash flash-error',
+    }
+    expect(isValidConfig(config)).toBe(true)
+  })
+
+  it('accepts the optional spacing overrides', () => {
     const config = defaultConfig()
-    config.sites.github.classes.notes = 'flash flash-warn'
+    config.sites.github.style = {
+      margin: '1.5rem 0',
+      padding: '12px 16px',
+      maxWidth: '80%',
+    }
     expect(isValidConfig(config)).toBe(true)
   })
 
@@ -94,9 +103,18 @@ describe('config schema', () => {
       expect(isValidConfig(config)).toBe(false)
     })
 
-    it('rejects a site missing its classes', () => {
+    it.each(['red', '10', '1rem; position: fixed', 'url(x)', '1 2 3 4 5rem'])(
+      'rejects spacing value %j',
+      (margin) => {
+        const config = defaultConfig()
+        config.sites.github.style = { margin }
+        expect(isValidConfig(config)).toBe(false)
+      },
+    )
+
+    it('rejects an unknown key inside style', () => {
       const config = defaultConfig()
-      delete (config.sites.github as { classes?: unknown }).classes
+      config.sites.github.style = { colour: 'red' } as never
       expect(isValidConfig(config)).toBe(false)
     })
 

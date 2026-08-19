@@ -257,13 +257,24 @@ describe('SiteCard', () => {
 
   it('shows a quote in a value as a quote, not as an entity', () => {
     renderSite('github', false, {
-      site: {
-        ...config.sites.github,
-        classes: { ...config.sites.github.classes, deploy: "flash 'ok'" },
-      },
+      patterns: ["*://*.github.com/it's/*"],
     })
 
-    expect(screen.getByText("flash 'ok'")).toBeInTheDocument()
+    expect(screen.getByText("*://*.github.com/it's/*")).toBeInTheDocument()
+  })
+
+  it('shows the spacing overrides when a site has them', () => {
+    renderSite('github', false, {
+      site: { ...config.sites.github, style: { margin: '2rem 0' } },
+    })
+
+    expect(screen.getByText('Margin')).toBeInTheDocument()
+    expect(screen.getByText('2rem 0')).toBeInTheDocument()
+  })
+
+  it('leaves the spacing section out when a site takes the defaults', () => {
+    renderSite('github')
+    expect(screen.queryByText('Spacing')).not.toBeInTheDocument()
   })
 
   it('reads a bare insert location back as the class it is', () => {
@@ -363,27 +374,38 @@ describe('SiteCard', () => {
   })
 
   it('pairs every label with its value, so the columns line up', () => {
-    const { container } = renderSite('github')
+    const { container } = renderSite('github', false, {
+      site: { ...config.sites.github, style: { padding: '10px' } },
+    })
     const rows = container.querySelectorAll('.dw-defs .dw-def')
 
-    // Two insert locations plus three styling classes.
-    expect(rows).toHaveLength(5)
+    // Two insert locations plus the one spacing override.
+    expect(rows).toHaveLength(3)
     for (const row of rows) {
       expect(row.querySelector('dt')).not.toBeNull()
       expect(row.querySelector('dd')).not.toBeNull()
     }
   })
 
-  it('lists the styling classes under readable labels', () => {
-    renderSite('github')
-    expect(screen.getByText('Window open')).toBeInTheDocument()
-    expect(screen.getByText('flash flash-success')).toBeInTheDocument()
-    expect(screen.getByText('Notes only')).toBeInTheDocument()
+  it('lists the spacing overrides under readable labels', () => {
+    renderSite('github', false, {
+      site: {
+        ...config.sites.github,
+        style: { margin: '1rem 0', padding: '10px', maxWidth: '640px' },
+      },
+    })
+
+    expect(screen.getByText('Margin')).toBeInTheDocument()
+    expect(screen.getByText('1rem 0')).toBeInTheDocument()
+    expect(screen.getByText('Max width')).toBeInTheDocument()
+    expect(screen.getByText('640px')).toBeInTheDocument()
   })
 
-  it('omits the notes class when it is not configured', () => {
-    renderSite('jira')
-    expect(screen.queryByText('Notes only')).not.toBeInTheDocument()
+  it('omits a spacing value that is not set', () => {
+    renderSite('github', false, {
+      site: { ...config.sites.github, style: { margin: '1rem 0' } },
+    })
+    expect(screen.queryByText('Max width')).not.toBeInTheDocument()
   })
 
   it('does not crash on a domain with no matching site entry', () => {

@@ -136,7 +136,7 @@ describe('dev harness', () => {
       installChromeShim()
 
       expect(chrome.storage?.sync).toBeDefined()
-      expect(chrome.i18n.getMessage('l10nStatus')).toBe('Status')
+      expect(chrome.i18n.getMessage('l10nNotes')).toBe('Notes')
     })
 
     it('backs storage with localStorage so surfaces share it', async () => {

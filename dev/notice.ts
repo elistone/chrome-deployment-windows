@@ -6,7 +6,6 @@ ensureSeeded()
 
 const { DW } = await import('../src/app/components/DW')
 const { Notice } = await import('../src/app/components/Notice')
-await import('../src/styles/content.css')
 await import('./hostPage.css')
 
 /**

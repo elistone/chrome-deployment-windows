@@ -151,11 +151,6 @@ export function e2eConfig(): DeploymentWindowsConfig {
           { class: 'file-navigation', position: 'after' },
           { class: 'repository-content', position: 'before' },
         ],
-        classes: {
-          deploy: 'flash flash-success',
-          'no-deploy': 'flash flash-error',
-          notes: 'flash flash-warn',
-        },
       },
     },
     deployments: {

@@ -21,6 +21,11 @@ function notice(): HTMLElement | null {
   return document.querySelector('.dw-notification')
 }
 
+/** The notice draws inside a shadow root, so its text is not in the page. */
+function noticeText(): string {
+  return notice()?.shadowRoot?.textContent ?? ''
+}
+
 describe('NoticeManager', () => {
   let manager: NoticeManager | null = null
   let url = DAYTIME
@@ -50,7 +55,7 @@ describe('NoticeManager', () => {
     await start()
 
     expect(notice()).not.toBeNull()
-    expect(notice()?.textContent).toContain('Daytime project')
+    expect(noticeText()).toContain('Daytime project')
   })
 
   it('inserts nothing when no deployment matches', async () => {
@@ -72,18 +77,18 @@ describe('NoticeManager', () => {
     await settle()
 
     expect(notice()).not.toBeNull()
-    expect(notice()?.textContent).toContain('Daytime project')
+    expect(noticeText()).toContain('Daytime project')
   })
 
   it('swaps the notice when an in-app navigation changes the project', async () => {
     await start()
-    expect(notice()?.textContent).toContain('Daytime project')
+    expect(noticeText()).toContain('Daytime project')
 
     url = NOTES_ONLY
     renderGithubPage()
     await settle()
 
-    expect(notice()?.textContent).toContain('Notes only project')
+    expect(noticeText()).toContain('Notes only project')
     expect(document.querySelectorAll('.dw-notification')).toHaveLength(1)
   })
 

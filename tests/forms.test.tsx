@@ -284,7 +284,23 @@ describe('SiteForm', () => {
 
     expect(screen.getByLabelText(/^Site key/)).toHaveValue('github')
     expect(screen.getByLabelText('Pattern 1')).toHaveValue('*://*.github.com/*')
-    expect(screen.getByLabelText(/^Window open/)).toHaveValue('flash flash-success')
+    // The github fixture has two insert rows, so two Element fields.
+    expect(screen.getAllByLabelText(/^Element/)[0]).toHaveValue(
+      'file-navigation',
+    )
+  })
+
+  it('fills the spacing overrides in when editing', () => {
+    const config = testConfig()
+    config.sites.github.style = { margin: '2rem 0', maxWidth: '640px' }
+    renderSiteForm({
+      originalKey: 'github',
+      initial: toSiteDraft('github', config.domains.github, config.sites.github),
+    })
+
+    expect(screen.getByLabelText(/^Margin/)).toHaveValue('2rem 0')
+    expect(screen.getByLabelText(/^Padding/)).toHaveValue('')
+    expect(screen.getByLabelText(/^Max width/)).toHaveValue('640px')
   })
 
   it('adds and removes pattern rows', async () => {
@@ -322,8 +338,7 @@ describe('SiteForm', () => {
     await user.type(screen.getByLabelText(/^Site key/), 'gitlab')
     await user.type(screen.getByLabelText('Pattern 1'), '*://gitlab.com/*')
     await user.type(screen.getByLabelText(/^Element/), 'content-wrapper')
-    await user.type(screen.getByLabelText(/^Window open/), 'alert alert-success')
-    await user.type(screen.getByLabelText(/^Window closed/), 'alert alert-danger')
+    await user.type(screen.getByLabelText(/^Padding/), '10px 14px')
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(onSubmit).toHaveBeenCalledWith(
@@ -331,12 +346,23 @@ describe('SiteForm', () => {
       ['*://gitlab.com/*'],
       {
         insert: [{ class: 'content-wrapper', position: 'after' }],
-        classes: {
-          deploy: 'alert alert-success',
-          'no-deploy': 'alert alert-danger',
-        },
+        style: { padding: '10px 14px' },
       },
     )
+  })
+
+  it('refuses to save spacing that is not a css length', async () => {
+    const user = userEvent.setup()
+    const { onSubmit } = renderSiteForm()
+
+    await user.type(screen.getByLabelText(/^Site key/), 'gitlab')
+    await user.type(screen.getByLabelText('Pattern 1'), '*://gitlab.com/*')
+    await user.type(screen.getByLabelText(/^Element/), 'content-wrapper')
+    await user.type(screen.getByLabelText(/^Margin/), 'massive')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByText(/CSS length/)).toBeInTheDocument()
   })
 
   it('records the chosen insert position', async () => {
@@ -347,8 +373,6 @@ describe('SiteForm', () => {
     await user.type(screen.getByLabelText('Pattern 1'), '*://gitlab.com/*')
     await user.type(screen.getByLabelText(/^Element/), 'content-wrapper')
     await user.selectOptions(screen.getByLabelText(/^Position/), 'before')
-    await user.type(screen.getByLabelText(/^Window open/), 'a')
-    await user.type(screen.getByLabelText(/^Window closed/), 'b')
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(vi.mocked(onSubmit).mock.calls[0][2].insert[0].position).toBe('before')

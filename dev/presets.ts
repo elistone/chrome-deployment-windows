@@ -31,18 +31,9 @@ export function devConfig(): DeploymentWindowsConfig {
           { class: 'file-navigation', position: 'after' },
           { class: 'repository-content', position: 'before' },
         ],
-        classes: {
-          deploy: 'flash flash-success',
-          'no-deploy': 'flash flash-error',
-          notes: 'flash flash-warn',
-        },
       },
       jira: {
         insert: [{ class: 'mod-header', position: 'before' }],
-        classes: {
-          deploy: 'aui-message aui-message-success',
-          'no-deploy': 'aui-message aui-message-error',
-        },
       },
     },
     deployments: {

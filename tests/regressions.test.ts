@@ -147,7 +147,7 @@ describe('regression: invalid timezone in config', () => {
       'https://github.com/acme/a',
     ).getDeploymentInfo()!
     const element = new Notice(info).build()
-    expect(element.querySelector('.dw-current-name')?.textContent).toBe('Bad zone')
+    expect(element.shadowRoot?.querySelector('.name')?.textContent).toBe('Bad zone')
   })
 
   it('is rejected by the config validator so it cannot be saved', () => {
@@ -175,11 +175,21 @@ describe('regression: notice reads its own DOM, not the page', () => {
   // element that happened to share the class.
   function hostilePage(): void {
     document.body.innerHTML = `
-      <div class="dw-current-time-text">HOST PAGE VALUE</div>
-      <div class="dw-current-status-text">HOST PAGE VALUE</div>
-      <div class="dw-details" style="display: block;">HOST PAGE VALUE</div>
+      <div class="clock">HOST PAGE VALUE</div>
+      <div class="status-text">HOST PAGE VALUE</div>
+      <div class="details" data-open="true">HOST PAGE VALUE</div>
+      <div class="toggle">HOST PAGE VALUE</div>
       <div class="file-navigation">nav</div>
     `
+  }
+
+  /** The notice's own tree, which the shadow boundary keeps to itself. */
+  function own(notice: Notice): ShadowRoot {
+    const root = notice.element?.shadowRoot
+    if (!root) {
+      throw new Error('the notice has no shadow root')
+    }
+    return root
   }
 
   it('does not overwrite host page elements that share its classes', () => {
@@ -195,10 +205,11 @@ describe('regression: notice reads its own DOM, not the page', () => {
     notice.insert()
     vi.advanceTimersByTime(2000)
 
-    const hostNodes = document.querySelectorAll('body > .dw-current-time-text')
-    expect(hostNodes[0].textContent).toBe('HOST PAGE VALUE')
     expect(
-      document.querySelector('body > .dw-current-status-text')?.textContent,
+      document.querySelector('body > .clock')?.textContent,
+    ).toBe('HOST PAGE VALUE')
+    expect(
+      document.querySelector('body > .status-text')?.textContent,
     ).toBe('HOST PAGE VALUE')
 
     notice.destroy()
@@ -218,9 +229,7 @@ describe('regression: notice reads its own DOM, not the page', () => {
     notice.insert()
     vi.advanceTimersByTime(1000)
 
-    expect(
-      notice.element?.querySelector('.dw-current-time-text')?.textContent,
-    ).toBe('12:00:01')
+    expect(own(notice).querySelector('.clock')?.textContent).toBe('12:00:01')
 
     notice.destroy()
     vi.useRealTimers()
@@ -236,14 +245,14 @@ describe('regression: notice reads its own DOM, not the page', () => {
     const notice = new Notice(info)
     notice.insert()
 
-    const ownDetails = notice.element!.querySelector<HTMLElement>('.dw-details')!
+    const ownDetails = own(notice).querySelector<HTMLElement>('.details')!
     const hostDetails =
-      document.querySelector<HTMLElement>('body > .dw-details')!
+      document.querySelector<HTMLElement>('body > .details')!
 
-    notice.element!.querySelector<HTMLElement>('.dw-toggle')!.click()
+    own(notice).querySelector<HTMLElement>('.toggle')!.click()
 
-    expect(ownDetails.style.display).toBe('block')
-    expect(hostDetails.style.display).toBe('block') // untouched
+    expect(ownDetails.dataset.open).toBe('true')
+    expect(hostDetails.dataset.open).toBe('true') // untouched
     expect(hostDetails.textContent).toBe('HOST PAGE VALUE')
 
     notice.destroy()

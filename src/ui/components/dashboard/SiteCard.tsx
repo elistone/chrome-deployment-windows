@@ -78,12 +78,13 @@ export function SiteCard({
   onDelete,
 }: SiteCardProps) {
   const host = siteHost(patterns)
-  const classes = site?.classes
-  const styling: [string, string | undefined][] = [
-    ['l10nClassDeploy', classes?.deploy],
-    ['l10nClassNoDeploy', classes?.['no-deploy']],
-    ['l10nClassNotes', classes?.notes],
+  const style = site?.style
+  const spacing: [string, string | undefined][] = [
+    ['l10nMargin', style?.margin],
+    ['l10nPadding', style?.padding],
+    ['l10nMaxWidth', style?.maxWidth],
   ]
+  const hasSpacing = spacing.some(([, value]) => value)
 
   return (
     <article
@@ -156,23 +157,27 @@ export function SiteCard({
             </dl>
           </section>
 
-          <section className="dw-card-section">
-            <h4 className="dw-card-section-title">
-              {Methods.i18n('l10nCustomClasses')}
-            </h4>
-            <dl className="dw-defs">
-              {styling.map(([labelKey, value]) =>
-                value ? (
-                  <div className="dw-def" key={labelKey}>
-                    <dt>{Methods.i18n(labelKey)}</dt>
-                    <dd className="dw-mono">
-                      {TextFormatter.toPlainText(value)}
-                    </dd>
-                  </div>
-                ) : null,
-              )}
-            </dl>
-          </section>
+          {/* Only worth a section when something was actually overridden -
+              most sites take the notice's own spacing. */}
+          {hasSpacing && (
+            <section className="dw-card-section">
+              <h4 className="dw-card-section-title">
+                {Methods.i18n('l10nSpacing')}
+              </h4>
+              <dl className="dw-defs">
+                {spacing.map(([labelKey, value]) =>
+                  value ? (
+                    <div className="dw-def" key={labelKey}>
+                      <dt>{Methods.i18n(labelKey)}</dt>
+                      <dd className="dw-mono">
+                        {TextFormatter.toPlainText(value)}
+                      </dd>
+                    </div>
+                  ) : null,
+                )}
+              </dl>
+            </section>
+          )}
         </>
       )}
 

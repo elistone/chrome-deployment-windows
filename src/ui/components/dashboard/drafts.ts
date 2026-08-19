@@ -1,11 +1,13 @@
 import { Methods } from '../../../app/components/Methods'
 import { Timezones, isValidTimezone } from '../../../app/components/Timezones'
 import { MatchPattern } from '../../../app/matching/MatchPattern'
+import { isCssSpacing } from '../../../app/config/schema'
 import type {
   DeploymentConfig,
   DeploymentWindowsConfig,
   InsertLocation,
   SiteConfig,
+  SiteStyle,
 } from '../../../app/config/types'
 
 /**
@@ -45,9 +47,10 @@ export interface SiteDraft {
   key: string
   patterns: string[]
   insert: InsertLocation[]
-  deploy: string
-  noDeploy: string
-  notes: string
+  /** Spacing overrides, blank when the notice's own defaults will do. */
+  margin: string
+  padding: string
+  maxWidth: string
 }
 
 export type DraftErrors = Record<string, string>
@@ -181,9 +184,9 @@ export function toSiteDraft(
       site?.insert && site.insert.length > 0
         ? site.insert.map((entry) => ({ ...entry }))
         : [{ class: '', position: 'after' }],
-    deploy: site?.classes?.deploy ?? '',
-    noDeploy: site?.classes?.['no-deploy'] ?? '',
-    notes: site?.classes?.notes ?? '',
+    margin: site?.style?.margin ?? '',
+    padding: site?.style?.padding ?? '',
+    maxWidth: site?.style?.maxWidth ?? '',
   }
 }
 
@@ -196,14 +199,22 @@ export function fromSiteDraft(draft: SiteDraft): SiteConfig {
     insert: draft.insert
       .filter((entry) => entry.class.trim())
       .map((entry) => ({ class: entry.class.trim(), position: entry.position })),
-    classes: {
-      deploy: draft.deploy.trim(),
-      'no-deploy': draft.noDeploy.trim(),
-    },
   }
 
-  if (draft.notes.trim()) {
-    site.classes.notes = draft.notes.trim()
+  // Left off entirely when nothing was overridden, so a site that takes the
+  // defaults stays as short in the JSON as it reads on the card.
+  const style: SiteStyle = {}
+  if (draft.margin.trim()) {
+    style.margin = draft.margin.trim()
+  }
+  if (draft.padding.trim()) {
+    style.padding = draft.padding.trim()
+  }
+  if (draft.maxWidth.trim()) {
+    style.maxWidth = draft.maxWidth.trim()
+  }
+  if (Object.keys(style).length > 0) {
+    site.style = style
   }
 
   return site
@@ -253,11 +264,11 @@ export function validateSiteDraft(
     errors.insert = Methods.i18n('l10nInsertRequired')
   }
 
-  if (!draft.deploy.trim()) {
-    errors.deploy = Methods.i18n('l10nRequired')
-  }
-  if (!draft.noDeploy.trim()) {
-    errors.noDeploy = Methods.i18n('l10nRequired')
+  for (const field of ['margin', 'padding', 'maxWidth'] as const) {
+    const value = draft[field].trim()
+    if (value && !isCssSpacing(value)) {
+      errors[field] = Methods.i18n('l10nInvalidLength')
+    }
   }
 
   return errors

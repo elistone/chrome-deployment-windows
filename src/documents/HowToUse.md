@@ -53,10 +53,14 @@ without ever reloading, which takes the notice with it. The extension watches
 for that and puts the notice back, re-checking the URL as it does, so moving
 between projects shows the right one without a refresh.
 
-**Styling** reuses the host site's own classes, which is why the notice looks
-like it belongs there. `flash flash-success` is GitHub's green banner;
-`aui-message aui-message-error` is Atlassian's red one. The notes class is
-optional and only applies to notes-only entries.
+**Styling** is the notice's own. It renders inside a shadow root, so the page it
+sits on cannot restyle it and it cannot restyle the page, and it follows that
+page's light or dark setting. It is capped at a readable width and centred.
+
+**Spacing** is the one part you can adjust per site, for when the notice sits
+too tight against whatever is above it. Margin, padding and max width each take
+a CSS length - `1.25rem 0`, `14px 18px`, `960px` - and anything left blank keeps
+the default.
 
 The site's **key** matters: deployments store their URL fragment under it. Renaming
 a site here updates every deployment that referenced it.
@@ -114,9 +118,8 @@ The stored config has three parts: `domains`, `sites` and `deployments`.
                 { "class": "#repository-container-header", "position": "after" },
                 { "class": ".application-main", "position": "before" }
             ],
-            "classes": {
-                "deploy": "flash flash-success",
-                "no-deploy": "flash flash-error"
+            "style": {
+                "margin": "1.25rem 0"
             }
         }
     },
@@ -150,10 +153,10 @@ key|string|Unique key that must match a domain
 insert|array[insert_data]|Locations to try, in order; the first one found is used
 insert.insert_data.class|string|A class name to look up in the page, or a CSS selector when it starts with `#`, `.` or `[`
 insert.insert_data.position|string[before\|after]|Whether the notice goes before or after that element
-classes|object[class_data]|Classes applied to the notice itself
-classes.class_data.deploy|string|Applied while the window is open
-classes.class_data.no-deploy|string|Applied while the window is closed
-classes.class_data.notes|string|Optional; applied instead for notes-only entries
+style|object[style_data]|Optional spacing overrides for this site
+style.style_data.margin|string|CSS length for the space around the notice
+style.style_data.padding|string|CSS length for the space inside it
+style.style_data.maxWidth|string|CSS length capping how wide it is drawn
 
 **Deployments**
 

@@ -84,7 +84,7 @@ describe('DW', () => {
       const dw = new DW(testConfig(), 'https://github.com/acme/daytime')
       const info = dw.getDeploymentInfo()
       expect(info?.domainInfo.insert).toHaveLength(2)
-      expect(info?.domainInfo.classes.deploy).toBe('flash flash-success')
+      expect(info?.domainInfo.insert[0].class).toBe('file-navigation')
     })
 
     it('defaults name to the deployment key and notes to an empty string', () => {
