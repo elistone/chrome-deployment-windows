@@ -19,6 +19,52 @@ describe('Methods', () => {
     })
   })
 
+  describe('findAnchor', () => {
+    it('treats a bare word as a class name', () => {
+      document.body.innerHTML = '<p class="x">one</p><p class="x">two</p>'
+      expect(Methods.findAnchor('x')?.textContent).toBe('one')
+    })
+
+    it('keeps the two-class meaning of a spaced value', () => {
+      // getElementsByClassName('a b') means "has both", not "b inside a".
+      document.body.innerHTML =
+        '<div class="a"><p class="b">inner</p></div><p class="a b">both</p>'
+      expect(Methods.findAnchor('a b')?.textContent).toBe('both')
+    })
+
+    it('treats a leading # as a selector', () => {
+      document.body.innerHTML = '<div id="repo-header">header</div>'
+      expect(Methods.findAnchor('#repo-header')?.textContent).toBe('header')
+    })
+
+    it('treats a leading . as a selector', () => {
+      document.body.innerHTML = '<div class="a"><p class="b">inner</p></div>'
+      expect(Methods.findAnchor('.a .b')?.textContent).toBe('inner')
+    })
+
+    it('treats a leading [ as a selector', () => {
+      document.body.innerHTML = '<div data-testid="main">tagged</div>'
+      expect(Methods.findAnchor('[data-testid="main"]')?.textContent).toBe(
+        'tagged',
+      )
+    })
+
+    it('returns null for an unparseable selector rather than throwing', () => {
+      document.body.innerHTML = '<div id="x">x</div>'
+      expect(Methods.findAnchor('#((')).toBeNull()
+    })
+
+    it('returns null for an empty or blank value', () => {
+      expect(Methods.findAnchor('')).toBeNull()
+      expect(Methods.findAnchor('   ')).toBeNull()
+    })
+
+    it('ignores surrounding whitespace', () => {
+      document.body.innerHTML = '<div id="x">x</div>'
+      expect(Methods.findAnchor('  #x  ')?.textContent).toBe('x')
+    })
+  })
+
   describe('insertBefore / insertAfter', () => {
     it('inserts before the reference element', () => {
       document.body.innerHTML = '<div id="wrap"><p class="anchor">a</p></div>'
@@ -34,6 +80,14 @@ describe('Methods', () => {
 
       expect(Methods.insertAfter(node, 'anchor')).toBe(true)
       expect(document.querySelector('.anchor')?.nextElementSibling).toBe(node)
+    })
+
+    it('inserts against a selector as readily as a class', () => {
+      document.body.innerHTML = '<div id="wrap"><p id="anchor">a</p></div>'
+      const node = document.createElement('span')
+
+      expect(Methods.insertAfter(node, '#anchor')).toBe(true)
+      expect(document.getElementById('anchor')?.nextElementSibling).toBe(node)
     })
 
     it('reports failure when the reference is absent', () => {

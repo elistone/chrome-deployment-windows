@@ -77,9 +77,9 @@ The control bar lets you:
 
 Each surface renders in its own iframe, so the page-level CSS of the popup and
 options page stays isolated exactly as it is in the real extension. The in-page
-notice is injected into a stand-in host page carrying the same anchor classes
-(`.file-navigation`, `.repository-content`, `.mod-header`) the config targets, so
-insertion is genuinely exercised rather than mocked.
+notice is injected into a stand-in host page carrying anchor classes
+(`.file-navigation`, `.repository-content`, `.mod-header`), so insertion is
+genuinely exercised rather than mocked.
 
 The harness lives entirely in `dev/` and is never part of the extension build.
 It cannot replace a real extension context either: the shim installs only when

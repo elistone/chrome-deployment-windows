@@ -528,7 +528,7 @@
     "description": "Hint for the insert position."
   },
   "l10nElementHint": {
-    "message": "A class name from the page, without the leading dot.",
+    "message": "A class name from the page, without the leading dot. A CSS selector works too, such as #repository-container-header.",
     "description": "Hint for the insert element."
   },
   "l10nClassDeployHint": {

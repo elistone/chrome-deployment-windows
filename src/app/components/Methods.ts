@@ -2,9 +2,9 @@
  * Small DOM / extension-API helpers shared by the content script and UI.
  */
 export class Methods {
-  /** Insert `node` immediately after the first element with `className`. */
-  static insertAfter(node: Node, className: string): boolean {
-    const reference = Methods.findClass(className)
+  /** Insert `node` immediately after the first element `target` names. */
+  static insertAfter(node: Node, target: string): boolean {
+    const reference = Methods.findAnchor(target)
     if (reference?.parentNode) {
       reference.parentNode.insertBefore(node, reference.nextSibling)
       return true
@@ -12,14 +12,47 @@ export class Methods {
     return false
   }
 
-  /** Insert `node` immediately before the first element with `className`. */
-  static insertBefore(node: Node, className: string): boolean {
-    const reference = Methods.findClass(className)
+  /** Insert `node` immediately before the first element `target` names. */
+  static insertBefore(node: Node, target: string): boolean {
+    const reference = Methods.findAnchor(target)
     if (reference?.parentNode) {
       reference.parentNode.insertBefore(node, reference)
       return true
     }
     return false
+  }
+
+  /**
+   * The element an insert rule points at.
+   *
+   * A bare word is a class name, which is what every configuration written so
+   * far contains. A value starting with `#`, `.` or `[` is a CSS selector
+   * instead, because a site's stable anchor is not always a class: GitHub's
+   * repository header is identified by an id, and the classes beside it are
+   * generated and change without notice.
+   *
+   * The distinction is drawn on the first character on purpose. Whitespace is
+   * not a signal, since `getElementsByClassName('a b')` already means "has
+   * both classes" and reading it as a selector would silently change what an
+   * existing config matches.
+   */
+  static findAnchor(target: string): HTMLElement | null {
+    const value = target.trim()
+    if (!value) {
+      return null
+    }
+
+    if (/^[#.[]/.test(value)) {
+      try {
+        const element = document.querySelector(value)
+        return element instanceof HTMLElement ? element : null
+      } catch {
+        // An unparseable selector is a typo in the config, not a crash.
+        return null
+      }
+    }
+
+    return Methods.findClass(value)
   }
 
   /**

@@ -38,9 +38,20 @@ count, and where on the page the notice goes.
 so `*://*.github.com/*` covers GitHub and every subdomain of it, over both http
 and https.
 
-**Where to insert** is a list of class names taken from the site's own HTML. The
+**Where to insert** is a list of anchors taken from the site's own HTML. The
 notice is placed at the first one that exists on the page, so putting a reliable
 fallback lower down the list is worthwhile - it is never inserted twice.
+
+An anchor is usually a class name, written without the leading dot. If it starts
+with `#`, `.` or `[` it is used as a full CSS selector instead, which is what you
+want when the stable part of a page is an id rather than a class - GitHub's
+repository header is `#repository-container-header`, and the classes around it
+are generated.
+
+Sites like GitHub and Jira replace the page's contents as you click around,
+without ever reloading, which takes the notice with it. The extension watches
+for that and puts the notice back, re-checking the URL as it does, so moving
+between projects shows the right one without a refresh.
 
 **Styling** reuses the host site's own classes, which is why the notice looks
 like it belongs there. `flash flash-success` is GitHub's green banner;
@@ -100,8 +111,8 @@ The stored config has three parts: `domains`, `sites` and `deployments`.
     "sites": {
         "github": {
             "insert": [
-                { "class": "file-navigation", "position": "after" },
-                { "class": "repository-content", "position": "before" }
+                { "class": "#repository-container-header", "position": "after" },
+                { "class": ".application-main", "position": "before" }
             ],
             "classes": {
                 "deploy": "flash flash-success",
@@ -137,7 +148,7 @@ Option | Type | Description
 ------ | ---- | -----------
 key|string|Unique key that must match a domain
 insert|array[insert_data]|Locations to try, in order; the first one found is used
-insert.insert_data.class|string|A class name to look up in the page
+insert.insert_data.class|string|A class name to look up in the page, or a CSS selector when it starts with `#`, `.` or `[`
 insert.insert_data.position|string[before\|after]|Whether the notice goes before or after that element
 classes|object[class_data]|Classes applied to the notice itself
 classes.class_data.deploy|string|Applied while the window is open

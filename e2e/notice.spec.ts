@@ -117,6 +117,77 @@ test.describe('in-page notice', () => {
     await expect(next).toHaveClass(/repository-content/)
   })
 
+  test('puts the notice back when the page swaps its content', async ({
+    openStubbedPage,
+  }) => {
+    const page = await openStubbedPage(
+      'https://github.com/acme/always',
+      githubPageHtml(),
+    )
+    await expect(page.locator('.dw-notification')).toBeVisible()
+
+    // What a turbo frame swap does: the region the notice was injected into is
+    // replaced wholesale, taking the notice with it.
+    await page.evaluate(() => {
+      document.body.innerHTML =
+        '<div class="file-navigation">file navigation</div>'
+    })
+
+    await expect(page.locator('.dw-notification')).toBeVisible()
+    await expect(page.locator('.dw-notification')).toHaveCount(1)
+  })
+
+  test('follows an in-app navigation to another project', async ({
+    openStubbedPage,
+  }) => {
+    const page = await openStubbedPage(
+      'https://github.com/acme/always',
+      githubPageHtml(),
+    )
+    await expect(page.locator('.dw-notification')).toContainText(
+      'Always open project',
+    )
+
+    // No page load: the url changes and the content is re-rendered, which is
+    // all a single page app does when you click one of its own links.
+    await page.evaluate(() => {
+      history.pushState({}, '', '/acme/notes')
+      document.body.innerHTML =
+        '<div class="file-navigation">file navigation</div>'
+    })
+
+    await expect(page.locator('.dw-notification')).toContainText(
+      'Notes only project',
+    )
+    await expect(page.locator('.dw-notification')).toHaveCount(1)
+  })
+
+  test('accepts a css selector as an insert location', async ({
+    seedConfig,
+    openStubbedPage,
+  }) => {
+    // What github.com needs: its stable anchor is an id, and the classes
+    // beside it are generated.
+    const config = e2eConfig()
+    config.sites.github.insert = [
+      { class: '#repository-container-header', position: 'after' },
+    ]
+    await seedConfig(config)
+
+    const page = await openStubbedPage(
+      'https://github.com/acme/always',
+      `<!doctype html><html lang="en"><body>
+         <div id="repository-container-header">repo header</div>
+         <div class="repository-content">repository content</div>
+       </body></html>`,
+    )
+
+    const notice = page.locator('.dw-notification')
+    await expect(notice).toBeVisible()
+    const previous = notice.locator('xpath=preceding-sibling::*[1]')
+    await expect(previous).toHaveAttribute('id', 'repository-container-header')
+  })
+
   test('injects nothing on a url with no configured deployment', async ({
     openStubbedPage,
   }) => {

@@ -19,8 +19,14 @@ export function defaultConfig(): DeploymentWindowsConfig {
     sites: {
       github: {
         insert: [
-          { class: 'file-navigation', position: 'after' },
-          { class: 'repository-content', position: 'before' },
+          // Directly under the repository tab strip, and outside the region
+          // GitHub swaps as you move between tabs. `file-navigation`, which v1
+          // aimed at, no longer exists, and `repository-content` only exists
+          // on a full page load - it is gone after an in-app navigation.
+          { class: '#repository-container-header', position: 'after' },
+          // Anything that is not a repository page - an org or user profile -
+          // has no repository header, so fall back to the whole page body.
+          { class: '.application-main', position: 'before' },
         ],
         classes: {
           deploy: 'flash flash-success',

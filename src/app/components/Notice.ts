@@ -25,6 +25,8 @@ export class Notice {
   element: HTMLDivElement | null = null
   inserted = false
 
+  /** Which insert rule placed the notice, or -1 while it is not placed. */
+  private locationIndex = -1
   private realTimeTimer: ReturnType<typeof setInterval> | null = null
   private toggleHandler: ((event: Event) => void) | null = null
   /** Avoids messaging the service worker every tick when nothing changed. */
@@ -60,18 +62,25 @@ export class Notice {
   /**
    * Try each configured insert location in order, stopping at the first hit, so
    * the notice is only ever added once per page.
+   *
+   * Safe to call again after the host page has torn the notice out of the DOM:
+   * the timer and the toggle listener are only ever set up once, so repeated
+   * inserts cannot stack a second clock or double-fire the details toggle.
    */
   insert(): boolean {
     const element = this.element ?? this.build()
     this.inserted = false
+    this.locationIndex = -1
 
-    for (const location of this.deployment.domainInfo.insert ?? []) {
+    const locations = this.deployment.domainInfo.insert ?? []
+    for (const [index, location] of locations.entries()) {
       if (location.position === 'after') {
         this.inserted = Methods.insertAfter(element, location.class)
       } else if (location.position === 'before') {
         this.inserted = Methods.insertBefore(element, location.class)
       }
       if (this.inserted) {
+        this.locationIndex = index
         break
       }
     }
@@ -82,6 +91,29 @@ export class Notice {
     }
 
     return this.inserted
+  }
+
+  /**
+   * Does the notice need putting back?
+   *
+   * True once it has been detached, and also once a location earlier in the
+   * list has appeared. A single page app swaps its content in stages, so a pass
+   * that runs mid-swap can land on the fallback while the anchor it should
+   * really use is momentarily absent - which on GitHub means the notice sits
+   * above the repository header instead of under its tabs.
+   */
+  needsInsert(): boolean {
+    if (this.element?.isConnected !== true) {
+      return true
+    }
+
+    const locations = this.deployment.domainInfo.insert ?? []
+    for (let index = 0; index < this.locationIndex; index += 1) {
+      if (Methods.findAnchor(locations[index].class)) {
+        return true
+      }
+    }
+    return false
   }
 
   /** Stop timers and listeners, and remove the notice from the page. */
@@ -96,6 +128,7 @@ export class Notice {
     this.toggleHandler = null
     this.element?.remove()
     this.inserted = false
+    this.locationIndex = -1
   }
 
   private getContent(): string {
@@ -158,11 +191,16 @@ export class Notice {
 
   private enableRealTime(): void {
     this.realTime()
+    if (this.realTimeTimer !== null) {
+      return
+    }
     this.realTimeTimer = setInterval(() => this.realTime(), REALTIME_INTERVAL_MS)
   }
 
   private enableToggleDetails(): void {
-    if (!this.toggle) {
+    // The listener lives on the notice's own element, which survives being
+    // removed from the page, so it is still attached on a re-insert.
+    if (!this.toggle || this.toggleHandler) {
       return
     }
     this.toggleHandler = (event: Event) => this.toggleDetails(event)
