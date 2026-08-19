@@ -255,6 +255,39 @@ describe('SiteCard', () => {
     expect(screen.getByText('github.com')).toBeInTheDocument()
   })
 
+  it('shows a quote in a value as a quote, not as an entity', () => {
+    renderSite('github', false, {
+      site: {
+        ...config.sites.github,
+        classes: { ...config.sites.github.classes, deploy: "flash 'ok'" },
+      },
+    })
+
+    expect(screen.getByText("flash 'ok'")).toBeInTheDocument()
+  })
+
+  it('reads a bare insert location back as the class it is', () => {
+    renderSite('github')
+    expect(screen.getByText('.file-navigation')).toBeInTheDocument()
+  })
+
+  it('leaves a selector insert location exactly as written', () => {
+    renderSite('github', false, {
+      site: {
+        ...config.sites.github,
+        insert: [
+          { class: '#repository-container-header', position: 'after' as const },
+          { class: '[data-testid="main"]', position: 'before' as const },
+        ],
+      },
+    })
+
+    expect(
+      screen.getByText('#repository-container-header'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('[data-testid="main"]')).toBeInTheDocument()
+  })
+
   it('says so when the patterns name no particular host', () => {
     renderSite('github', false, { patterns: ['*://*/*'] })
     expect(screen.getByText('any host')).toBeInTheDocument()

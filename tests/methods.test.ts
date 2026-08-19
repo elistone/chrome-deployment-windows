@@ -19,6 +19,22 @@ describe('Methods', () => {
     })
   })
 
+  describe('isSelector', () => {
+    it.each(['#id', '.klass', '[data-x]', '  #id  '])(
+      'reads %s as a selector',
+      (value) => {
+        expect(Methods.isSelector(value)).toBe(true)
+      },
+    )
+
+    it.each(['repository-content', 'a b', '', 'flash-success'])(
+      'reads %s as a class name',
+      (value) => {
+        expect(Methods.isSelector(value)).toBe(false)
+      },
+    )
+  })
+
   describe('findAnchor', () => {
     it('treats a bare word as a class name', () => {
       document.body.innerHTML = '<p class="x">one</p><p class="x">two</p>'

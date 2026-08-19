@@ -80,7 +80,7 @@ export function DeploymentCard({
     <article className="dw-card" data-status={tone}>
       <header className="dw-card-head">
         <div className="dw-card-heading">
-          <h3 className="dw-card-title">{TextFormatter.stripTags(name)}</h3>
+          <h3 className="dw-card-title">{TextFormatter.toPlainText(name)}</h3>
           <code className="dw-card-key">{configKey}</code>
         </div>
         <StatusPill tone={tone} />
@@ -132,7 +132,7 @@ export function DeploymentCard({
               <span className="dw-chip-key">{domainKey}</span>
               <span className="dw-chip-value">
                 {fragment
-                  ? TextFormatter.stripTags(fragment)
+                  ? TextFormatter.toPlainText(fragment)
                   : Methods.i18n('l10nNotConfigured')}
               </span>
             </li>

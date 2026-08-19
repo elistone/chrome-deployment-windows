@@ -221,7 +221,7 @@ export function SiteForm({
                     id={id}
                     className="dw-input dw-mono"
                     type="text"
-                    placeholder="repository-content"
+                    placeholder="#repository-container-header"
                     value={entry.class}
                     onChange={(event) =>
                       setInsert(index, { class: event.target.value })

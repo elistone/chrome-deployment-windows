@@ -192,7 +192,7 @@ function Deployment({
           <StatusPill tone={toneFor(deployment)} />
         </div>
         <h1 className="dw-popup-title">
-          {TextFormatter.stripTags(deployment.name)}
+          {TextFormatter.toPlainText(deployment.name)}
         </h1>
       </header>
 

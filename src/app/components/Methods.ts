@@ -23,6 +23,16 @@ export class Methods {
   }
 
   /**
+   * Is this insert location a CSS selector rather than a bare class name?
+   *
+   * Shared with the options page so what it draws and what the content script
+   * looks for can never disagree about what a value means.
+   */
+  static isSelector(target: string): boolean {
+    return /^[#.[]/.test(target.trim())
+  }
+
+  /**
    * The element an insert rule points at.
    *
    * A bare word is a class name, which is what every configuration written so
@@ -42,7 +52,7 @@ export class Methods {
       return null
     }
 
-    if (/^[#.[]/.test(value)) {
+    if (Methods.isSelector(value)) {
       try {
         const element = document.querySelector(value)
         return element instanceof HTMLElement ? element : null

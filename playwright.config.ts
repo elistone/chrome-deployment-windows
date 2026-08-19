@@ -9,7 +9,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
-  timeout: 30_000,
+  // Every test launches a persistent profile with the extension loaded and
+  // tears it down again, which on a busy machine can take most of a shorter
+  // budget before a single assertion runs. The expect timeout below is what
+  // actually bounds the assertions.
+  timeout: 60_000,
   expect: { timeout: 10_000 },
   use: {
     trace: 'on-first-retry',

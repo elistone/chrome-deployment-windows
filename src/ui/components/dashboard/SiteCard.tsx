@@ -12,6 +12,18 @@ import {
   siteInitials,
 } from './siteBranding'
 
+/**
+ * How an insert location reads back.
+ *
+ * A bare class name is shown with the leading dot it was entered without, so it
+ * looks like the CSS it is - but a selector already carries its own `#`, `.` or
+ * `[`, and prefixing that gave `.#repository-container-header`.
+ */
+function anchorLabel(value: string): string {
+  const anchor = TextFormatter.toPlainText(value)
+  return Methods.isSelector(anchor) ? anchor : `.${anchor}`
+}
+
 interface SiteCardProps {
   configKey: string
   patterns: string[]
@@ -85,7 +97,7 @@ export function SiteCard({
           <SiteFavicon host={host} name={configKey} />
           <div className="dw-card-heading">
             <h3 className="dw-card-title">
-              {TextFormatter.stripTags(configKey)}
+              {TextFormatter.toPlainText(configKey)}
             </h3>
             <span className="dw-card-key">
               {host ?? Methods.i18n('l10nAnyHost')}
@@ -113,7 +125,7 @@ export function SiteCard({
             <ul className="dw-list">
               {patterns.map((pattern, index) => (
                 <li key={index} className="dw-mono">
-                  {TextFormatter.stripTags(pattern)}
+                  {TextFormatter.toPlainText(pattern)}
                 </li>
               ))}
             </ul>
@@ -137,7 +149,7 @@ export function SiteCard({
                     )}
                   </dt>
                   <dd className="dw-mono">
-                    .{TextFormatter.stripTags(entry.class)}
+                    {anchorLabel(entry.class)}
                   </dd>
                 </div>
               ))}
@@ -154,7 +166,7 @@ export function SiteCard({
                   <div className="dw-def" key={labelKey}>
                     <dt>{Methods.i18n(labelKey)}</dt>
                     <dd className="dw-mono">
-                      {TextFormatter.stripTags(value)}
+                      {TextFormatter.toPlainText(value)}
                     </dd>
                   </div>
                 ) : null,
