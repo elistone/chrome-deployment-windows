@@ -176,17 +176,24 @@ src/
     popup.css            Popup layout
     notice.css           In-page notice, adopted into its shadow root
   documents/HowToUse.md  Rendered inside the options page
+assets/icons/            Vector source for the toolbar icons, not shipped
 public/                  Copied verbatim to dist/ (icons, _locales)
 dev/                     Browser-only dev harness (never built into the extension)
 tests/                   Vitest unit and component tests
 e2e/                     Playwright end-to-end tests
-scripts/                 Manifest check and release packaging
+scripts/                 Build checks, icon drawing and release packaging
 ```
 
----
+### Redrawing the icons
 
-## Credits
+```text
+pnpm icons
+```
 
-### Icon
+Renders `public/icons/<state>/icon{16,48,128}.png` from the geometry in
+`scripts/icons.js`, and writes the SVG source to `assets/icons/` alongside. The
+three states share one disc, one stroke weight and one set of tones, and only
+the glyph changes — a ring for the extension itself, a chevron while the window
+is open, a bar while it is shut. The PNGs are committed, so this only needs
+running when the artwork changes.
 
-Icons made by [Nhor Phai](https://www.flaticon.com/authors/nhor-phai) from [www.flaticon.com](https://www.flaticon.com/)

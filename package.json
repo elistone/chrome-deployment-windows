@@ -16,6 +16,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "package": "pnpm build && node scripts/package.js",
+    "icons": "node scripts/icons.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
