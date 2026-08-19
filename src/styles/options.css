@@ -330,6 +330,16 @@ body {
   gap: var(--dw-space-3);
 }
 
+/* The pill and the countdown stack at the right hand end, so the title keeps
+   the width it needs and the two status readings stay together. */
+.dw-card-status {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
 .dw-card-heading {
   display: flex;
   flex-direction: column;

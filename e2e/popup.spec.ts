@@ -49,6 +49,9 @@ test.describe('popup', () => {
       'open',
     )
     await expect(page.locator('.dw-pill')).toHaveText('Deployment window open')
+    await expect(page.locator('.dw-countdown')).toHaveText(
+      /^Closes in (1h|59m)$/,
+    )
     await expect(page.locator('.dw-popup-rows')).toBeVisible()
     await expect(page.locator('.dw-popup-site')).toContainText('github.com')
   })

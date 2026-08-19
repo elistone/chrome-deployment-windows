@@ -181,8 +181,29 @@
   animation: dw-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
-.toggle {
+/* The countdown and the toggle share the right hand end of the head, so the
+   name keeps whatever width is left rather than being pushed onto its own
+   line by two separately floated things. */
+.head-end {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   margin-left: auto;
+}
+
+/* The status says whether you can deploy. This says for how much longer, which
+   is the part anyone actually plans around, so it is coloured with the card
+   rather than tucked away in the rows below. */
+.countdown {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--dw-tone);
+  white-space: nowrap;
+  animation: dw-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) 30ms both;
+}
+
+.toggle {
   padding: 3px 0;
   font: inherit;
   font-size: 12px;
@@ -356,7 +377,7 @@
     gap: 4px;
   }
 
-  .toggle {
+  .head-end {
     margin-left: 0;
   }
 }
@@ -434,6 +455,7 @@
   .notice[data-flip],
   .name,
   .pill,
+  .countdown,
   .rows {
     animation: none;
   }

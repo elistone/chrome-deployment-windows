@@ -542,5 +542,25 @@
   "l10nAnyHost": {
     "message": "any host",
     "description": "Shown when a site pattern names no particular host."
+  },
+  "l10nClosesIn": {
+    "message": "Closes in",
+    "description": "Prefix for how long the open deployment window has left, e.g. 'Closes in 2h 10m'."
+  },
+  "l10nOpensIn": {
+    "message": "Opens in",
+    "description": "Prefix for how long until a closed deployment window next opens, e.g. 'Opens in 45m'."
+  },
+  "l10nUnderAMinute": {
+    "message": "under a minute",
+    "description": "Duration shown when the window changes state within the current minute."
+  },
+  "l10nHoursShort": {
+    "message": "h",
+    "description": "Single letter suffix for hours in a duration, e.g. the h in '2h 10m'."
+  },
+  "l10nMinutesShort": {
+    "message": "m",
+    "description": "Single letter suffix for minutes in a duration, e.g. the m in '2h 10m'."
   }
 }

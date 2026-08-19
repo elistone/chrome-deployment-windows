@@ -3,8 +3,10 @@ import { Methods } from '../../../app/components/Methods'
 import { TextFormatter } from '../../../app/components/TextFormatter'
 import type { DeploymentConfig } from '../../../app/config/types'
 import ConfirmDelete from '../common/ConfirmDelete'
+import Countdown from '../common/Countdown'
 import StatusPill, { type StatusTone } from '../common/StatusPill'
 import { ClockIcon, CopyIcon, NoteIcon, PencilIcon } from '../common/Icons'
+import { useNow } from '../common/useNow'
 
 interface DeploymentCardProps {
   configKey: string
@@ -65,6 +67,9 @@ export function DeploymentCard({
   onDuplicate,
   onDelete,
 }: DeploymentCardProps) {
+  // The status and the countdown are both worked out from the clock, so the
+  // card has to keep redrawing for either to stay true.
+  useNow()
   const tone = statusFor(deployment)
   const name =
     typeof deployment.name === 'string' && deployment.name
@@ -83,7 +88,12 @@ export function DeploymentCard({
           <h3 className="dw-card-title">{TextFormatter.toPlainText(name)}</h3>
           <code className="dw-card-key">{configKey}</code>
         </div>
-        <StatusPill tone={tone} />
+        <div className="dw-card-status">
+          <StatusPill tone={tone} />
+          {times && tone !== 'notes' && tone !== 'unset' && (
+            <Countdown start={times.local.start} end={times.local.end} />
+          )}
+        </div>
       </header>
 
       {times && (

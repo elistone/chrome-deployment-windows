@@ -56,6 +56,26 @@ test.describe('in-page notice', () => {
     )
   })
 
+  test('says how long the window has left, in both directions', async ({
+    openStubbedPage,
+  }) => {
+    // The fixture windows are built an exact number of hours from now, so the
+    // only wobble is whichever minute the suite happens to start in.
+    const open = await openStubbedPage(
+      'https://github.com/acme/always',
+      githubPageHtml(),
+    )
+    await expect(open.locator('.countdown')).toHaveText(/^Closes in (1h|59m)$/)
+
+    const closed = await openStubbedPage(
+      'https://github.com/acme/never',
+      githubPageHtml(),
+    )
+    await expect(closed.locator('.countdown')).toHaveText(
+      /^Opens in (2h|1h 59m)$/,
+    )
+  })
+
   test('ticks the clock in real time', async ({ openStubbedPage }) => {
     const page = await openStubbedPage(
       'https://github.com/acme/always',

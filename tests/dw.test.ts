@@ -157,6 +157,44 @@ describe('DW', () => {
     })
   })
 
+  describe('countdownText', () => {
+    it('says how long an open window has left', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T12:50:00'))
+      expect(DW.countdownText('09:00', '17:00')).toBe('Closes in 4h 10m')
+    })
+
+    it('drops the minutes when there are none', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T12:00:00'))
+      expect(DW.countdownText('09:00', '17:00')).toBe('Closes in 5h')
+    })
+
+    it('drops the hours when there are none', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T16:45:00'))
+      expect(DW.countdownText('09:00', '17:00')).toBe('Closes in 15m')
+    })
+
+    it('says how long until a closed window opens', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T07:30:00'))
+      expect(DW.countdownText('09:00', '17:00')).toBe('Opens in 1h 30m')
+    })
+
+    it('words the last minute rather than showing 0m', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T17:00:30'))
+      expect(DW.countdownText('09:00', '17:00')).toBe(
+        'Closes in under a minute',
+      )
+    })
+
+    it('says nothing at all when the times cannot be read', () => {
+      expect(DW.countdownText('', '17:00')).toBe('')
+    })
+  })
+
   describe('create', () => {
     it('loads config from storage before resolving', async () => {
       seedStorage({

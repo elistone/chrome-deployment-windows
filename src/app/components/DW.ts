@@ -10,6 +10,7 @@ import { Methods } from './Methods'
 import { Timezones, isValidTimezone } from './Timezones'
 
 const DEFAULT_TIME = '00:00'
+const MINUTES_PER_HOUR = 60
 
 /**
  * Resolves "what, if anything, should be shown for this URL".
@@ -181,5 +182,49 @@ export class DW {
     return DW.canDeploy(startTime, endTime)
       ? Methods.i18n('l10nDeploymentOpen')
       : Methods.i18n('l10nDeploymentClosed')
+  }
+
+  /**
+   * "Closes in 2h 10m", or "Opens in 45m".
+   *
+   * The status on its own answers whether you can deploy; this answers the
+   * question everybody asks straight afterwards, which is the one you plan
+   * around. Empty when the times cannot be read, so every caller can render it
+   * unconditionally.
+   */
+  static countdownText(startTime: string, endTime: string): string {
+    const countdown = Timezones.countdown(startTime, endTime)
+    if (!countdown) {
+      return ''
+    }
+    const label = Methods.i18n(
+      countdown.open ? 'l10nClosesIn' : 'l10nOpensIn',
+    )
+    return `${label} ${DW.duration(countdown.minutes)}`
+  }
+
+  /**
+   * Whole minutes as "2h 10m".
+   *
+   * A window never sits more than a day away, so hours are the largest unit
+   * needed. Anything under a minute is worded rather than shown as "0m", which
+   * reads as though it has already happened.
+   */
+  private static duration(minutes: number): string {
+    if (minutes <= 0) {
+      return Methods.i18n('l10nUnderAMinute')
+    }
+
+    const hours = Math.floor(minutes / MINUTES_PER_HOUR)
+    const rest = minutes % MINUTES_PER_HOUR
+    const parts: string[] = []
+
+    if (hours > 0) {
+      parts.push(`${hours}${Methods.i18n('l10nHoursShort')}`)
+    }
+    if (rest > 0) {
+      parts.push(`${rest}${Methods.i18n('l10nMinutesShort')}`)
+    }
+    return parts.join(' ')
   }
 }

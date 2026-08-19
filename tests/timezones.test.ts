@@ -115,6 +115,67 @@ describe('Timezones', () => {
     })
   })
 
+  describe('countdown', () => {
+    it('counts down to the close while the window is open', () => {
+      expect(Timezones.countdown('09:00', '17:00', '12:00')).toEqual({
+        open: true,
+        minutes: 300,
+      })
+    })
+
+    it('counts down to the opening before the window starts', () => {
+      expect(Timezones.countdown('09:00', '17:00', '07:30')).toEqual({
+        open: false,
+        minutes: 90,
+      })
+    })
+
+    it('counts forward to tomorrow once the window has passed', () => {
+      // 20:00 to the next 09:00 is 13 hours, not minus eleven.
+      expect(Timezones.countdown('09:00', '17:00', '20:00')).toEqual({
+        open: false,
+        minutes: 780,
+      })
+    })
+
+    it('counts down across midnight inside a wrapping window', () => {
+      expect(Timezones.countdown('23:00', '02:00', '00:30')).toEqual({
+        open: true,
+        minutes: 90,
+      })
+    })
+
+    it('counts up to a wrapping window from the middle of the day', () => {
+      expect(Timezones.countdown('23:00', '02:00', '12:00')).toEqual({
+        open: false,
+        minutes: 660,
+      })
+    })
+
+    it('reports zero for the closing minute itself', () => {
+      // The window runs to the end of 17:00, so this is "any second now"
+      // rather than "already shut".
+      expect(Timezones.countdown('09:00', '17:00', '17:00')).toEqual({
+        open: true,
+        minutes: 0,
+      })
+    })
+
+    it('returns null for a time it cannot read', () => {
+      expect(Timezones.countdown('nope', '17:00', '12:00')).toBeNull()
+      expect(Timezones.countdown('09:00', '', '12:00')).toBeNull()
+    })
+
+    it('uses the clock when no time is supplied', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T15:45:00'))
+      expect(Timezones.countdown('09:00', '17:00')).toEqual({
+        open: true,
+        minutes: 75,
+      })
+    })
+  })
+
   describe('getCurrentDate', () => {
     it('zero pads day and month', () => {
       expect(Timezones.getCurrentDate('2020/01/05')).toEqual({

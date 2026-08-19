@@ -5,9 +5,11 @@ import { Methods } from '../../app/components/Methods'
 import { TextFormatter } from '../../app/components/TextFormatter'
 import type { ResolvedDeployment } from '../../app/config/types'
 import { useTheme } from '../theme'
+import Countdown from './common/Countdown'
 import { ClockIcon, NoteIcon, SettingsIcon } from './common/Icons'
 import StatusPill, { type StatusTone } from './common/StatusPill'
 import { THEME_META } from './common/themeMeta'
+import { useNow } from './common/useNow'
 import { faviconUrl, siteInitials } from './dashboard/siteBranding'
 
 interface PopupView {
@@ -61,11 +63,16 @@ function usePopupView(): { loaded: boolean; view: PopupView } {
   return { loaded, view }
 }
 
+/**
+ * Recomputed rather than read off the resolved deployment: `canDeploy` was
+ * decided when the popup opened, and the popup outlives the moment it asked.
+ */
 function toneFor(deployment: ResolvedDeployment): StatusTone {
   if (deployment.notesOnly) {
     return 'notes'
   }
-  return deployment.canDeploy ? 'open' : 'closed'
+  const { start, end } = deployment.timeObj.local
+  return DW.canDeploy(start, end) ? 'open' : 'closed'
 }
 
 /** The active tab's favicon, from Chrome's own cache, or its initial. */
@@ -194,6 +201,12 @@ function Deployment({
         <h1 className="dw-popup-title">
           {TextFormatter.toPlainText(deployment.name)}
         </h1>
+        {!deployment.notesOnly && (
+          <Countdown
+            start={deployment.timeObj.local.start}
+            end={deployment.timeObj.local.end}
+          />
+        )}
       </header>
 
       <div className="dw-popup-body">
@@ -256,6 +269,8 @@ function Message({
  */
 export function Popup() {
   const { loaded, view } = usePopupView()
+  // Keeps the status and the countdown honest for as long as the popup is up.
+  useNow()
   // The status tints the whole panel, so it lives on the outermost element.
   const tone = view.deployment ? toneFor(view.deployment) : undefined
 

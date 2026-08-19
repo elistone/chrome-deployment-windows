@@ -132,6 +132,41 @@ describe('Notice', () => {
       expect(root.querySelector('.details')).toBeNull()
     })
 
+    describe('countdown', () => {
+      // The fixture window is 09:00-17:00 Europe/London, which is 04:00-12:00
+      // in the America/New_York timezone the tests are pinned to.
+      it('says how long an open window has left', () => {
+        vi.useFakeTimers()
+        vi.setSystemTime(new Date('2024-06-03T10:00:00'))
+
+        notice = new Notice(resolve(DAYTIME))
+        const root = inside(notice.build())
+
+        expect(root.querySelector('.countdown')?.textContent).toBe(
+          'Closes in 2h',
+        )
+      })
+
+      it('says how long until a closed window opens', () => {
+        vi.useFakeTimers()
+        vi.setSystemTime(new Date('2024-06-03T13:30:00'))
+
+        notice = new Notice(resolve(DAYTIME))
+        const root = inside(notice.build())
+
+        expect(root.querySelector('.countdown')?.textContent).toBe(
+          'Opens in 14h 30m',
+        )
+      })
+
+      it('has nothing to count down for a notes-only entry', () => {
+        notice = new Notice(resolve(NOTES_ONLY))
+        const root = inside(notice.build())
+
+        expect(root.querySelector('.countdown')).toBeNull()
+      })
+    })
+
     describe('spacing', () => {
       it('applies the site overrides as custom properties', () => {
         const deployment = resolve(DAYTIME)
@@ -290,6 +325,25 @@ describe('Notice', () => {
 
       vi.advanceTimersByTime(1000)
       expect(clock()).toBe('12:00:02')
+    })
+
+    it('counts the window down as the clock moves', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T11:00:00'))
+
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+
+      const countdown = () =>
+        onPage().querySelector('.countdown')?.textContent
+      expect(countdown()).toBe('Closes in 1h')
+
+      vi.advanceTimersByTime(30 * 60 * 1000)
+      expect(countdown()).toBe('Closes in 30m')
+
+      // Past the close, and it turns round to the next opening.
+      vi.advanceTimersByTime(31 * 60 * 1000)
+      expect(countdown()).toBe('Opens in 15h 59m')
     })
 
     it('flips status and tone when the window closes', () => {

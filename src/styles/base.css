@@ -81,6 +81,29 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* countdown                                                           */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Sits beside the pill and carries the same colour, so the two read as one
+ * statement rather than as a status and an unrelated number.
+ */
+.dw-countdown {
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dw-countdown-open {
+  color: var(--dw-success);
+}
+
+.dw-countdown-closed {
+  color: var(--dw-danger);
+}
+
+/* ------------------------------------------------------------------ */
 /* label/value pairs                                                   */
 /* ------------------------------------------------------------------ */
 

@@ -45,6 +45,7 @@ export class Notice {
   private card: HTMLElement | null = null
   private clock: HTMLElement | null = null
   private statusText: HTMLElement | null = null
+  private countdown: HTMLElement | null = null
   private details: HTMLElement | null = null
   private toggle: HTMLElement | null = null
 
@@ -85,6 +86,7 @@ export class Notice {
     this.card = card
     this.clock = card.querySelector('.clock')
     this.statusText = card.querySelector('.status-text')
+    this.countdown = card.querySelector('.countdown')
     this.details = card.querySelector('.details')
     this.toggle = card.querySelector('.toggle')
 
@@ -205,13 +207,20 @@ export class Notice {
     const { timeObj, name, notes, notesOnly } = this.deployment
     const t = TextFormatter.stripTags
 
+    // A notes-only entry has nothing to hide behind a toggle: the notes are
+    // the whole notice, and they start open.
+    const toggle =
+      notes && !notesOnly
+        ? `<button type="button" class="toggle" aria-expanded="false">${Methods.i18n('l10nDetailsShow')}</button>`
+        : ''
+    const countdown = notesOnly
+      ? ''
+      : `<span class="countdown">${t(this.countdownText())}</span>`
     const heading = [
       notesOnly ? '' : this.statusPill(),
       `<h2 class="name">${t(name)}</h2>`,
-      // A notes-only entry has nothing to hide behind a toggle: the notes are
-      // the whole notice, and they start open.
-      notes && !notesOnly
-        ? `<button type="button" class="toggle" aria-expanded="false">${Methods.i18n('l10nDetailsShow')}</button>`
+      countdown || toggle
+        ? `<div class="head-end">${countdown}${toggle}</div>`
         : '',
     ].join('')
 
@@ -239,6 +248,12 @@ export class Notice {
       : ''
 
     return `<div class="head">${heading}</div>${times}${details}`
+  }
+
+  /** "Closes in 2h 10m", for the head. */
+  private countdownText(): string {
+    const { start, end } = this.deployment.timeObj.local
+    return DW.countdownText(start, end)
   }
 
   private statusPill(): string {
@@ -330,6 +345,9 @@ export class Notice {
     }
     if (this.statusText) {
       this.statusText.textContent = DW.statusText(start, end)
+    }
+    if (this.countdown) {
+      this.countdown.textContent = this.countdownText()
     }
     if (this.card && this.card.dataset.status !== this.tone()) {
       this.card.dataset.status = this.tone()

@@ -16,6 +16,14 @@ const MINUTES_PER_DAY = 24 * 60
 /** Any date works for formatting a bare time; this one is just a fixed anchor. */
 const ANCHOR_DATE = '2000-01-01'
 
+/** How long is left of the current state of a deployment window. */
+export interface WindowCountdown {
+  /** Is the window open right now? */
+  open: boolean
+  /** Whole minutes until it closes, or until it next opens. */
+  minutes: number
+}
+
 export interface CurrentDate {
   day: string
   month: string
@@ -173,6 +181,40 @@ export class Timezones {
       return now >= start && now <= end
     }
     return now >= start || now <= end
+  }
+
+  /**
+   * How long until the window changes state, in whole minutes.
+   *
+   * The extension knew the window and it knew the time, and never subtracted
+   * one from the other - so it could say "closed" without ever saying for how
+   * much longer, which is the only part anyone actually acts on.
+   *
+   * Both directions wrap past midnight, so a window that has already ended
+   * today counts forward to tomorrow's opening rather than going negative.
+   * Zero means the boundary is inside the current minute: the window ends at
+   * the close of `end`, so 0 is "any second now", not "already over".
+   */
+  static countdown(
+    startTime: string,
+    endTime: string,
+    setTime: string | null = null,
+  ): WindowCountdown | null {
+    const start = toMinutesOfDay(startTime)
+    const end = toMinutesOfDay(endTime)
+    const now =
+      setTime === null ? Timezones.nowMinutes() : toMinutesOfDay(setTime)
+
+    if (start === null || end === null || now === null) {
+      return null
+    }
+
+    const open = Timezones.isDeploymentWindow(startTime, endTime, setTime)
+    const target = open ? end : start
+    return {
+      open,
+      minutes: (target - now + MINUTES_PER_DAY) % MINUTES_PER_DAY,
+    }
   }
 
   /** Minutes since local midnight, right now. */

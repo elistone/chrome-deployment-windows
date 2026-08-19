@@ -93,6 +93,59 @@ describe('DeploymentCard', () => {
     expect(screen.getByText('Deployment window open')).toBeInTheDocument()
   })
 
+  it('says how much longer the window has', () => {
+    // 10:00 in New York, two hours before the 04:00-12:00 local window shuts.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2024-06-03T10:00:00'))
+    const { container } = renderDeployment('daytime')
+
+    expect(container.querySelector('.dw-countdown')?.textContent).toBe(
+      'Closes in 2h',
+    )
+  })
+
+  it('counts up to the next opening once the window has shut', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2024-06-03T13:30:00'))
+    const { container } = renderDeployment('daytime')
+
+    expect(container.querySelector('.dw-countdown')?.textContent).toBe(
+      'Opens in 14h 30m',
+    )
+  })
+
+  it('keeps the status and the countdown true while it sits open', () => {
+    // The options page can be left open all afternoon. Both readings are
+    // worked out from the clock, so the card has to keep redrawing.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2024-06-03T11:59:00'))
+    const { container } = renderDeployment('daytime')
+
+    expect(screen.getByText('Deployment window open')).toBeInTheDocument()
+    expect(container.querySelector('.dw-countdown')?.textContent).toBe(
+      'Closes in 1m',
+    )
+
+    act(() => {
+      vi.advanceTimersByTime(2 * 60 * 1000)
+    })
+
+    expect(screen.getByText('Deployment window closed')).toBeInTheDocument()
+    expect(container.querySelector('.dw-countdown')?.textContent).toBe(
+      'Opens in 15h 59m',
+    )
+  })
+
+  it('has nothing to count down without a window', () => {
+    atMidday()
+    const notes = renderDeployment('notesOnly')
+    expect(notes.container.querySelector('.dw-countdown')).toBeNull()
+    notes.unmount()
+
+    const untimed = renderDeployment('untimed')
+    expect(untimed.container.querySelector('.dw-countdown')).toBeNull()
+  })
+
   it('lists a fragment per site, marking the ones not set', () => {
     atMidday()
     const { container } = renderDeployment('daytime')

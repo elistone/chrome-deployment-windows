@@ -23,8 +23,10 @@ by hand unless you want to.
    the hours it can be deployed, and the part of the URL that identifies it.
 4. Turn Edit mode back off. Open one of those pages and the notice appears.
 
-Each card shows its live status, so this page doubles as an at-a-glance view of
-what is open right now.
+Each card shows its live status and how long that status has left — "Closes in
+2h 10m", or "Opens in 45m" — so this page doubles as an at-a-glance view of what
+is open right now, and what is about to change. The notice and the toolbar popup
+say the same thing on the page itself.
 
 ---
 

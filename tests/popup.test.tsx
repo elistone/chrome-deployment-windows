@@ -43,6 +43,29 @@ describe('Popup', () => {
     vi.useRealTimers()
   })
 
+  it('says how much longer the window has', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date('2024-06-03T10:00:00'))
+
+    const { container } = await renderPopupFor('https://github.com/acme/daytime')
+    await screen.findByText('Daytime project')
+
+    expect(container.querySelector('.dw-countdown')?.textContent).toBe(
+      'Closes in 2h',
+    )
+
+    vi.useRealTimers()
+  })
+
+  it('has nothing to count down for a notes-only entry', async () => {
+    const { container } = await renderPopupFor(
+      'https://github.com/acme/notes-only',
+    )
+    await screen.findByText('Notes only project')
+
+    expect(container.querySelector('.dw-countdown')).toBeNull()
+  })
+
   it('names the host the window was matched against', async () => {
     await renderPopupFor('https://github.com/acme/daytime')
 
