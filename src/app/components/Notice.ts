@@ -1,4 +1,5 @@
 import type { ResolvedDeployment, SiteStyle } from '../config/types'
+import { GLYPHS, GLYPH_VIEWBOX, glyphFor } from '../glyphs'
 import { isCssSpacing } from '../config/schema'
 import { Methods } from './Methods'
 import { TextFormatter } from './TextFormatter'
@@ -46,6 +47,7 @@ export class Notice {
   private clock: HTMLElement | null = null
   private statusText: HTMLElement | null = null
   private countdown: HTMLElement | null = null
+  private markPath: SVGPathElement | null = null
   private details: HTMLElement | null = null
   private toggle: HTMLElement | null = null
 
@@ -87,6 +89,7 @@ export class Notice {
     this.clock = card.querySelector('.clock')
     this.statusText = card.querySelector('.status-text')
     this.countdown = card.querySelector('.countdown')
+    this.markPath = card.querySelector('.mark path')
     this.details = card.querySelector('.details')
     this.toggle = card.querySelector('.toggle')
 
@@ -259,7 +262,27 @@ export class Notice {
   private statusPill(): string {
     const { start, end } = this.deployment.timeObj.local
     const status = TextFormatter.stripTags(DW.statusText(start, end))
-    return `<span class="pill"><span class="dot"></span><span class="status-text">${status}</span></span>`
+    return `<span class="pill">${Notice.mark(this.tone())}<span class="status-text">${status}</span></span>`
+  }
+
+  /**
+   * The status mark: the toolbar icon this page is currently showing.
+   *
+   * A plain dot said only "there is a status here". The chevron and the bar say
+   * which one, in the same shapes sitting in the toolbar and on the options
+   * page, so none of the three has to be learned on its own. The disc comes
+   * with them: at this size a bare stroke reads as punctuation.
+   */
+  private static mark(tone: NoticeTone): string {
+    const glyph = GLYPHS[glyphFor(tone)]
+    return `<span class="mark"><svg viewBox="${GLYPH_VIEWBOX}" aria-hidden="true" focusable="false"><circle cx="64" cy="64" r="60" fill="currentColor"></circle><path d="${glyph.d}" fill="none" stroke="#fff" stroke-width="${glyph.width}" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>`
+  }
+
+  /** Redraw the mark for the current status. */
+  private applyMark(): void {
+    const glyph = GLYPHS[glyphFor(this.tone())]
+    this.markPath?.setAttribute('d', glyph.d)
+    this.markPath?.setAttribute('stroke-width', String(glyph.width))
   }
 
   private static row(
@@ -351,6 +374,7 @@ export class Notice {
     }
     if (this.card && this.card.dataset.status !== this.tone()) {
       this.card.dataset.status = this.tone()
+      this.applyMark()
       this.flip()
     }
 

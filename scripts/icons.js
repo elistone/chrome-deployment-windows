@@ -54,13 +54,16 @@ const TONES = {
  *   it is the one that has to work in the Web Store and the extensions list.
  * success - a chevron up: ship it.
  * error   - a bar: the universal "not through here".
+ *
+ * A copy of src/app/glyphs.ts, which is where the rest of the extension reads
+ * them from. This file has to run as plain JavaScript outside the bundle, so it
+ * cannot import that one; tests/icons.test.ts asserts the two still agree, and
+ * fails if either is changed alone.
  */
-const GLYPHS = {
-  default: '<circle cx="64" cy="64" r="27" fill="none" stroke="#fff" stroke-width="13"/>',
-  success:
-    '<path d="M40 76 64 48 88 76" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>',
-  error:
-    '<path d="M38 64H90" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round"/>',
+export const GLYPHS = {
+  default: { d: 'M64 37a27 27 0 1 0 0 54 27 27 0 1 0 0-54', width: 13 },
+  success: { d: 'M40 76 64 48 88 76', width: 14 },
+  error: { d: 'M38 64H90', width: 14 },
 }
 
 export function svgFor(state) {
@@ -73,7 +76,7 @@ export function svgFor(state) {
     </linearGradient>
   </defs>
   <circle cx="64" cy="64" r="60" fill="url(#g)"/>
-  ${GLYPHS[state]}
+  <path d="${GLYPHS[state].d}" fill="none" stroke="#fff" stroke-width="${GLYPHS[state].width}" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`
 }
 

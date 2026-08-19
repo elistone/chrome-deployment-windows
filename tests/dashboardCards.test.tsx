@@ -7,6 +7,7 @@ import DeploymentCard, {
 } from '../src/ui/components/dashboard/DeploymentCard'
 import SiteCard from '../src/ui/components/dashboard/SiteCard'
 import HowToUse from '../src/ui/components/HowToUse'
+import { GLYPHS } from '../src/app/glyphs'
 import { testConfig } from './helpers/fixtures'
 
 const DOMAINS = ['github', 'jira']
@@ -91,6 +92,31 @@ describe('DeploymentCard', () => {
     atMidday()
     renderDeployment('daytime')
     expect(screen.getByText('Deployment window open')).toBeInTheDocument()
+  })
+
+  it('marks the status with the toolbar icon for that state', () => {
+    // The chevron in the toolbar and the chevron in the pill are the same
+    // chevron, which is what makes the toolbar readable without a legend.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2024-06-03T10:00:00'))
+    const open = renderDeployment('daytime')
+    expect(
+      open.container.querySelector('.dw-pill-mark path')?.getAttribute('d'),
+    ).toBe(GLYPHS.open.d)
+    open.unmount()
+
+    vi.setSystemTime(new Date('2024-06-03T20:00:00'))
+    const closed = renderDeployment('daytime')
+    expect(
+      closed.container.querySelector('.dw-pill-mark path')?.getAttribute('d'),
+    ).toBe(GLYPHS.closed.d)
+    closed.unmount()
+
+    // Notes-only is not a state of a window, so it gets the neutral mark.
+    const notes = renderDeployment('notesOnly')
+    expect(
+      notes.container.querySelector('.dw-pill-mark path')?.getAttribute('d'),
+    ).toBe(GLYPHS.neutral.d)
   })
 
   it('says how much longer the window has', () => {

@@ -1,7 +1,7 @@
 import { Methods } from '../../../app/components/Methods'
 import type { ThemeChoice } from '../../theme'
 import Toggle from '../common/Toggle'
-import { BookIcon } from '../common/Icons'
+import { BookIcon, StatusMark } from '../common/Icons'
 import ThemeSwitch from './ThemeSwitch'
 
 interface DashboardHeaderProps {
@@ -23,12 +23,17 @@ export function DashboardHeader({
     <header className="dw-header">
       <div className="dw-header-inner">
         <div className="dw-header-identity">
-          <h1 className="dw-header-title">
-            {Methods.i18n('l10nDeploymentWindowsConfig')}
-          </h1>
-          <p className="dw-header-subtitle">
-            {Methods.i18n('l10nOptionsSubtitle')}
-          </p>
+          {/* The same mark the toolbar wears, so the page it opens from and
+              the page it opens are recognisably the same thing. */}
+          <StatusMark name="neutral" size={34} className="dw-app-mark" />
+          <div>
+            <h1 className="dw-header-title">
+              {Methods.i18n('l10nDeploymentWindowsConfig')}
+            </h1>
+            <p className="dw-header-subtitle">
+              {Methods.i18n('l10nOptionsSubtitle')}
+            </p>
+          </div>
         </div>
 
         <div className="dw-header-tools">

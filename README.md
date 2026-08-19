@@ -197,3 +197,10 @@ the glyph changes — a ring for the extension itself, a chevron while the windo
 is open, a bar while it is shut. The PNGs are committed, so this only needs
 running when the artwork changes.
 
+The same marks are drawn inline by the notice, the popup and the options page,
+from the shared geometry in `src/app/glyphs.ts` — the chevron in the toolbar and
+the chevron in a status pill are the same chevron, which is what lets the
+toolbar be read without a legend. `scripts/icons.js` keeps its own copy because
+it runs as plain JavaScript outside the bundle; `tests/icons.test.ts` fails if
+the two ever stop agreeing.
+

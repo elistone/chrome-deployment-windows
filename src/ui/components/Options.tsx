@@ -10,7 +10,7 @@ import type {
 import { useTheme } from '../theme'
 import { HowToUseDialog } from './HowToUse'
 import Toaster, { useToasts } from './common/Toaster'
-import { PlusIcon, SearchIcon } from './common/Icons'
+import { PlusIcon, SearchIcon, StatusMark } from './common/Icons'
 import DashboardHeader from './dashboard/DashboardHeader'
 import DeploymentCard, { statusFor } from './dashboard/DeploymentCard'
 import DeploymentForm from './dashboard/DeploymentForm'
@@ -230,7 +230,10 @@ export function Options() {
           </div>
           <div className="dw-stat dw-stat-open">
             <span className="dw-stat-value">{openCount}</span>
-            <span className="dw-stat-label">{Methods.i18n('l10nOpenNow')}</span>
+            <span className="dw-stat-label">
+              <StatusMark name="open" size={13} />
+              {Methods.i18n('l10nOpenNow')}
+            </span>
             <span className="dw-stat-hint">
               {Methods.i18n('l10nOpenNowStatHint')}
             </span>

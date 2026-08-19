@@ -1,5 +1,7 @@
 import type { SVGProps } from 'react'
 
+import { GLYPHS, GLYPH_VIEWBOX, type GlyphName } from '../../../app/glyphs'
+
 /**
  * Inline icons.
  *
@@ -26,6 +28,50 @@ function Icon({ size = 16, children, ...props }: IconProps) {
       {...props}
     >
       {children}
+    </svg>
+  )
+}
+
+/**
+ * The status mark: the toolbar icon for that state, drawn rather than loaded.
+ *
+ * The whole icon, not just its glyph. A bare stroke at this size reads as
+ * punctuation - the closed bar in particular came out as an en dash sitting in
+ * front of the label - where the disc is unmistakably the thing in the toolbar.
+ * The disc takes `currentColor`, so a pill, a stat and the page header each
+ * tint it from whatever they already are, and the same component doubles as the
+ * extension's own mark: that is only the neutral one in accent.
+ *
+ * Drawn from the shared geometry on the icons' own 128 grid rather than the 24
+ * the interface icons use, so the chevron in the toolbar and the chevron in a
+ * pill are the same chevron. That is the point of it: it is what lets the
+ * toolbar be read without being explained.
+ */
+export function StatusMark({
+  name,
+  size = 15,
+  ...props
+}: IconProps & { name: GlyphName }) {
+  const glyph = GLYPHS[name]
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={GLYPH_VIEWBOX}
+      aria-hidden="true"
+      focusable="false"
+      {...props}
+    >
+      <circle cx="64" cy="64" r="60" fill="currentColor" />
+      <path
+        d={glyph.d}
+        fill="none"
+        stroke="#fff"
+        strokeWidth={glyph.width}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }

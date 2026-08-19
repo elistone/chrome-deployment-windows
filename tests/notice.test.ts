@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DW } from '../src/app/components/DW'
 import { ICONS, Notice } from '../src/app/components/Notice'
 import type { ResolvedDeployment } from '../src/app/config/types'
+import { GLYPHS } from '../src/app/glyphs'
 import { chromeMock } from './helpers/chromeMock'
 import { renderGithubPage, testConfig } from './helpers/fixtures'
 
@@ -130,6 +131,43 @@ describe('Notice', () => {
 
       expect(root.querySelector('.toggle')).toBeNull()
       expect(root.querySelector('.details')).toBeNull()
+    })
+
+    describe('status mark', () => {
+      const markOf = (root: ShadowRoot) =>
+        root.querySelector('.mark path')?.getAttribute('d')
+
+      it('wears the toolbar chevron while the window is open', () => {
+        vi.useFakeTimers()
+        vi.setSystemTime(new Date('2024-06-03T10:00:00'))
+
+        notice = new Notice(resolve(DAYTIME))
+        expect(markOf(inside(notice.build()))).toBe(GLYPHS.open.d)
+      })
+
+      it('wears the toolbar bar while the window is shut', () => {
+        vi.useFakeTimers()
+        vi.setSystemTime(new Date('2024-06-03T20:00:00'))
+
+        notice = new Notice(resolve(DAYTIME))
+        expect(markOf(inside(notice.build()))).toBe(GLYPHS.closed.d)
+      })
+
+      it('redraws the mark when the window closes under it', () => {
+        vi.useFakeTimers()
+        vi.setSystemTime(new Date('2024-06-03T11:59:00'))
+
+        notice = new Notice(resolve(DAYTIME))
+        notice.insert()
+        expect(markOf(onPage())).toBe(GLYPHS.open.d)
+
+        vi.advanceTimersByTime(2 * 60 * 1000)
+
+        expect(markOf(onPage())).toBe(GLYPHS.closed.d)
+        expect(
+          onPage().querySelector('.mark path')?.getAttribute('stroke-width'),
+        ).toBe(String(GLYPHS.closed.width))
+      })
     })
 
     describe('countdown', () => {

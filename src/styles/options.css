@@ -68,6 +68,19 @@ body {
   padding-bottom: var(--dw-space-4);
 }
 
+/* The extension's own mark is the neutral status mark in accent. */
+.dw-app-mark {
+  flex: none;
+  color: var(--dw-accent);
+}
+
+.dw-header-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-3);
+  min-width: 0;
+}
+
 .dw-header-title {
   margin: 0;
   font-size: 1.15rem;
@@ -129,6 +142,9 @@ body {
 }
 
 .dw-stat-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -141,7 +157,8 @@ body {
   color: var(--dw-text-faint);
 }
 
-.dw-stat-open .dw-stat-value {
+.dw-stat-open .dw-stat-value,
+.dw-stat-open .dw-stat-label {
   color: var(--dw-success);
 }
 
