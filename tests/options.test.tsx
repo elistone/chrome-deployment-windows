@@ -496,6 +496,24 @@ describe('Options shared config', () => {
     expect(screen.getByRole('button', { name: 'Connect' })).toBeDisabled()
   })
 
+  it('survives storage being unavailable', async () => {
+    const { user } = await openDashboard()
+    // Reading the URL and the cache is the panel's first act; a rejection
+    // there used to escape as an unhandled rejection rather than being shown.
+    vi.mocked(chrome.storage.sync.get).mockRejectedValue(new Error('offline'))
+
+    await user.click(screen.getByRole('button', { name: /Shared config/ }))
+    expect(screen.getByLabelText(/Config URL/)).toHaveValue('')
+
+    vi.mocked(chrome.storage.sync.set).mockRejectedValue(new Error('offline'))
+    await user.type(screen.getByLabelText(/Config URL/), URL_)
+    await user.click(screen.getByRole('button', { name: 'Connect' }))
+
+    expect(
+      await screen.findByText(/Could not fetch the shared config/),
+    ).toBeInTheDocument()
+  })
+
   it('takes the shared entries away again on disconnect', async () => {
     serve(shared())
     const { user } = await openDashboard()

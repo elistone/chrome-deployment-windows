@@ -54,17 +54,25 @@ export function SharedConfigPanel({ onChanged }: SharedConfigPanelProps) {
   useEffect(() => {
     let active = true
     void (async () => {
-      const [storedUrl, storedCache] = await Promise.all([
-        readRemoteUrl(),
-        readCache(),
-      ])
+      try {
+        const [storedUrl, storedCache] = await Promise.all([
+          readRemoteUrl(),
+          readCache(),
+        ])
+        if (active) {
+          setUrl(storedUrl)
+          setCache(storedCache)
+          // Opened on its own when one is configured, because a shared config
+          // that is failing to fetch is the first thing worth seeing.
+          setOpen(storedUrl !== '')
+        }
+      } catch {
+        // Storage being unavailable leaves the panel closed and empty, which
+        // is what it looks like when nothing is configured. The dashboard
+        // beside it reports the failure once a save is attempted.
+      }
       if (active) {
-        setUrl(storedUrl)
-        setCache(storedCache)
         setLoaded(true)
-        // Opened on its own when one is configured, because a shared config
-        // that is failing to fetch is the first thing worth seeing.
-        setOpen(storedUrl !== '')
       }
     })()
     return () => {
@@ -77,6 +85,16 @@ export function SharedConfigPanel({ onChanged }: SharedConfigPanelProps) {
     try {
       setCache(await work())
       onChanged()
+    } catch (error: unknown) {
+      // Writing the URL is a storage write like any other, and it can fail.
+      // Reported in the same place as a fetch failure, since from here they
+      // are the same thing: the shared config did not take.
+      setCache({
+        url: trimmed,
+        fetchedAt: Date.now(),
+        config: null,
+        error: error instanceof Error ? error.message : String(error),
+      })
     } finally {
       setBusy(false)
     }
