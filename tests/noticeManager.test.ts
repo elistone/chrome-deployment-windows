@@ -167,4 +167,62 @@ describe('NoticeManager', () => {
 
     expect(notice()).toBeNull()
   })
+
+  describe('following config changes', () => {
+    it('picks up an edit made while the page is open', async () => {
+      await start()
+      expect(noticeText()).toContain('Daytime project')
+
+      const config = testConfig()
+      config.deployments.daytime.name = 'Renamed by the popup'
+      await Config.save(config)
+      await settle()
+
+      // No navigation and no DOM change - only storage moved - so without the
+      // storage listener this would still say the old name.
+      expect(noticeText()).toContain('Renamed by the popup')
+    })
+
+    it('takes the notice away when its deployment is deleted', async () => {
+      await start()
+      expect(notice()).not.toBeNull()
+
+      const config = testConfig()
+      delete config.deployments.daytime
+      await Config.save(config)
+      await settle()
+
+      expect(notice()).toBeNull()
+    })
+
+    it('puts a notice up when one starts matching', async () => {
+      url = UNKNOWN
+      await start()
+      expect(notice()).toBeNull()
+
+      const config = testConfig()
+      config.deployments.added = {
+        name: 'Newly added',
+        github: 'acme/nothing-here',
+        time: { start: '09:00', end: '17:00', timezone: 'Europe/London' },
+      }
+      await Config.save(config)
+      await settle()
+
+      expect(noticeText()).toContain('Newly added')
+    })
+
+    it('stops listening once it is stopped', async () => {
+      const started = await start()
+      started.stop()
+      manager = null
+
+      const config = testConfig()
+      config.deployments.daytime.name = 'Should not appear'
+      await Config.save(config)
+      await settle()
+
+      expect(document.querySelector('.dw-notification')).toBeNull()
+    })
+  })
 })

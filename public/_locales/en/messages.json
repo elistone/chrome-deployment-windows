@@ -562,5 +562,17 @@
   "l10nMinutesShort": {
     "message": "m",
     "description": "Single letter suffix for minutes in a duration, e.g. the m in '2h 10m'."
+  },
+  "l10nUrlFragment": {
+    "message": "URL fragment",
+    "description": "Label for the single url fragment field in the popup editor."
+  },
+  "l10nAddHereHint": {
+    "message": "This site is set up, so a deployment can be added for this page.",
+    "description": "Hint shown when the site matches but no deployment does."
+  },
+  "l10nNoAnchorHint": {
+    "message": "This site has no insert location yet, so the notice has nowhere to go. Add one in settings.",
+    "description": "Hint shown when a domain matches but has no sites entry."
   }
 }

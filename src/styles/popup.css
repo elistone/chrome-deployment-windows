@@ -1,4 +1,5 @@
 @import './base.css';
+@import './forms.css';
 
 /**
  * Toolbar popup styling.
@@ -234,11 +235,19 @@ body {
 .dw-popup-foot {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--dw-space-2);
   padding: var(--dw-space-2) var(--dw-space-3);
   background: var(--dw-surface-2);
   border-top: 1px solid var(--dw-border);
+}
+
+/*
+ * The icon buttons sit together at the far end; the first of them is what
+ * pushes the group away from whatever labelled button is on the left.
+ */
+.dw-popup-button-icon:first-of-type,
+.dw-popup-button:not(.dw-popup-button-icon) + .dw-popup-button-icon {
+  margin-left: auto;
 }
 
 .dw-popup-button {
@@ -264,4 +273,62 @@ body {
 
 .dw-popup-button-icon {
   padding: 6px;
+}
+
+/* ------------------------------------------------------------------ */
+/* editor                                                              */
+/* ------------------------------------------------------------------ */
+
+/*
+ * The dashboard's form in a 340px column. It replaces the panel rather than
+ * covering it: a modal inside a popup has nowhere to sit, and there is nothing
+ * behind it worth keeping in view while you type.
+ *
+ * The height cap is Chrome's - it scrolls a popup taller than roughly 600px
+ * itself, and it scrolls the whole thing, which would take the save button off
+ * the bottom. Staying just under that and scrolling only the fields keeps the
+ * actions where they were put.
+ */
+.dw-popup-editor {
+  display: flex;
+  flex-direction: column;
+  max-height: 556px;
+  padding: var(--dw-space-4);
+  border-top: 3px solid var(--dw-popup-accent);
+}
+
+/* Only the fields scroll, so the save button stays where it was put. */
+.dw-popup-editor-fields {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/*
+ * Two columns at 340px, which auto-fit will not do: the popup has room for
+ * both time inputs, but not for the 150px minimum plus the wider gap.
+ */
+.dw-popup-editor .dw-form-grid-2 {
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--dw-space-3);
+}
+
+.dw-popup-editor-title {
+  margin: 0 0 var(--dw-space-4);
+  font-size: 0.95rem;
+  font-weight: 640;
+  letter-spacing: -0.01em;
+}
+
+.dw-popup-editor .dw-field:last-of-type {
+  margin-bottom: var(--dw-space-3);
+}
+
+.dw-popup-editor-actions {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  gap: var(--dw-space-2);
+  padding-top: var(--dw-space-3);
+  border-top: 1px solid var(--dw-border);
+  margin-top: var(--dw-space-1);
 }

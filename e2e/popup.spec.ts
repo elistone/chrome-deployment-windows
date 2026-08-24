@@ -137,6 +137,62 @@ test.describe('popup', () => {
 
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   })
+
+  test('edits the matched deployment and stores it', async ({
+    context,
+    extensionId,
+  }) => {
+    const page = await popupFor(
+      context,
+      extensionId,
+      'https://github.com/acme/always',
+    )
+
+    await page.getByRole('button', { name: 'Edit' }).click()
+    await expect(
+      page.getByRole('heading', { name: 'Edit deployment' }),
+    ).toBeVisible()
+
+    const name = page.getByLabel(/Name/)
+    await expect(name).toHaveValue('Always open project')
+    await name.fill('Renamed from the popup')
+    await page.getByRole('button', { name: 'Save' }).click()
+
+    // Straight back to the view, reading from what was just written.
+    await expect(page.locator('.dw-popup-title')).toHaveText(
+      'Renamed from the popup',
+    )
+
+    // And it really went to storage, not just to React state.
+    const stored = await page.evaluate(async () => {
+      const read = await chrome.storage.sync.get('DEPLOYMENTS')
+      return (read.DEPLOYMENTS as Record<string, { name: string }>).always.name
+    })
+    expect(stored).toBe('Renamed from the popup')
+  })
+
+  test('adds a deployment for a page that has none', async ({
+    context,
+    extensionId,
+  }) => {
+    const page = await popupFor(
+      context,
+      extensionId,
+      'https://github.com/acme/fresh/pull/1',
+    )
+
+    await expect(page.locator('.dw-popup-message-title')).toHaveText(
+      'No deployment information for this domain.',
+    )
+
+    await page.getByRole('button', { name: 'Add deployment' }).click()
+    await expect(page.getByLabel(/URL fragment/)).toHaveValue('acme/fresh')
+
+    await page.getByLabel(/Name/).fill('Fresh project')
+    await page.getByRole('button', { name: 'Save' }).click()
+
+    await expect(page.locator('.dw-popup-title')).toHaveText('Fresh project')
+  })
 })
 
 test.describe('toolbar icon', () => {

@@ -4,6 +4,11 @@ import messages from '../../public/_locales/en/messages.json'
 
 type StorageArea = Record<string, unknown>
 
+type StorageChangeListener = (
+  changes: Record<string, chrome.storage.StorageChange>,
+  area: string,
+) => void
+
 export interface ChromeMock {
   /** Backing store for chrome.storage.sync. */
   storage: StorageArea
@@ -61,8 +66,35 @@ function keysToRead(keys: unknown): string[] {
  * storage.sync, tabs.query, runtime messaging, i18n and action.setIcon.
  */
 export function installChromeMock(): void {
+  /**
+   * storage.onChanged listeners, fired by writes the way Chrome fires them.
+   * The content script relies on that event to notice an edit made elsewhere,
+   * so a mock that stored silently would let that regress unnoticed.
+   */
+  const changeListeners: StorageChangeListener[] = []
+
+  const announce = (changes: Record<string, chrome.storage.StorageChange>) => {
+    if (Object.keys(changes).length === 0) {
+      return
+    }
+    for (const listener of [...changeListeners]) {
+      listener(changes, 'sync')
+    }
+  }
+
   const mock = {
     storage: {
+      onChanged: {
+        addListener: vi.fn((listener: StorageChangeListener) => {
+          changeListeners.push(listener)
+        }),
+        removeListener: vi.fn((listener: StorageChangeListener) => {
+          const index = changeListeners.indexOf(listener)
+          if (index >= 0) {
+            changeListeners.splice(index, 1)
+          }
+        }),
+      },
       sync: {
         get: vi.fn(async (keys?: unknown) => {
           if (state.failStorage) {
@@ -80,12 +112,22 @@ export function installChromeMock(): void {
           if (state.failStorage) {
             throw new Error('storage unavailable')
           }
+          const changes: Record<string, chrome.storage.StorageChange> = {}
+          for (const [key, newValue] of Object.entries(items)) {
+            changes[key] = { oldValue: state.storage[key], newValue }
+          }
           Object.assign(state.storage, items)
+          announce(changes)
         }),
         remove: vi.fn(async (keys: string | string[]) => {
+          const changes: Record<string, chrome.storage.StorageChange> = {}
           for (const key of Array.isArray(keys) ? keys : [keys]) {
+            if (key in state.storage) {
+              changes[key] = { oldValue: state.storage[key] }
+            }
             delete state.storage[key]
           }
+          announce(changes)
         }),
         clear: vi.fn(async () => {
           state.storage = {}

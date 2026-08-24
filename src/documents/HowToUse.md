@@ -28,6 +28,12 @@ Each card shows its live status and how long that status has left — "Closes in
 is open right now, and what is about to change. The notice and the toolbar popup
 say the same thing on the page itself.
 
+You do not have to come back here to change one of them. The popup edits the
+entry for whatever page you are on, and offers to create one where a site is set
+up but the page has nothing on it yet — the times, the notes and the matching
+fragment, saved from the toolbar. Anything on the page updates as soon as you
+save, without a reload.
+
 ---
 
 ## Sites

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 
 import Popup from '../src/ui/components/Popup'
 import { Config } from '../src/app/config/Config'
-import { seedTabs } from './helpers/chromeMock'
+import { chromeMock, seedTabs } from './helpers/chromeMock'
 import { testConfig } from './helpers/fixtures'
 
 async function renderPopupFor(url: string) {
@@ -115,11 +115,44 @@ describe('Popup', () => {
     expect(
       await screen.findByText('No deployment information for this domain.'),
     ).toBeInTheDocument()
+    // The site itself is configured, so the useful thing to say is that one
+    // could be added rather than that nothing matched.
+    expect(
+      screen.getByText(
+        'This site is set up, so a deployment can be added for this page.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('says nothing matched at all on an unconfigured host', async () => {
+    await renderPopupFor('https://example.com/anything')
+
+    expect(
+      await screen.findByText('No deployment information for this domain.'),
+    ).toBeInTheDocument()
     expect(
       screen.getByText(
         'Nothing on this page matches a configured site and deployment.',
       ),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Add deployment' }),
+    ).toBeNull()
+  })
+
+  it('has nowhere to put a notice for a site with no insert rule', async () => {
+    const config = testConfig()
+    delete config.sites.github
+    await Config.save(config)
+    seedTabs([{ url: 'https://github.com/acme/daytime', active: true }])
+    render(<Popup />)
+
+    expect(
+      await screen.findByText(
+        'This site has no insert location yet, so the notice has nowhere to go. Add one in settings.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
   })
 
   it('reports no information when there is no active tab at all', async () => {
@@ -175,5 +208,150 @@ describe('Popup', () => {
 
     expect(document.documentElement.dataset.theme).toBe('light')
     expect(chrome.storage.sync.set).toHaveBeenCalledWith({ THEME: 'light' })
+  })
+})
+
+describe('Popup editing', () => {
+  it('opens the editor on the matched deployment', async () => {
+    const user = userEvent.setup()
+    await renderPopupFor('https://github.com/acme/daytime')
+    await screen.findByText('Daytime project')
+
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+
+    expect(screen.getByRole('heading', { name: 'Edit deployment' })).toBeInTheDocument()
+    expect(screen.getByLabelText(/Name/)).toHaveValue('Daytime project')
+    expect(screen.getByLabelText(/URL fragment/)).toHaveValue('acme/daytime')
+    expect(screen.getByLabelText(/Opens/)).toHaveValue('09:00')
+  })
+
+  it('writes an edit back to storage and re-renders from it', async () => {
+    const user = userEvent.setup()
+    await renderPopupFor('https://github.com/acme/daytime')
+    await screen.findByText('Daytime project')
+
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    const name = screen.getByLabelText(/Name/)
+    await user.clear(name)
+    await user.type(name, 'Renamed project')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    // Back on the view, showing the new value ...
+    expect(await screen.findByText('Renamed project')).toBeInTheDocument()
+
+    // ... and the stored config carries it, under the original key.
+    const stored = await Config.load()
+    expect(stored.deployments.daytime.name).toBe('Renamed project')
+    expect(stored.deployments.daytime.github).toBe('acme/daytime')
+  })
+
+  it('keeps the fragments for sites the popup did not show', async () => {
+    const user = userEvent.setup()
+    await renderPopupFor('https://github.com/acme/overnight')
+    await screen.findByText('Overnight project')
+
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    // Only the github fragment is on screen; the jira one has to survive
+    // anyway, or editing from the popup would quietly unhook the other site.
+    const stored = await Config.load()
+    expect(stored.deployments.overnight.jira).toBe('BOARD-9')
+  })
+
+  it('offers to add one where the site matches but nothing else does', async () => {
+    const user = userEvent.setup()
+    await renderPopupFor('https://github.com/acme/brand-new/pull/4')
+    await screen.findByText('No deployment information for this domain.')
+
+    await user.click(screen.getByRole('button', { name: 'Add deployment' }))
+
+    expect(
+      screen.getByRole('heading', { name: 'New deployment' }),
+    ).toBeInTheDocument()
+    // Prefilled from the URL: the first two path segments are the project.
+    expect(screen.getByLabelText(/URL fragment/)).toHaveValue('acme/brand-new')
+  })
+
+  it('saves a new deployment and shows it straight away', async () => {
+    const user = userEvent.setup()
+    await renderPopupFor('https://github.com/acme/brand-new/pull/4')
+    await screen.findByText('No deployment information for this domain.')
+
+    await user.click(screen.getByRole('button', { name: 'Add deployment' }))
+    const name = screen.getByLabelText(/Name/)
+    await user.clear(name)
+    await user.type(name, 'Brand new')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText('Brand new')).toBeInTheDocument()
+
+    const stored = await Config.load()
+    expect(stored.deployments['brand-new']).toMatchObject({
+      name: 'Brand new',
+      github: 'acme/brand-new',
+    })
+    // The entries that were already there are untouched.
+    expect(Object.keys(stored.deployments)).toContain('daytime')
+  })
+
+  it('will not save an entry that could never match', async () => {
+    const user = userEvent.setup()
+    await renderPopupFor('https://github.com/acme/brand-new/pull/4')
+    await screen.findByText('No deployment information for this domain.')
+
+    await user.click(screen.getByRole('button', { name: 'Add deployment' }))
+    await user.clear(screen.getByLabelText(/URL fragment/))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    // Still in the editor, with the reason on screen.
+    expect(
+      screen.getByRole('heading', { name: 'New deployment' }),
+    ).toBeInTheDocument()
+    expect((await Config.load()).deployments['brand-new']).toBeUndefined()
+  })
+
+  it('drops the window fields for a notes-only entry', async () => {
+    const user = userEvent.setup()
+    await renderPopupFor('https://github.com/acme/daytime')
+    await screen.findByText('Daytime project')
+
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    expect(screen.getByLabelText(/Opens/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('checkbox', { name: /Notes only/ }))
+    expect(screen.queryByLabelText(/Opens/)).toBeNull()
+  })
+
+  it('leaves the config alone when the editor is cancelled', async () => {
+    const user = userEvent.setup()
+    await renderPopupFor('https://github.com/acme/daytime')
+    await screen.findByText('Daytime project')
+
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    const name = screen.getByLabelText(/Name/)
+    await user.clear(name)
+    await user.type(name, 'Discarded')
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(await screen.findByText('Daytime project')).toBeInTheDocument()
+    expect((await Config.load()).deployments.daytime.name).toBe(
+      'Daytime project',
+    )
+  })
+
+  it('reports a failed save without leaving the editor', async () => {
+    const user = userEvent.setup()
+    await renderPopupFor('https://github.com/acme/daytime')
+    await screen.findByText('Daytime project')
+
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    chromeMock().failStorage = true
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      await screen.findByText('Could not save. Your changes were not stored.'),
+    ).toBeInTheDocument()
+    chromeMock().failStorage = false
   })
 })

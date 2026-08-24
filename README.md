@@ -170,9 +170,11 @@ src/
     components/
       common/            Modal, toggle, field, toasts, status pill, icons
       dashboard/         Options page cards, forms and the JSON panel
+      popup/             The popup's own editor, and what it can write
   styles/
     tokens.css           Design tokens, light and dark
     base.css             Primitives shared by both extension pages
+    forms.css            Buttons, toggles and fields, shared by both
     options.css          Options page layout
     popup.css            Popup layout
     notice.css           In-page notice, adopted into its shadow root

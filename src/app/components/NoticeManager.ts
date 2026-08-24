@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from '../config/Config'
 import { DW } from './DW'
 import { Notice } from './Notice'
 
@@ -26,6 +27,12 @@ export interface NoticeManagerOptions {
  * The check is deliberately cheap. Unless the URL has changed or the notice has
  * been detached, it does nothing at all, which is the outcome for almost every
  * mutation on a page as busy as GitHub's.
+ *
+ * The config is watched for the same reason: an edit made in the popup or on
+ * the options page changes what this page should say, with no navigation and no
+ * DOM change to give it away. Without that, a correction only appeared after a
+ * reload - which is the one thing someone who has just fixed the times is least
+ * likely to think of doing.
  */
 export class NoticeManager {
   private readonly currentUrl: () => string
@@ -54,6 +61,7 @@ export class NoticeManager {
     this.observer = new MutationObserver(() => this.schedule())
     this.observer.observe(this.root, { childList: true, subtree: true })
     window.addEventListener('popstate', this.onHistoryMove)
+    chrome.storage?.onChanged?.addListener(this.onConfigChanged)
 
     await this.sync()
   }
@@ -63,6 +71,7 @@ export class NoticeManager {
     this.observer?.disconnect()
     this.observer = null
     window.removeEventListener('popstate', this.onHistoryMove)
+    chrome.storage?.onChanged?.removeListener(this.onConfigChanged)
     if (this.timer !== null) {
       clearTimeout(this.timer)
       this.timer = null
@@ -91,6 +100,30 @@ export class NoticeManager {
   }
 
   private onHistoryMove = (): void => {
+    this.schedule()
+  }
+
+  /**
+   * Re-resolve after the config changes underneath us.
+   *
+   * The notice is torn down rather than kept, even when the same deployment
+   * still matches: it was built from values that have just been edited, and
+   * rebuilding it is cheaper than working out which of them moved.
+   */
+  private onConfigChanged = (
+    changes: Record<string, chrome.storage.StorageChange>,
+    area: string,
+  ): void => {
+    if (area !== 'sync') {
+      return
+    }
+    const watched = Object.values(STORAGE_KEYS) as string[]
+    if (!Object.keys(changes).some((key) => watched.includes(key))) {
+      return
+    }
+
+    this.clear()
+    this.url = null
     this.schedule()
   }
 
