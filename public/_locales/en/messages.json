@@ -574,5 +574,61 @@
   "l10nNoAnchorHint": {
     "message": "This site has no insert location yet, so the notice has nowhere to go. Add one in settings.",
     "description": "Hint shown when a domain matches but has no sites entry."
+  },
+  "l10nSharedTitle": {
+    "message": "Shared config",
+    "description": "Title of the shared config panel."
+  },
+  "l10nSharedHint": {
+    "message": "Take deployments from a file your team maintains. Anything you change here wins.",
+    "description": "Subtitle of the shared config panel."
+  },
+  "l10nSharedUrl": {
+    "message": "Config URL",
+    "description": "Label for the shared config address field."
+  },
+  "l10nSharedUrlHint": {
+    "message": "An https address returning the same JSON as the panel below.",
+    "description": "Hint for the shared config address field."
+  },
+  "l10nSharedUrlInvalid": {
+    "message": "Must be an https:// address.",
+    "description": "Error when the shared config address is not https."
+  },
+  "l10nSharedConnect": {
+    "message": "Connect",
+    "description": "Button that starts using a shared config."
+  },
+  "l10nSharedRefresh": {
+    "message": "Refresh now",
+    "description": "Button that re-fetches the shared config."
+  },
+  "l10nSharedDisconnect": {
+    "message": "Disconnect",
+    "description": "Button that stops using a shared config."
+  },
+  "l10nSharedEntries": {
+    "message": "shared entries",
+    "description": "Counts entries coming from the shared config."
+  },
+  "l10nSharedChecked": {
+    "message": "last checked",
+    "description": "Precedes the time of the last fetch."
+  },
+  "l10nSharedFailed": {
+    "message": "Fetch failed",
+    "description": "Badge shown when the shared config could not be fetched."
+  },
+  "l10nSharedError": {
+    "message": "Could not fetch the shared config:",
+    "description": "Precedes the reason a shared config fetch failed."
+  },
+  "l10nShared": {
+    "message": "Shared",
+    "description": "Badge on a card that comes from the shared config."
+  },
+  "l10nSharedUpdate": {
+    "message": "Update URL",
+    "description": "Button that points the shared config at a different address."
   }
 }

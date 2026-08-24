@@ -1,3 +1,14 @@
+import {
+  REMOTE_HIDDEN_KEY,
+  emptyConfig,
+  isConfigEmpty,
+  isHiddenEmpty,
+  loadRemoteLayer,
+  mergeConfigs,
+  readHidden,
+  splitLocal,
+  visibleRemote,
+} from './remote'
 import type { DeploymentWindowsConfig, SiteConfig } from './types'
 
 export const STORAGE_KEYS = {
@@ -61,10 +72,6 @@ function migrateSites(
   return migrated
 }
 
-function isEmpty(value: object | undefined | null): boolean {
-  return !value || Object.keys(value).length === 0
-}
-
 /**
  * Reads and writes the config in chrome.storage.sync.
  *
@@ -72,10 +79,15 @@ function isEmpty(value: object | undefined | null): boolean {
  * un-awaitable and un-testable. Loading and saving are now explicit and return
  * promises. MV3 exposes chrome.storage with native promise support, so the
  * manual callback wrapping is gone too.
+ *
+ * What loads is two layers: an optional shared config fetched from a URL, and
+ * whatever is configured on this machine on top of it. See config/remote.ts.
+ * Everything above this class - the notice, the popup, the dashboard - sees the
+ * one merged config and does not have to care which layer an entry came from.
  */
 export class Config {
-  /** Load the stored config, falling back to defaults when storage is empty. */
-  static async load(): Promise<DeploymentWindowsConfig> {
+  /** Read only what this machine has stored, with no shared layer merged in. */
+  static async loadLocal(): Promise<DeploymentWindowsConfig> {
     const stored = await chrome.storage.sync.get([
       STORAGE_KEYS.domains,
       STORAGE_KEYS.sites,
@@ -92,10 +104,6 @@ export class Config {
       | DeploymentWindowsConfig['deployments']
       | undefined
 
-    if (isEmpty(domains) && isEmpty(sites) && isEmpty(deployments)) {
-      return defaultConfig()
-    }
-
     return {
       domains: domains ?? {},
       sites: migrateSites(sites ?? {}),
@@ -103,13 +111,69 @@ export class Config {
     }
   }
 
-  /** Persist the whole config in one write. */
+  /**
+   * Load what this machine should act on: the shared layer, minus anything
+   * deleted from it, with the local layer on top.
+   *
+   * The defaults only stand in when both layers are empty. Someone whose whole
+   * config comes from a shared file has not "got nothing configured", and
+   * quietly adding GitHub and Jira underneath it would put a notice on pages
+   * their team had deliberately left out.
+   */
+  static async load(): Promise<DeploymentWindowsConfig> {
+    const local = await Config.loadLocal()
+    const remote = visibleRemote(await Config.loadRemote(), await readHidden())
+
+    if (isConfigEmpty(local) && isConfigEmpty(remote)) {
+      return defaultConfig()
+    }
+
+    return mergeConfigs(remote, local)
+  }
+
+  /** The shared layer as last fetched, or an empty config when there is none. */
+  static async loadRemote(): Promise<DeploymentWindowsConfig> {
+    try {
+      return await loadRemoteLayer()
+    } catch {
+      // A shared config that cannot be read is not a reason to lose the local
+      // one; the options page reports the failure from the cache instead.
+      return emptyConfig()
+    }
+  }
+
+  /**
+   * Persist the merged config, storing only what the shared layer does not
+   * already say.
+   *
+   * Writing the whole thing would copy every shared entry into local storage,
+   * where it would stop tracking the file it came from - which is the one thing
+   * a shared config is for.
+   */
   static async save(config: DeploymentWindowsConfig): Promise<void> {
+    const remote = visibleRemote(await Config.loadRemote(), await readHidden())
+    // A config assembled elsewhere may be missing a section entirely; the
+    // storage layer has always filled those in rather than refusing them.
+    const { local, hidden } = splitLocal(
+      {
+        domains: config.domains ?? {},
+        sites: config.sites ?? {},
+        deployments: config.deployments ?? {},
+      },
+      remote,
+    )
+
     await chrome.storage.sync.set({
-      [STORAGE_KEYS.domains]: config.domains ?? {},
-      [STORAGE_KEYS.sites]: config.sites ?? {},
-      [STORAGE_KEYS.deployments]: config.deployments ?? {},
+      [STORAGE_KEYS.domains]: local.domains,
+      [STORAGE_KEYS.sites]: local.sites,
+      [STORAGE_KEYS.deployments]: local.deployments,
     })
+
+    if (isHiddenEmpty(hidden)) {
+      await chrome.storage.sync.remove(REMOTE_HIDDEN_KEY)
+    } else {
+      await chrome.storage.sync.set({ [REMOTE_HIDDEN_KEY]: hidden })
+    }
   }
 
   static async clear(): Promise<void> {
@@ -117,6 +181,7 @@ export class Config {
       STORAGE_KEYS.domains,
       STORAGE_KEYS.sites,
       STORAGE_KEYS.deployments,
+      REMOTE_HIDDEN_KEY,
     ])
   }
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { chromeMock } from './helpers/chromeMock'
 
@@ -112,5 +112,77 @@ describe('background service worker', () => {
       error: true,
       reason: expect.stringContaining('tab gone'),
     })
+  })
+})
+
+describe('shared config refresh', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        text: async () =>
+          JSON.stringify({ domains: {}, sites: {}, deployments: {} }),
+      })),
+    )
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  /** Every listener the worker registers on a cold start. */
+  async function loadListeners() {
+    vi.resetModules()
+    await import('../src/app/background')
+    return {
+      installed: vi.mocked(chrome.runtime.onInstalled.addListener).mock
+        .calls[0][0] as () => void,
+      startup: vi.mocked(chrome.runtime.onStartup.addListener).mock
+        .calls[0][0] as () => void,
+      alarm: vi.mocked(chrome.alarms.onAlarm.addListener).mock
+        .calls[0][0] as (alarm: chrome.alarms.Alarm) => void,
+    }
+  }
+
+  it('schedules a recurring refresh on install', async () => {
+    const { installed } = await loadListeners()
+    installed()
+
+    await vi.waitFor(() =>
+      expect(chrome.alarms.create).toHaveBeenCalledWith(
+        'refresh-remote-config',
+        { periodInMinutes: 60 },
+      ),
+    )
+  })
+
+  it('schedules it again on browser startup', async () => {
+    // An alarm can be lost to an update, so re-creating it is what repairs it.
+    const { startup } = await loadListeners()
+    startup()
+
+    await vi.waitFor(() => expect(chrome.alarms.create).toHaveBeenCalled())
+  })
+
+  it('fetches when its own alarm fires', async () => {
+    await chrome.storage.sync.set({ REMOTE_URL: 'https://example.com/a.json' })
+    const { alarm } = await loadListeners()
+
+    alarm({ name: 'refresh-remote-config' } as chrome.alarms.Alarm)
+
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalled())
+  })
+
+  it('ignores an alarm belonging to something else', async () => {
+    await chrome.storage.sync.set({ REMOTE_URL: 'https://example.com/a.json' })
+    const { alarm } = await loadListeners()
+
+    alarm({ name: 'someone-elses-alarm' } as chrome.alarms.Alarm)
+
+    await Promise.resolve()
+    expect(fetch).not.toHaveBeenCalled()
   })
 })

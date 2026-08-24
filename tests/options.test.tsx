@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
@@ -390,5 +390,124 @@ describe('Options dashboard', () => {
         ).toBeInTheDocument(),
       )
     })
+  })
+})
+
+describe('Options shared config', () => {
+  const URL_ = 'https://example.com/windows.json'
+
+  function shared() {
+    return {
+      domains: { partner: ['*://*.partner.test/*'] },
+      sites: {
+        partner: { insert: [{ class: 'main', position: 'after' as const }] },
+      },
+      deployments: {
+        team: {
+          name: 'Team project',
+          partner: 'acme/team',
+          time: { start: '09:00', end: '17:00', timezone: 'Europe/London' },
+        },
+      },
+    }
+  }
+
+  function serve(body: unknown, ok = true) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok,
+        status: ok ? 200 : 500,
+        statusText: ok ? 'OK' : 'Server Error',
+        text: async () => JSON.stringify(body),
+      })),
+    )
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  async function connect(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole('button', { name: /Shared config/ }))
+    await user.type(screen.getByLabelText(/Config URL/), URL_)
+    await user.click(screen.getByRole('button', { name: 'Connect' }))
+  }
+
+  it('pulls a shared config in and shows what it added', async () => {
+    serve(shared())
+    const { user } = await openDashboard()
+
+    await connect(user)
+
+    expect(await screen.findByRole('heading', { name: 'Team project' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'partner' })).toBeInTheDocument()
+  })
+
+  it('marks the entries that came from it', async () => {
+    serve(shared())
+    const { user } = await openDashboard()
+    await connect(user)
+
+    const card = await screen.findByRole('heading', { name: 'Team project' })
+    expect(within(card.closest('article')!).getByText('Shared')).toBeInTheDocument()
+
+    // A local entry is not from the shared file and does not get the badge.
+    expect(
+      within(cardFor('Daytime project')).queryByText('Shared'),
+    ).toBeNull()
+  })
+
+  it('drops the badge once the entry is edited here', async () => {
+    serve(shared())
+    const { user } = await openDashboard()
+    await connect(user)
+    await screen.findByRole('heading', { name: 'Team project' })
+
+    await enterEditMode(user)
+    await user.click(
+      within(cardFor('Team project')).getByRole('button', { name: 'Edit' }),
+    )
+    const name = screen.getByLabelText(/Name/)
+    await user.clear(name)
+    await user.type(name, 'Overridden here')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    const card = await screen.findByRole('heading', { name: 'Overridden here' })
+    expect(within(card.closest('article')!).queryByText('Shared')).toBeNull()
+  })
+
+  it('reports a shared config that could not be fetched', async () => {
+    serve({}, false)
+    const { user } = await openDashboard()
+    await connect(user)
+
+    expect(await screen.findByText(/Could not fetch the shared config/))
+      .toBeInTheDocument()
+    expect(screen.getByText('Fetch failed')).toBeInTheDocument()
+  })
+
+  it('refuses an address that is not https', async () => {
+    const { user } = await openDashboard()
+    await user.click(screen.getByRole('button', { name: /Shared config/ }))
+    await user.type(screen.getByLabelText(/Config URL/), 'http://example.com/a')
+
+    expect(screen.getByText('Must be an https:// address.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Connect' })).toBeDisabled()
+  })
+
+  it('takes the shared entries away again on disconnect', async () => {
+    serve(shared())
+    const { user } = await openDashboard()
+    await connect(user)
+    await screen.findByRole('heading', { name: 'Team project' })
+
+    await user.click(screen.getByRole('button', { name: 'Disconnect' }))
+
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: 'Team project' })).toBeNull(),
+    )
+    // The local config is untouched by any of it.
+    expect(screen.getByRole('heading', { name: 'Daytime project' })).toBeInTheDocument()
   })
 })

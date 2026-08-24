@@ -28,8 +28,17 @@ for copying a setup between machines.
 
 The toolbar popup answers the same question for whichever page you are on:
 whether the window is open right now, when it opens in both its own timezone
-and yours, and any notes attached to it. It follows the light/dark choice made
-on the options page, and can be switched from its own footer.
+and yours, and any notes attached to it. It also edits: the entry behind what it
+is showing, or a new one for a page that has none yet, so a wrong window can be
+corrected from where it was noticed. It follows the light/dark choice made on
+the options page, and can be switched from its own footer.
+
+A **shared config** can be pointed at a JSON file on an https address, for a
+team that deploys the same projects to the same windows. It is fetched hourly
+and merged *underneath* everything configured locally, so any single entry can
+still be corrected - or deleted - on the machine that needs it, without the
+change going anywhere near the file. Entries still tracking the file are marked
+"Shared" on the dashboard.
 
 The full guide is [found here](/src/documents/HowToUse.md), and is also
 available from the "How to use" link in the options page header.
@@ -161,7 +170,7 @@ src/
     icons.ts             Toolbar icon states, sizes and paths
     content.ts           Content script entry point
     components/          DW (resolution), Notice (injection), Timezones, helpers
-    config/              Storage access, types and validation
+    config/              Storage access, types, validation, shared config
     matching/            Chrome match-pattern implementation
   ui/
     popup.html/.tsx      Browser action popup

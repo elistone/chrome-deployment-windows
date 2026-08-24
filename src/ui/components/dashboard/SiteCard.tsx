@@ -30,6 +30,8 @@ interface SiteCardProps {
   site: SiteConfig | undefined
   /** How many deployments reference this site, shown so deleting is informed. */
   usedBy: number
+  /** True while this site is still exactly what the shared config says. */
+  shared?: boolean
   editing: boolean
   onEdit: () => void
   onDelete: () => void
@@ -73,6 +75,7 @@ export function SiteCard({
   patterns,
   site,
   usedBy,
+  shared = false,
   editing,
   onEdit,
   onDelete,
@@ -105,12 +108,19 @@ export function SiteCard({
             </span>
           </div>
         </div>
-        <span className="dw-site-count">
-          {usedBy}{' '}
-          {Methods.i18n(
-            usedBy === 1 ? 'l10nDeploymentOne' : 'l10nDeploymentMany',
+        <div className="dw-card-meta">
+          {shared && (
+            <span className="dw-badge" title={Methods.i18n('l10nSharedHint')}>
+              {Methods.i18n('l10nShared')}
+            </span>
           )}
-        </span>
+          <span className="dw-site-count">
+            {usedBy}{' '}
+            {Methods.i18n(
+              usedBy === 1 ? 'l10nDeploymentOne' : 'l10nDeploymentMany',
+            )}
+          </span>
+        </div>
       </header>
 
       {!site ? (

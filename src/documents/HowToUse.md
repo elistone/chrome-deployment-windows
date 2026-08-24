@@ -100,6 +100,33 @@ notice stays small.
 
 ---
 
+## Sharing one config with a team
+
+If everyone works on the same projects, one person can host the config and the
+rest can point at it. Put a JSON file — the same shape as the panel at the
+bottom of the page — on any https address the team can read, then open **Shared
+config** and connect to it.
+
+It is fetched when you connect, and again every hour after that. What comes back
+is a layer *underneath* your own settings, which means:
+
+* Entries you have not touched follow the file. Change a window at the source
+  and everyone picks it up on the next refresh. They are marked **Shared**.
+* Editing one stores your version on this machine, and yours wins from then on.
+  The badge goes, because that entry has stopped following the file.
+* Deleting one hides it here without touching the file. Add it back and it
+  follows the file again.
+* Everything you add yourself is yours alone and is never sent anywhere.
+
+If the file cannot be fetched, the last copy that worked carries on being used
+and the panel says what went wrong. Nothing is lost while it is unreachable.
+
+The GitHub and Jira entries a fresh install starts with are a demonstration
+rather than a saved config, so connecting a shared config replaces them. Add
+them back from the Sites section if you need them.
+
+---
+
 ## Editing the JSON directly
 
 The **JSON config** panel at the bottom holds the same configuration as raw JSON.
@@ -107,7 +134,8 @@ Use it to copy a setup between machines, share one with a team, or make a bulk
 change faster than clicking through forms.
 
 Paste a whole config in and press Save. It is checked before anything is written,
-so an invalid config is rejected rather than half applied.
+so an invalid config is rejected rather than half applied. What it shows is both
+layers merged; saving stores only the parts that differ from the shared config.
 
 ---
 

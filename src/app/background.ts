@@ -7,7 +7,40 @@
  * to live here now lives in the content script's Notice, which is long-lived.
  */
 
+import { REFRESH_INTERVAL_MINUTES, refreshRemote } from './config/remote'
 import { type IconState, iconPaths, isIconState } from './icons'
+
+/** The recurring re-fetch of the shared config, if one is configured. */
+const REFRESH_ALARM = 'refresh-remote-config'
+
+/**
+ * Keep the shared config current.
+ *
+ * The alarm is what does the work: this worker does not stay running, so a
+ * setInterval would last only as long as the browser happened to keep it alive.
+ * Creating an alarm that already exists just updates it, so re-running this on
+ * every startup is safe and is what repairs a schedule lost to an update.
+ */
+async function scheduleRefresh(): Promise<void> {
+  await chrome.alarms.create(REFRESH_ALARM, {
+    periodInMinutes: REFRESH_INTERVAL_MINUTES,
+  })
+  await refreshRemote()
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+  void scheduleRefresh()
+})
+
+chrome.runtime.onStartup.addListener(() => {
+  void scheduleRefresh()
+})
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === REFRESH_ALARM) {
+    void refreshRemote()
+  }
+})
 
 /**
  * The content script names a state, not a file. Chrome wants one image per

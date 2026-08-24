@@ -538,11 +538,19 @@ body {
   font-weight: 600;
 }
 
+/*
+ * The base carries its own fill. It used to rely on a modifier for colour, so
+ * an unmodified badge - the "Shared" one on a card - rendered as bare text
+ * sitting next to the key, reading as a word rather than a label.
+ */
 .dw-badge {
   padding: 2px 8px;
   font-size: 0.72rem;
   font-weight: 600;
+  color: var(--dw-text-muted);
+  background: var(--dw-surface-2);
   border-radius: 999px;
+  white-space: nowrap;
 }
 
 .dw-badge-warn {
@@ -819,6 +827,21 @@ body {
 .dw-panel-body {
   padding: 0 var(--dw-space-4) var(--dw-space-4);
   border-top: 1px solid var(--dw-border);
+}
+
+/* The key and any badge sit on one line under the card's title. */
+.dw-card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-2);
+  min-width: 0;
+}
+
+/* Standing information about the panel, rather than a result of an action. */
+.dw-panel-note {
+  margin: var(--dw-space-3) 0 0;
+  font-size: 0.82rem;
+  color: var(--dw-text-muted);
 }
 
 .dw-panel-toolbar {

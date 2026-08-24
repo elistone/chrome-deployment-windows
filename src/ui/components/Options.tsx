@@ -1,7 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Methods } from '../../app/components/Methods'
 import { Config, defaultConfig } from '../../app/config/Config'
+import {
+  emptyConfig,
+  readHidden,
+  splitLocal,
+  visibleRemote,
+} from '../../app/config/remote'
 import type {
   DeploymentConfig,
   DeploymentWindowsConfig,
@@ -16,6 +22,7 @@ import DeploymentCard, { statusFor } from './dashboard/DeploymentCard'
 import DeploymentForm from './dashboard/DeploymentForm'
 import JsonPanel from './dashboard/JsonPanel'
 import SiteCard from './dashboard/SiteCard'
+import SharedConfigPanel from './dashboard/SharedConfigPanel'
 import SiteForm from './dashboard/SiteForm'
 import {
   deploymentsUsingSite,
@@ -47,6 +54,8 @@ type Dialog =
  */
 export function Options() {
   const [config, setConfig] = useState<DeploymentWindowsConfig>(defaultConfig)
+  // The shared layer on its own, so a card can say where it came from.
+  const [remote, setRemote] = useState<DeploymentWindowsConfig>(emptyConfig)
   const [loaded, setLoaded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [filter, setFilter] = useState('')
@@ -58,27 +67,56 @@ export function Options() {
   // Statuses are time-dependent, so the page has to re-render on its own.
   const tick = useTick()
 
+  /** Read both layers. Also used after the shared one is pointed elsewhere. */
+  const reload = useCallback(async () => {
+    try {
+      const [stored, shared, hidden] = await Promise.all([
+        Config.load(),
+        Config.loadRemote(),
+        readHidden(),
+      ])
+      setConfig(stored)
+      setRemote(visibleRemote(shared, hidden))
+    } catch {
+      // Storage being unavailable is not a reason to show a broken page; the
+      // in-memory default renders and the next save will surface the error.
+    }
+  }, [])
+
   useEffect(() => {
     let active = true
-    void Config.load()
-      .then((stored) => {
-        if (active) {
-          setConfig(stored)
-        }
-      })
-      .catch(() => {
-        // Storage being unavailable is not a reason to show a broken page; the
-        // in-memory default renders and the next save will surface the error.
-      })
-      .finally(() => {
-        if (active) {
-          setLoaded(true)
-        }
-      })
+    void reload().finally(() => {
+      if (active) {
+        setLoaded(true)
+      }
+    })
     return () => {
       active = false
     }
-  }, [])
+  }, [reload])
+
+  /**
+   * Which keys are showing exactly what the shared config says.
+   *
+   * Anything the local layer holds has been changed here and is no longer
+   * following the file, so the same split that decides what gets stored decides
+   * what gets the badge - there is no second rule to keep in step.
+   */
+  const shared = useMemo(() => {
+    const { local } = splitLocal(config, remote)
+    return {
+      deployments: new Set(
+        Object.keys(config.deployments).filter(
+          (key) => !(key in local.deployments),
+        ),
+      ),
+      sites: new Set(
+        Object.keys(config.domains).filter(
+          (key) => !(key in local.domains) && !(key in local.sites),
+        ),
+      ),
+    }
+  }, [config, remote])
 
   const domainKeys = useMemo(() => Object.keys(config.domains), [config.domains])
   const deploymentKeys = useMemo(
@@ -315,6 +353,7 @@ export function Options() {
                   configKey={key}
                   deployment={config.deployments[key]}
                   domainKeys={domainKeys}
+                  shared={shared.deployments.has(key)}
                   editing={editing}
                   onEdit={() => openDeployment(key)}
                   onDuplicate={() => duplicateDeployment(key)}
@@ -370,6 +409,7 @@ export function Options() {
                   patterns={config.domains[key] ?? []}
                   site={config.sites[key]}
                   usedBy={deploymentsUsingSite(config, key)}
+                  shared={shared.sites.has(key)}
                   editing={editing}
                   onEdit={() => openSite(key)}
                   onDelete={() =>
@@ -383,6 +423,8 @@ export function Options() {
             </div>
           )}
         </section>
+
+        <SharedConfigPanel onChanged={() => void reload()} />
 
         <JsonPanel
           config={config}

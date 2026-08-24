@@ -52,18 +52,28 @@ export function seedTabs(tabs: Partial<chrome.tabs.Tab>[]): void {
   state.tabs = tabs as chrome.tabs.Tab[]
 }
 
-function keysToRead(keys: unknown): string[] {
+/**
+ * Chrome serialises what it stores, so a value read back is never the object
+ * that was written. Cloning here keeps that true: without it a test could
+ * mutate "stored" data in place and the code under test would appear to agree.
+ */
+function clone<T>(value: T): T {
+  return structuredClone(value)
+}
+
+function keysToRead(keys: unknown, area: StorageArea = state.storage): string[] {
   if (typeof keys === 'string') return [keys]
   if (Array.isArray(keys)) return keys as string[]
   if (keys && typeof keys === 'object') return Object.keys(keys)
-  return Object.keys(state.storage)
+  return Object.keys(area)
 }
 
 /**
  * A hand-rolled stand-in for the parts of the chrome API this extension uses.
  *
  * Promise-based throughout, matching MV3. Deliberately small: it only covers
- * storage.sync, tabs.query, runtime messaging, i18n and action.setIcon.
+ * storage.sync, storage.local, tabs.query, runtime messaging, i18n and
+ * action.setIcon.
  */
 export function installChromeMock(): void {
   /**
@@ -82,8 +92,40 @@ export function installChromeMock(): void {
     }
   }
 
+  /**
+   * storage.local, kept separate from sync the way Chrome keeps it. The shared
+   * config is cached here precisely because it is too big for sync, so a mock
+   * that aliased the two would hide that.
+   */
+  const local: StorageArea = {}
+
   const mock = {
     storage: {
+      local: {
+        get: vi.fn(async (keys?: unknown) => {
+          const result: StorageArea = {}
+          for (const key of keysToRead(keys, local)) {
+            if (key in local) {
+              result[key] = clone(local[key])
+            }
+          }
+          return result
+        }),
+        set: vi.fn(async (items: StorageArea) => {
+          Object.assign(local, clone(items))
+        }),
+        remove: vi.fn(async (keys: string | string[]) => {
+          for (const key of Array.isArray(keys) ? keys : [keys]) {
+            delete local[key]
+          }
+        }),
+        clear: vi.fn(async () => {
+          for (const key of Object.keys(local)) {
+            delete local[key]
+          }
+        }),
+      },
+
       onChanged: {
         addListener: vi.fn((listener: StorageChangeListener) => {
           changeListeners.push(listener)
@@ -103,7 +145,7 @@ export function installChromeMock(): void {
           const result: StorageArea = {}
           for (const key of keysToRead(keys)) {
             if (key in state.storage) {
-              result[key] = state.storage[key]
+              result[key] = clone(state.storage[key])
             }
           }
           return result
@@ -116,7 +158,7 @@ export function installChromeMock(): void {
           for (const [key, newValue] of Object.entries(items)) {
             changes[key] = { oldValue: state.storage[key], newValue }
           }
-          Object.assign(state.storage, items)
+          Object.assign(state.storage, clone(items))
           announce(changes)
         }),
         remove: vi.fn(async (keys: string | string[]) => {
@@ -151,7 +193,21 @@ export function installChromeMock(): void {
         addListener: vi.fn(),
         removeListener: vi.fn(),
       },
+      onInstalled: {
+        addListener: vi.fn(),
+      },
+      onStartup: {
+        addListener: vi.fn(),
+      },
       lastError: undefined as chrome.runtime.LastError | undefined,
+    },
+
+    alarms: {
+      create: vi.fn(async () => {}),
+      clear: vi.fn(async () => true),
+      onAlarm: {
+        addListener: vi.fn(),
+      },
     },
 
     action: {

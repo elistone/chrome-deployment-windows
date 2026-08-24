@@ -45,7 +45,10 @@ export default defineManifest({
   // Chrome has already cached. The options page uses it to label each site, and
   // it is what keeps that from becoming a network request to every configured
   // host - or worse, to a third party favicon service.
-  permissions: ['storage', 'tabs', 'favicon'],
+  // `alarms` is what wakes the worker to re-fetch a shared config; an MV3
+  // worker is torn down when idle, so there is nothing left running to do it
+  // on a timer.
+  permissions: ['storage', 'tabs', 'favicon', 'alarms'],
 
   host_permissions: ['https://*/*'],
 

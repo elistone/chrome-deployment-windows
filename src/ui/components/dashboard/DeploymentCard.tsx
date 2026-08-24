@@ -13,6 +13,8 @@ interface DeploymentCardProps {
   deployment: DeploymentConfig
   /** Every configured site key, so missing fragments can be shown as gaps. */
   domainKeys: string[]
+  /** True while this entry is still exactly what the shared config says. */
+  shared?: boolean
   editing: boolean
   onEdit: () => void
   onDuplicate: () => void
@@ -62,6 +64,7 @@ export function DeploymentCard({
   configKey,
   deployment,
   domainKeys,
+  shared = false,
   editing,
   onEdit,
   onDuplicate,
@@ -86,7 +89,14 @@ export function DeploymentCard({
       <header className="dw-card-head">
         <div className="dw-card-heading">
           <h3 className="dw-card-title">{TextFormatter.toPlainText(name)}</h3>
-          <code className="dw-card-key">{configKey}</code>
+          <div className="dw-card-meta">
+            <code className="dw-card-key">{configKey}</code>
+            {shared && (
+              <span className="dw-badge" title={Methods.i18n('l10nSharedHint')}>
+                {Methods.i18n('l10nShared')}
+              </span>
+            )}
+          </div>
         </div>
         <div className="dw-card-status">
           <StatusPill tone={tone} />
