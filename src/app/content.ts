@@ -1,31 +1,15 @@
-import {Notice} from "./components/Notice";
-import {DW} from "./components/DW";
-
-// import the basic styling
-import "../styles/content.css"
-
-
-chrome.runtime.sendMessage({}, (response) => {
-    let checkReady = setInterval(() => {
-        if (document.readyState === "complete") {
-            clearInterval(checkReady)
-            init();
-        }
-    })
-})
+import { NoticeManager } from './components/NoticeManager'
 
 /**
- * initialize the content
+ * Content script entry point.
+ *
+ * The manifest uses `run_at: document_idle`, so the DOM is already parsed by the
+ * time this runs; the v1 readyState polling loop is gone. Everything after that
+ * first pass is the manager's job - see NoticeManager for why one pass is not
+ * enough on a site that navigates without reloading.
  */
-function init(): void {
-    const dw = new DW()
-    dw.loadConfig().then(() => {
-        dw.setup();
-        const deploymentInfo = dw.getDeploymentInfo();
-        if (typeof deploymentInfo !== "undefined" && Object.keys(deploymentInfo).length !== 0) {
-            const notice = new Notice(dw)
-            notice.build();
-            notice.insert();
-        }
-    })
-}
+const manager = new NoticeManager()
+
+void manager.start().catch((error: unknown) => {
+  console.error('[deployment-windows] failed to initialise', error)
+})

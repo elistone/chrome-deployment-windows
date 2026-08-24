@@ -1,0 +1,357 @@
+@import './tokens.css';
+
+/**
+ * Form and control primitives.
+ *
+ * These started in options.css, where the only forms were. The popup can now
+ * add and edit a deployment too, so buttons, toggles and fields are shared
+ * rather than described twice - a control that looks like itself in one
+ * surface and not the other is worse than either.
+ *
+ * Layout stays with whichever surface owns it; only the controls live here.
+ */
+
+/* ------------------------------------------------------------------ */
+/* buttons                                                             */
+/* ------------------------------------------------------------------ */
+
+.dw-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 560;
+  color: var(--dw-text);
+  background: var(--dw-surface);
+  border: 1px solid var(--dw-border-strong);
+  border-radius: var(--dw-radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dw-transition), border-color var(--dw-transition),
+    color var(--dw-transition);
+}
+
+.dw-button:hover:not(:disabled) {
+  background: var(--dw-surface-2);
+}
+
+.dw-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dw-button-small {
+  padding: 4px 9px;
+  font-size: 0.78rem;
+}
+
+.dw-button-primary {
+  color: var(--dw-accent-text);
+  background: var(--dw-accent);
+  border-color: var(--dw-accent);
+}
+
+.dw-button-primary:hover:not(:disabled) {
+  background: var(--dw-accent-hover);
+  border-color: var(--dw-accent-hover);
+}
+
+.dw-button-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--dw-text-muted);
+}
+
+.dw-button-ghost:hover:not(:disabled) {
+  background: var(--dw-surface-2);
+  color: var(--dw-text);
+}
+
+.dw-button-danger {
+  color: var(--dw-danger);
+}
+
+.dw-button-danger:not(.dw-button-ghost) {
+  color: var(--dw-accent-text);
+  background: var(--dw-danger);
+  border-color: var(--dw-danger);
+}
+
+.dw-button-ghost.dw-button-danger:hover:not(:disabled) {
+  color: var(--dw-danger);
+  background: var(--dw-danger-soft);
+}
+
+.dw-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--dw-text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--dw-radius-sm);
+  cursor: pointer;
+  transition: background var(--dw-transition), color var(--dw-transition);
+}
+
+.dw-icon-button:hover:not(:disabled) {
+  background: var(--dw-surface-2);
+  color: var(--dw-text);
+}
+
+.dw-icon-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.dw-icon-button-danger:hover:not(:disabled) {
+  color: var(--dw-danger);
+  background: var(--dw-danger-soft);
+}
+
+.dw-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dw-space-2);
+}
+
+.dw-confirm-text {
+  font-size: 0.8rem;
+  color: var(--dw-danger);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ */
+/* toggle                                                              */
+/* ------------------------------------------------------------------ */
+
+.dw-toggle-field {
+  margin-bottom: var(--dw-space-4);
+}
+
+.dw-toggle-compact {
+  margin-bottom: 0;
+}
+
+.dw-toggle-row {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dw-space-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+/*
+ * Transparent rather than zero-sized: a control with no box is unclickable for
+ * anything driving the page by coordinates, and a switch nobody can point at
+ * is not a switch.
+ */
+.dw-toggle-input {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 36px;
+  height: 20px;
+  margin: 0;
+  transform: translateY(-50%);
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.dw-toggle-track {
+  position: relative;
+  flex: none;
+  /* Purely decorative: the invisible input sits on top and takes the clicks. */
+  pointer-events: none;
+  width: 36px;
+  height: 20px;
+  background: var(--dw-surface-3);
+  border: 1px solid var(--dw-border-strong);
+  border-radius: 999px;
+  transition: background var(--dw-transition), border-color var(--dw-transition);
+}
+
+.dw-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--dw-surface);
+  border-radius: 50%;
+  box-shadow: var(--dw-shadow-sm);
+  transition: transform var(--dw-transition);
+}
+
+.dw-toggle-input:checked + .dw-toggle-track {
+  background: var(--dw-accent);
+  border-color: var(--dw-accent);
+}
+
+.dw-toggle-input:checked + .dw-toggle-track .dw-toggle-thumb {
+  transform: translateX(16px);
+}
+
+.dw-toggle-input:focus-visible + .dw-toggle-track {
+  outline: 2px solid var(--dw-focus);
+  outline-offset: 2px;
+}
+
+.dw-toggle-label {
+  font-size: 0.86rem;
+  font-weight: 560;
+}
+
+.dw-toggle-hint {
+  margin-left: 44px;
+}
+
+/* ------------------------------------------------------------------ */
+/* forms                                                               */
+/* ------------------------------------------------------------------ */
+
+.dw-field {
+  margin-bottom: var(--dw-space-4);
+  min-width: 0;
+}
+
+.dw-field-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--dw-text-muted);
+}
+
+.dw-field-required {
+  margin-left: 3px;
+  color: var(--dw-danger);
+}
+
+.dw-field-hint {
+  margin: 5px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--dw-text-faint);
+}
+
+.dw-field-error {
+  margin: 5px 0 0;
+  font-size: 0.78rem;
+  font-weight: 560;
+  color: var(--dw-danger);
+}
+
+.dw-input {
+  display: block;
+  width: 100%;
+  padding: 8px 11px;
+  font: inherit;
+  font-size: 0.86rem;
+  color: var(--dw-text);
+  background: var(--dw-surface);
+  border: 1px solid var(--dw-border-strong);
+  border-radius: var(--dw-radius-sm);
+  transition: border-color var(--dw-transition), box-shadow var(--dw-transition);
+}
+
+.dw-input::placeholder {
+  color: var(--dw-text-faint);
+}
+
+.dw-input:focus {
+  outline: none;
+  border-color: var(--dw-accent);
+  box-shadow: 0 0 0 3px var(--dw-accent-soft);
+}
+
+.dw-field-invalid .dw-input {
+  border-color: var(--dw-danger);
+}
+
+.dw-textarea {
+  resize: vertical;
+  min-height: 90px;
+  font-family: var(--dw-font-sans);
+}
+
+.dw-select {
+  appearance: none;
+  padding-right: 28px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.dw-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-2);
+}
+
+.dw-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0 var(--dw-space-4);
+}
+
+.dw-form-grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.dw-form-grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.dw-fieldset {
+  margin: 0 0 var(--dw-space-4);
+  padding: var(--dw-space-4);
+  border: 1px solid var(--dw-border);
+  border-radius: var(--dw-radius);
+  background: var(--dw-surface-2);
+}
+
+.dw-fieldset legend {
+  padding: 0 6px;
+  font-size: 0.78rem;
+  font-weight: 640;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dw-text-muted);
+}
+
+.dw-fieldset-hint {
+  margin: 0 0 var(--dw-space-3);
+  font-size: 0.78rem;
+  color: var(--dw-text-faint);
+}
+
+.dw-repeat-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: var(--dw-space-3);
+}
+
+.dw-repeat-row:has(.dw-field + .dw-field) {
+  grid-template-columns: minmax(110px, 0.5fr) 1fr auto;
+}
+
+/*
+ * Line the remove button up with the input beside it rather than with the
+ * bottom of the field: only some rows carry a hint, so bottom alignment left
+ * the buttons at different heights down the list.
+ */
+.dw-repeat-row .dw-icon-button {
+  align-self: start;
+  margin-top: var(--dw-field-label-offset);
+}

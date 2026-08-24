@@ -1,0 +1,294 @@
+import { validateConfig } from './schema'
+import type { DeploymentWindowsConfig } from './types'
+
+/**
+ * A shared config, fetched from a URL someone else maintains.
+ *
+ * A team deploys the same projects to the same windows, so keeping that in one
+ * place beats everyone typing it in. The fetched config is a *layer*: it is
+ * merged underneath whatever is configured locally, so any entry can still be
+ * corrected on the machine that needs it corrected, without the change having
+ * to go anywhere near whoever owns the file.
+ *
+ * The URL lives in sync storage, so it follows the user between machines. What
+ * came back does not - it is a cache, it can be several kilobytes, and sync
+ * storage has an 8KB-per-item quota that a real team's config would break.
+ */
+
+/** Where the shared config is fetched from. Synced. */
+export const REMOTE_URL_KEY = 'REMOTE_URL'
+
+/**
+ * Keys hidden from the shared layer.
+ *
+ * Deleting a shared entry cannot delete it at the source, so it is remembered
+ * as a deletion instead. Without this the entry would simply come back the next
+ * time the page was opened, which reads as the delete having failed.
+ */
+export const REMOTE_HIDDEN_KEY = 'REMOTE_HIDDEN'
+
+/** The last fetch: what it returned, when, and whether it worked. Local. */
+export const REMOTE_CACHE_KEY = 'REMOTE_CACHE'
+
+/** Refuse anything larger; a config this big is a wrong URL, not a config. */
+const MAX_BYTES = 512 * 1024
+
+/** How long a cached copy is used before the next fetch is worth making. */
+export const REFRESH_INTERVAL_MINUTES = 60
+
+export interface RemoteCache {
+  /** The URL this was fetched from, so a changed URL invalidates it. */
+  url: string
+  /** Epoch milliseconds of the last attempt, successful or not. */
+  fetchedAt: number
+  /** The last config that parsed, kept through a failed refresh. */
+  config: DeploymentWindowsConfig | null
+  /** Why the last attempt failed, or null when it did not. */
+  error: string | null
+}
+
+export interface HiddenKeys {
+  domains: string[]
+  sites: string[]
+  deployments: string[]
+}
+
+const SECTIONS = ['domains', 'sites', 'deployments'] as const
+
+export function emptyConfig(): DeploymentWindowsConfig {
+  return { domains: {}, sites: {}, deployments: {} }
+}
+
+export function emptyHidden(): HiddenKeys {
+  return { domains: [], sites: [], deployments: [] }
+}
+
+export function isConfigEmpty(config: DeploymentWindowsConfig): boolean {
+  return SECTIONS.every((section) => Object.keys(config[section]).length === 0)
+}
+
+function without<T>(
+  record: Record<string, T>,
+  hidden: string[],
+): Record<string, T> {
+  return Object.fromEntries(
+    Object.entries(record).filter(([key]) => !hidden.includes(key)),
+  )
+}
+
+/**
+ * The shared layer with deletions applied, ready to be merged under the local
+ * one.
+ */
+export function visibleRemote(
+  remote: DeploymentWindowsConfig,
+  hidden: HiddenKeys,
+): DeploymentWindowsConfig {
+  return {
+    domains: without(remote.domains, hidden.domains),
+    sites: without(remote.sites, hidden.sites),
+    deployments: without(remote.deployments, hidden.deployments),
+  }
+}
+
+/** Local entries win, key by key. */
+export function mergeConfigs(
+  remote: DeploymentWindowsConfig,
+  local: DeploymentWindowsConfig,
+): DeploymentWindowsConfig {
+  return {
+    domains: { ...remote.domains, ...local.domains },
+    sites: { ...remote.sites, ...local.sites },
+    deployments: { ...remote.deployments, ...local.deployments },
+  }
+}
+
+/** Key order is not meaning, so it must not decide whether two entries match. */
+function stable(value: unknown): string {
+  return JSON.stringify(value, (_key, inner: unknown) => {
+    if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+      const record = inner as Record<string, unknown>
+      return Object.fromEntries(
+        Object.keys(record)
+          .sort()
+          .map((key) => [key, record[key]]),
+      )
+    }
+    return inner
+  })
+}
+
+/**
+ * Work out what the local layer has to hold for `merged` to be what loads.
+ *
+ * Anything identical to the shared copy is left out rather than written down:
+ * copying it locally would freeze it, and the whole point of the shared file is
+ * that a change to it reaches everyone. Anything the shared layer has and
+ * `merged` does not was deleted, and is remembered as such.
+ */
+function diffSection<T>(
+  current: Record<string, T>,
+  shared: Record<string, unknown>,
+): { own: Record<string, T>; missing: string[] } {
+  const own: Record<string, T> = {}
+  for (const [key, value] of Object.entries(current)) {
+    if (key in shared && stable(shared[key]) === stable(value)) {
+      continue
+    }
+    own[key] = value
+  }
+  const missing = Object.keys(shared).filter((key) => !(key in current))
+  return { own, missing }
+}
+
+export function splitLocal(
+  merged: DeploymentWindowsConfig,
+  remote: DeploymentWindowsConfig,
+): { local: DeploymentWindowsConfig; hidden: HiddenKeys } {
+  const domains = diffSection(merged.domains, remote.domains)
+  const sites = diffSection(merged.sites, remote.sites)
+  const deployments = diffSection(merged.deployments, remote.deployments)
+
+  return {
+    local: {
+      domains: domains.own,
+      sites: sites.own,
+      deployments: deployments.own,
+    },
+    hidden: {
+      domains: domains.missing,
+      sites: sites.missing,
+      deployments: deployments.missing,
+    },
+  }
+}
+
+export function isHiddenEmpty(hidden: HiddenKeys): boolean {
+  return SECTIONS.every((section) => hidden[section].length === 0)
+}
+
+/** Only https, so a shared config cannot be fetched over a readable connection. */
+export function isUsableRemoteUrl(url: string): boolean {
+  try {
+    return new URL(url).protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+export async function readRemoteUrl(): Promise<string> {
+  const stored = await chrome.storage.sync.get(REMOTE_URL_KEY)
+  const url = stored[REMOTE_URL_KEY]
+  return typeof url === 'string' ? url : ''
+}
+
+export async function readHidden(): Promise<HiddenKeys> {
+  const stored = await chrome.storage.sync.get(REMOTE_HIDDEN_KEY)
+  const value = stored[REMOTE_HIDDEN_KEY] as Partial<HiddenKeys> | undefined
+  const hidden = emptyHidden()
+  for (const section of SECTIONS) {
+    const list = value?.[section]
+    if (Array.isArray(list)) {
+      hidden[section] = list.filter((key): key is string => typeof key === 'string')
+    }
+  }
+  return hidden
+}
+
+export async function readCache(): Promise<RemoteCache | null> {
+  const stored = await chrome.storage.local.get(REMOTE_CACHE_KEY)
+  const cache = stored[REMOTE_CACHE_KEY] as RemoteCache | undefined
+  return cache ?? null
+}
+
+/**
+ * The shared layer as it stands: the cached config, or nothing at all when no
+ * URL is set or the URL has moved on since the cache was written.
+ */
+export async function loadRemoteLayer(): Promise<DeploymentWindowsConfig> {
+  const url = await readRemoteUrl()
+  if (!url) {
+    return emptyConfig()
+  }
+
+  const cache = await readCache()
+  if (!cache || cache.url !== url || !cache.config) {
+    return emptyConfig()
+  }
+
+  return cache.config
+}
+
+/**
+ * Fetch the shared config and cache whatever came back.
+ *
+ * Never throws and never rejects: it is called from a service worker alarm as
+ * well as from a button, and a shared file that is briefly missing must not
+ * take the extension down with it. A failure is written into the cache so the
+ * options page can say what happened, and the last config that did parse is
+ * kept so the notice carries on working meanwhile.
+ */
+export async function refreshRemote(): Promise<RemoteCache> {
+  const url = await readRemoteUrl()
+  const previous = await readCache()
+  const kept = previous?.url === url ? previous.config : null
+
+  const cache: RemoteCache = {
+    url,
+    fetchedAt: Date.now(),
+    config: kept,
+    error: null,
+  }
+
+  if (!url) {
+    await chrome.storage.local.remove(REMOTE_CACHE_KEY)
+    return { ...cache, config: null }
+  }
+
+  if (!isUsableRemoteUrl(url)) {
+    cache.error = 'The shared config URL must be an https:// address.'
+    await chrome.storage.local.set({ [REMOTE_CACHE_KEY]: cache })
+    return cache
+  }
+
+  try {
+    const response = await fetch(url, { cache: 'no-cache' })
+    if (!response.ok) {
+      throw new Error(`${response.status} ${response.statusText}`.trim())
+    }
+
+    const text = await response.text()
+    if (text.length > MAX_BYTES) {
+      throw new Error('the file is too large to be a config')
+    }
+
+    const parsed: unknown = JSON.parse(text)
+    const validation = validateConfig(parsed)
+    if (!validation.valid) {
+      throw new Error(validation.errors[0] ?? 'it is not a valid config')
+    }
+
+    const config = parsed as DeploymentWindowsConfig
+    cache.config = {
+      domains: config.domains ?? {},
+      sites: config.sites ?? {},
+      deployments: config.deployments ?? {},
+    }
+  } catch (error: unknown) {
+    cache.error = error instanceof Error ? error.message : String(error)
+  }
+
+  await chrome.storage.local.set({ [REMOTE_CACHE_KEY]: cache })
+  return cache
+}
+
+/** Point at a different shared config, and pull it straight away. */
+export async function setRemoteUrl(url: string): Promise<RemoteCache> {
+  const trimmed = url.trim()
+  if (trimmed) {
+    await chrome.storage.sync.set({ [REMOTE_URL_KEY]: trimmed })
+  } else {
+    await chrome.storage.sync.remove(REMOTE_URL_KEY)
+  }
+  return refreshRemote()
+}

@@ -1,200 +1,954 @@
+@import './base.css';
+@import './forms.css';
+
+/**
+ * Options page styling.
+ *
+ * Layout is one dashboard: a sticky header, a summary strip, then card grids
+ * that stay readable at any width. Nothing here hard-codes a colour - every
+ * value comes from tokens.css, which is what makes the light/dark switch a
+ * single attribute change rather than a second stylesheet. Anything the
+ * popup also renders lives in base.css instead.
+ */
+
+html {
+  background: var(--dw-bg);
+}
+
 body {
-    background: #fbfbff;
+  margin: 0;
+  background: var(--dw-bg);
+  color: var(--dw-text);
+  font-family: var(--dw-font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4 {
-    color: rgba(0, 0, 0, 0.6);
+/* ------------------------------------------------------------------ */
+/* shell                                                               */
+/* ------------------------------------------------------------------ */
+
+.dw-app {
+  min-height: 100vh;
 }
 
-.tabs .tab {
-    margin-top: 10px;
-    color: rgba(0, 0, 0, 0.6);
-    display: inline-block;
-    padding: 10px;
-    border-radius: 10px 10px 0 0;
-    cursor: pointer;
+.dw-app-loading {
+  display: grid;
+  place-items: center;
+  min-height: 60vh;
 }
 
-.tabs .tab:hover, .tabs .tab.active {
-    background: none;
-    border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+.dw-loading {
+  color: var(--dw-text-muted);
 }
 
-.tabs .content {
-    padding: 20px;
-    color: rgba(0, 0, 0, 0.6);
-    background: rgba(255, 255, 255, 0.2);
-    border-top: 2px solid rgba(0, 0, 0, 0.2);
-    margin-top: -2px;
+.dw-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--dw-surface) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--dw-border);
 }
 
-.site-options-information {
-    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
-    padding: 1rem 0.7rem;
+.dw-header-inner,
+.dw-main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 var(--dw-space-5);
 }
 
-.site-options-information:last-child {
-    border-bottom: 0;
+.dw-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dw-space-5);
+  flex-wrap: wrap;
+  padding-top: var(--dw-space-4);
+  padding-bottom: var(--dw-space-4);
 }
 
-.site-information-title {
-    margin-bottom: 0;
+/* The extension's own mark is the neutral status mark in accent. */
+.dw-app-mark {
+  flex: none;
+  color: var(--dw-accent);
 }
 
-.mono-text {
-    font-family: "Courier New", Courier, monospace;
+.dw-header-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-3);
+  min-width: 0;
 }
 
-.custom-class {
-    font-family: "Courier New", Courier, monospace;
+.dw-header-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 640;
+  letter-spacing: -0.01em;
 }
 
-.custom-class.custom-class-deploy {
-    color: green;
+.dw-header-subtitle {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--dw-text-muted);
 }
 
-.custom-class.custom-class-no-deploy {
-    color: red;
+.dw-header-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-3);
+  flex-wrap: wrap;
 }
 
-.content-import-export {
-    height: 600px;
+.dw-header-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--dw-border);
 }
 
-.content-import-export .editor,
-.content-import-export .editor > div {
-    height: 100%;
+.dw-main {
+  padding-top: var(--dw-space-6);
+  padding-bottom: var(--dw-space-7);
 }
 
-.btn {
-    position: relative;
-    display: inline-block;
-    padding: 17px 40px;
-    z-index: 1;
-    border: 0;
-    outline: 0;
-    cursor: pointer;
-    font-size: 0.6875rem;
-    color: #fff;
-    background: #463f3a;
-    text-align: center;
-    line-height: normal;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
-    border-radius: 10px;
+/* ------------------------------------------------------------------ */
+/* summary                                                             */
+/* ------------------------------------------------------------------ */
+
+.dw-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--dw-space-3);
+  margin-bottom: var(--dw-space-5);
 }
 
-.btn.disabled,
-.btn:disabled {
-    opacity: 0.75;
+.dw-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--dw-space-4);
+  background: var(--dw-surface);
+  border: 1px solid var(--dw-border);
+  border-radius: var(--dw-radius);
+  box-shadow: var(--dw-shadow-sm);
 }
 
-.btn.disabled:hover:after,
-.btn:disabled:hover:after,
-.btn.disabled:active:after,
-.btn:disabled:active:after {
-    background: rgba(255, 255, 255, .0);
+.dw-stat-value {
+  font-size: 1.6rem;
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
-.btn:after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(255, 255, 255, .0);
-    border-radius: 10px;
-    transition: all 0.4s ease 0s;
+.dw-stat-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dw-text-faint);
 }
 
-.btn:hover:after {
-    background: rgba(255, 255, 255, .15);
+.dw-stat-hint {
+  margin-top: 1px;
+  font-size: 0.74rem;
+  color: var(--dw-text-faint);
 }
 
-.btn:active:after {
-    background: rgba(0, 0, 0, .35);
+.dw-stat-open .dw-stat-value,
+.dw-stat-open .dw-stat-label {
+  color: var(--dw-success);
 }
 
-.chip {
-    padding: 8px 10px;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 12px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
-    margin: 0 10px;
-    color: #fff;
-    background: #463f3a;
+/* ------------------------------------------------------------------ */
+/* site cards                                                          */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Each site carries a hue - its brand's where the host is recognisable, a
+ * stable hash of the name otherwise - set inline as --dw-site-hue. Only the
+ * hue travels: saturation and lightness are chosen here, per theme, so an
+ * accent is never legible in one theme and invisible in the other.
+ */
+.dw-site-card {
+  --dw-site-accent: hsl(var(--dw-site-hue, 220) 50% 38%);
+  --dw-site-soft: hsl(var(--dw-site-hue, 220) 60% 96%);
+  --dw-site-border: hsl(var(--dw-site-hue, 220) 45% 84%);
+
+  border-left: 3px solid var(--dw-site-accent);
 }
 
-.btn.btn-danger,
-.chip.chip-danger {
-    background: #d7263d;
+:root[data-theme='dark'] .dw-site-card {
+  --dw-site-accent: hsl(var(--dw-site-hue, 220) 70% 72%);
+  --dw-site-soft: hsl(var(--dw-site-hue, 220) 35% 18%);
+  --dw-site-border: hsl(var(--dw-site-hue, 220) 30% 32%);
 }
 
-.btn.btn-success,
-.chip.chip-success {
-    background: #008148;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .dw-site-card {
+  --dw-site-accent: hsl(var(--dw-site-hue, 220) 70% 72%);
+  --dw-site-soft: hsl(var(--dw-site-hue, 220) 35% 18%);
+  --dw-site-border: hsl(var(--dw-site-hue, 220) 30% 32%);
+  }
 }
 
-.btn.btn-info,
-.chip.chip-info {
-    background: #2660a4;
+.dw-site-card .dw-card-head {
+  align-items: center;
 }
 
-.btn.btn-warning,
-.chip.chip-warning {
-    background: #eec170;
+.dw-site-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-3);
+  min-width: 0;
 }
 
-.flex-row {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: 100%;
-    margin-bottom: 1rem;
+.dw-site-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--dw-site-accent);
+  background: var(--dw-site-soft);
+  border: 1px solid var(--dw-site-border);
+  border-radius: 9px;
 }
 
-.flex-col {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
+.dw-site-avatar-image {
+  padding: 5px;
+  object-fit: contain;
 }
 
-.flex-end {
-    align-items: center;
-    flex-flow: row nowrap;
-    justify-content: flex-end;
+.dw-site-count {
+  flex: none;
+  padding: 3px 9px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--dw-site-accent);
+  background: var(--dw-site-soft);
+  border: 1px solid var(--dw-site-border);
+  border-radius: 999px;
 }
 
-table.table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-    overflow: hidden;
-    margin-bottom: 2rem;
+/* ------------------------------------------------------------------ */
+/* toolbar                                                             */
+/* ------------------------------------------------------------------ */
+
+.dw-toolbar {
+  margin-bottom: var(--dw-space-5);
 }
 
-table.table td, table.table th {
-    border-top: 1px solid rgba(191, 191, 191, 0.37);
-    padding: 10px;
+.dw-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 420px;
+  color: var(--dw-text-faint);
 }
 
-table.table td {
-    border-left: 1px solid rgba(191, 191, 191, 0.37);
+.dw-search svg {
+  position: absolute;
+  left: 12px;
+  pointer-events: none;
 }
 
-table.table td:first-child {
-    border-left: 0;
+/* Specific enough to beat the padding shorthand on .dw-input further down. */
+.dw-search .dw-search-input {
+  padding-left: 36px;
 }
 
-table.table th {
-    text-transform: capitalize;
-    background-color: #b8ddff;
+/* ------------------------------------------------------------------ */
+/* sections and cards                                                  */
+/* ------------------------------------------------------------------ */
+
+.dw-section {
+  margin-bottom: var(--dw-space-6);
 }
 
-table.table tr:nth-of-type(even) td {
-    background-color: #e8f4ff;
+.dw-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dw-space-4);
+  margin-bottom: var(--dw-space-4);
+}
+
+.dw-section-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.dw-section-subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--dw-text-faint);
+}
+
+.dw-section-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 640;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dw-text-muted);
+}
+
+.dw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--dw-space-4);
+  align-items: start;
+}
+
+.dw-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-space-3);
+  padding: var(--dw-space-4);
+  background: var(--dw-surface);
+  border: 1px solid var(--dw-border);
+  border-radius: var(--dw-radius-lg);
+  box-shadow: var(--dw-shadow-sm);
+  transition: box-shadow var(--dw-transition), border-color var(--dw-transition);
+}
+
+.dw-card:hover {
+  box-shadow: var(--dw-shadow);
+  border-color: var(--dw-border-strong);
+}
+
+/* A hairline in the status colour, so the grid can be scanned at a glance. */
+.dw-card[data-status='open'] {
+  border-left: 3px solid var(--dw-success);
+}
+
+.dw-card[data-status='closed'] {
+  border-left: 3px solid var(--dw-danger);
+}
+
+.dw-card[data-status='notes'],
+.dw-card[data-status='unset'] {
+  border-left: 3px solid var(--dw-warn);
+}
+
+.dw-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--dw-space-3);
+}
+
+/* The pill and the countdown stack at the right hand end, so the title keeps
+   the width it needs and the two status readings stay together. */
+.dw-card-status {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.dw-card-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dw-card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-2);
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 620;
+  overflow-wrap: anywhere;
+}
+
+.dw-card-key {
+  font-family: var(--dw-font-mono);
+  font-size: 0.74rem;
+  color: var(--dw-text-faint);
+}
+
+.dw-card-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-space-2);
+  margin: 0;
+}
+
+.dw-card-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--dw-space-3);
+  flex-wrap: wrap;
+}
+
+.dw-card-row dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--dw-text-muted);
+  white-space: nowrap;
+}
+
+.dw-card-row dd {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--dw-space-2);
+  margin: 0;
+  margin-left: auto;
+  text-align: right;
+}
+
+/* The window itself must never be split across two lines - the timezone that
+   follows it can wrap instead. */
+.dw-card-row dd .dw-mono {
+  white-space: nowrap;
+}
+
+.dw-card-row-subtle {
+  opacity: 0.8;
+}
+
+.dw-card-zone {
+  font-size: 0.74rem;
+  color: var(--dw-text-faint);
+}
+
+.dw-card-warning {
+  margin: 0;
+  padding: var(--dw-space-2) var(--dw-space-3);
+  font-size: 0.8rem;
+  color: var(--dw-warn);
+  background: var(--dw-warn-soft);
+  border-radius: var(--dw-radius-sm);
+}
+
+.dw-card-section-title {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dw-text-faint);
+}
+
+.dw-card-notes-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dw-text-faint);
+}
+
+.dw-card-notes {
+  padding-top: var(--dw-space-3);
+  border-top: 1px solid var(--dw-border);
+}
+
+.dw-card-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-2);
+  flex-wrap: wrap;
+  padding-top: var(--dw-space-3);
+  border-top: 1px solid var(--dw-border);
+}
+
+.dw-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dw-list li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dw-space-2);
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------ */
+/* chips                                                               */
+/* ------------------------------------------------------------------ */
+
+.dw-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dw-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  background: var(--dw-surface-2);
+  border-radius: var(--dw-radius-sm);
+  overflow-wrap: anywhere;
+}
+
+.dw-chip-key {
+  font-weight: 600;
+  color: var(--dw-text-muted);
+}
+
+.dw-chip-value {
+  font-family: var(--dw-font-mono);
+  font-size: 0.92em;
+}
+
+.dw-chip-empty {
+  opacity: 0.55;
+}
+
+.dw-chip-empty .dw-chip-value {
+  font-family: var(--dw-font-sans);
+  font-style: italic;
+}
+
+.dw-chip-flag {
+  color: var(--dw-accent-soft-text);
+  background: var(--dw-accent-soft);
+  font-weight: 600;
+}
+
+/*
+ * The base carries its own fill. It used to rely on a modifier for colour, so
+ * an unmodified badge - the "Shared" one on a card - rendered as bare text
+ * sitting next to the key, reading as a word rather than a label.
+ */
+.dw-badge {
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--dw-text-muted);
+  background: var(--dw-surface-2);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.dw-badge-warn {
+  color: var(--dw-warn);
+  background: var(--dw-warn-soft);
+}
+
+/* ------------------------------------------------------------------ */
+/* segmented control                                                   */
+/* ------------------------------------------------------------------ */
+
+.dw-segmented {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--dw-surface-2);
+  border: 1px solid var(--dw-border);
+  border-radius: var(--dw-radius-sm);
+}
+
+.dw-segmented-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 560;
+  color: var(--dw-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background var(--dw-transition), color var(--dw-transition);
+}
+
+.dw-segmented-option:hover {
+  color: var(--dw-text);
+}
+
+.dw-segmented-option[aria-pressed='true'] {
+  color: var(--dw-text);
+  background: var(--dw-surface);
+  box-shadow: var(--dw-shadow-sm);
+}
+
+@media (max-width: 720px) {
+  .dw-segmented-label {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* empty states                                                        */
+/* ------------------------------------------------------------------ */
+
+.dw-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dw-space-2);
+  padding: var(--dw-space-7) var(--dw-space-5);
+  text-align: center;
+  background: var(--dw-surface);
+  border: 1px dashed var(--dw-border-strong);
+  border-radius: var(--dw-radius-lg);
+}
+
+.dw-empty-title {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 620;
+}
+
+.dw-empty-hint {
+  margin: 0 0 var(--dw-space-2);
+  max-width: 42ch;
+  color: var(--dw-text-muted);
+}
+
+.dw-empty-inline {
+  margin: 0;
+  padding: var(--dw-space-5);
+  text-align: center;
+  color: var(--dw-text-faint);
+  background: var(--dw-surface);
+  border: 1px dashed var(--dw-border);
+  border-radius: var(--dw-radius);
+}
+
+/* ------------------------------------------------------------------ */
+/* modal                                                               */
+/* ------------------------------------------------------------------ */
+
+.dw-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--dw-space-6) var(--dw-space-4);
+  overflow-y: auto;
+  background: var(--dw-bg-veil);
+  backdrop-filter: blur(2px);
+}
+
+.dw-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 680px;
+  max-height: calc(100vh - var(--dw-space-6) * 2);
+  background: var(--dw-surface);
+  border: 1px solid var(--dw-border);
+  border-radius: var(--dw-radius-lg);
+  box-shadow: var(--dw-shadow-lg);
+}
+
+.dw-modal-wide {
+  max-width: 900px;
+}
+
+.dw-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--dw-space-4);
+  padding: var(--dw-space-4) var(--dw-space-5);
+  border-bottom: 1px solid var(--dw-border);
+}
+
+.dw-modal-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 640;
+}
+
+.dw-modal-description {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--dw-text-muted);
+}
+
+.dw-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--dw-space-5);
+}
+
+.dw-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--dw-space-2);
+  padding: var(--dw-space-3) var(--dw-space-5);
+  background: var(--dw-surface-2);
+  border-top: 1px solid var(--dw-border);
+  border-radius: 0 0 var(--dw-radius-lg) var(--dw-radius-lg);
+}
+
+/* ------------------------------------------------------------------ */
+/* toasts                                                              */
+/* ------------------------------------------------------------------ */
+
+.dw-toaster {
+  position: fixed;
+  right: var(--dw-space-5);
+  bottom: var(--dw-space-5);
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dw-space-2);
+}
+
+.dw-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-4);
+  padding: 10px var(--dw-space-4);
+  background: var(--dw-surface);
+  border: 1px solid var(--dw-border-strong);
+  border-left-width: 3px;
+  border-radius: var(--dw-radius);
+  box-shadow: var(--dw-shadow-lg);
+}
+
+.dw-toast-success {
+  border-left-color: var(--dw-success);
+}
+
+.dw-toast-danger {
+  border-left-color: var(--dw-danger);
+}
+
+.dw-toast-info {
+  border-left-color: var(--dw-accent);
+}
+
+.dw-toast-message {
+  font-size: 0.86rem;
+}
+
+.dw-toast-action {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 620;
+  color: var(--dw-accent);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.dw-toast-action:hover {
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------ */
+/* json panel                                                          */
+/* ------------------------------------------------------------------ */
+
+.dw-panel {
+  background: var(--dw-surface);
+  border: 1px solid var(--dw-border);
+  border-radius: var(--dw-radius-lg);
+  overflow: hidden;
+}
+
+.dw-panel-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-3);
+  width: 100%;
+  padding: var(--dw-space-4);
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.dw-panel-summary:hover {
+  background: var(--dw-surface-2);
+}
+
+.dw-panel-chevron {
+  flex: none;
+  color: var(--dw-text-faint);
+  transition: transform var(--dw-transition);
+}
+
+.dw-panel-chevron-open {
+  transform: rotate(180deg);
+}
+
+.dw-panel-summary-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.dw-panel-title {
+  font-size: 0.9rem;
+  font-weight: 620;
+}
+
+.dw-panel-subtitle {
+  font-size: 0.8rem;
+  color: var(--dw-text-muted);
+}
+
+.dw-panel-body {
+  padding: 0 var(--dw-space-4) var(--dw-space-4);
+  border-top: 1px solid var(--dw-border);
+}
+
+/* The key and any badge sit on one line under the card's title. */
+.dw-card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-2);
+  min-width: 0;
+}
+
+/* Standing information about the panel, rather than a result of an action. */
+.dw-panel-note {
+  margin: var(--dw-space-3) 0 0;
+  font-size: 0.82rem;
+  color: var(--dw-text-muted);
+}
+
+.dw-panel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--dw-space-2);
+  flex-wrap: wrap;
+  padding: var(--dw-space-3) 0;
+}
+
+.dw-panel-toolbar-gap {
+  flex: 1;
+}
+
+.dw-panel-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: var(--dw-success);
+}
+
+.dw-errors {
+  margin: 0 0 var(--dw-space-3);
+  padding: var(--dw-space-3) var(--dw-space-4) var(--dw-space-3) var(--dw-space-6);
+  font-size: 0.82rem;
+  color: var(--dw-danger);
+  background: var(--dw-danger-soft);
+  border: 1px solid color-mix(in srgb, var(--dw-danger) 30%, transparent);
+  border-radius: var(--dw-radius);
+}
+
+.dw-errors li + li {
+  margin-top: 4px;
+}
+
+.dw-editor {
+  overflow: hidden;
+  border: 1px solid var(--dw-border);
+  border-radius: var(--dw-radius);
+}
+
+.dw-editor .cm-editor {
+  font-size: 13px;
+}
+
+.dw-editor .cm-editor.cm-focused {
+  outline: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* the how-to document                                                 */
+/* ------------------------------------------------------------------ */
+
+.dw-prose-doc h1 {
+  margin: 0 0 0.4em;
+  font-size: 1.3rem;
+}
+
+.dw-prose-doc h2 {
+  margin: 1.6em 0 0.5em;
+  padding-bottom: 0.3em;
+  font-size: 1.05rem;
+  border-bottom: 1px solid var(--dw-border);
+}
+
+.dw-prose-doc h3 {
+  margin: 1.3em 0 0.4em;
+  font-size: 0.95rem;
+}
+
+.dw-prose-doc hr {
+  margin: 1.6em 0;
+  border: 0;
+  border-top: 1px solid var(--dw-border);
+}
+
+.dw-prose-doc table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+}
+
+.dw-prose-doc th,
+.dw-prose-doc td {
+  padding: 7px 10px;
+  text-align: left;
+  border: 1px solid var(--dw-border);
+  vertical-align: top;
+}
+
+.dw-prose-doc th {
+  background: var(--dw-surface-2);
+  font-weight: 620;
+  white-space: nowrap;
+}
+
+@media (max-width: 620px) {
+  .dw-header-inner,
+  .dw-main {
+    padding-left: var(--dw-space-4);
+    padding-right: var(--dw-space-4);
+  }
+
+  .dw-grid {
+    grid-template-columns: 1fr;
+  }
 }

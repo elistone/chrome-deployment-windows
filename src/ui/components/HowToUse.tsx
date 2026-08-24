@@ -1,29 +1,53 @@
-import * as React from "react"
+import { Methods } from '../../app/components/Methods'
+import { TextFormatter } from '../../app/components/TextFormatter'
+import howToUseMarkdown from '../../documents/HowToUse.md?raw'
+import Modal from './common/Modal'
 
-type Props = {}
-
-class HowToUse extends React.Component<Props> {
-    /**
-     * on constructor
-     * @param props
-     */
-    constructor(props) {
-        super(props);
-        this.state = { }
-    }
-
-    /**
-     * render method
-     */
-    render() {
-        const howToUseMD = require('../../documents/HowToUse.md');
-
-        return (
-            <div className="content-wrapper content-site-information">
-                <div dangerouslySetInnerHTML={{__html: howToUseMD}}/>
-            </div>
-        );
-    }
+/**
+ * Renders the bundled how-to document.
+ *
+ * v1 relied on webpack's markdown-loader to convert this at build time; Vite's
+ * `?raw` import keeps it as source and it is rendered here instead.
+ */
+export function HowToUse() {
+  return (
+    <div className="dw-prose dw-prose-doc">
+      <div
+        dangerouslySetInnerHTML={{
+          __html: TextFormatter.renderTrustedMarkdown(howToUseMarkdown),
+        }}
+      />
+    </div>
+  )
 }
 
-export default HowToUse;
+/**
+ * The same document as an overlay.
+ *
+ * It used to be a tab, which put reference material on the same footing as the
+ * config itself. Now that every field carries its own hint the document is
+ * background reading, so it lives behind a link in the header instead.
+ */
+export function HowToUseDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <Modal
+      title={Methods.i18n('l10nHowToUse')}
+      description={Methods.i18n('l10nHowToUseSubtitle')}
+      onClose={onClose}
+      size="wide"
+      footer={
+        <button
+          type="button"
+          className="dw-button dw-button-primary"
+          onClick={onClose}
+        >
+          {Methods.i18n('l10nClose')}
+        </button>
+      }
+    >
+      <HowToUse />
+    </Modal>
+  )
+}
+
+export default HowToUse

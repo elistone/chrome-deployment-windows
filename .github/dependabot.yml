@@ -1,0 +1,61 @@
+version: 2
+
+# There was no config here before, so only security updates ever ran and
+# nothing kept ordinary versions moving - which is a large part of how the
+# toolchain drifted far enough to stop installing at all.
+#
+# Minor and patch updates are grouped into a single PR per ecosystem so a few
+# quiet weeks cannot rebuild the 20-PR backlog this replaced. Major updates are
+# deliberately left ungrouped: they are the ones that break things (TypeScript 7
+# and ESLint 10 both had to be turned down during the v2 rebuild), so each
+# deserves its own PR and its own CI run.
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: Europe/London
+    # Enough headroom for the two grouped PRs plus a few majors.
+    open-pull-requests-limit: 6
+    labels:
+      - dependencies
+    commit-message:
+      prefix: deps
+      prefix-development: deps-dev
+    groups:
+      production-dependencies:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      development-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    # The workflows live at the repo root; the composite action needs naming
+    # separately, as it is not under .github/workflows.
+    directories:
+      - /
+      - /.github/actions/setup
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: Europe/London
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        update-types:
+          - minor
+          - patch

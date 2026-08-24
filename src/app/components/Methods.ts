@@ -1,119 +1,132 @@
+import type { IconState } from '../icons'
+
 /**
- * Helper methods class
+ * Small DOM / extension-API helpers shared by the content script and UI.
  */
 export class Methods {
+  /** Insert `node` immediately after the first element `target` names. */
+  static insertAfter(node: Node, target: string): boolean {
+    const reference = Methods.findAnchor(target)
+    if (reference?.parentNode) {
+      reference.parentNode.insertBefore(node, reference.nextSibling)
+      return true
+    }
+    return false
+  }
 
-    /**
-     * Insets element after
-     *
-     * @param notice
-     * @param className
-     */
-    public static insertAfter(notice, className): boolean {
-        const referenceNode = this.findClass(className);
-        if (referenceNode) {
-            referenceNode.parentNode.insertBefore(notice, referenceNode.nextSibling);
-            return true;
-        }
-        return false;
+  /** Insert `node` immediately before the first element `target` names. */
+  static insertBefore(node: Node, target: string): boolean {
+    const reference = Methods.findAnchor(target)
+    if (reference?.parentNode) {
+      reference.parentNode.insertBefore(node, reference)
+      return true
+    }
+    return false
+  }
+
+  /**
+   * Is this insert location a CSS selector rather than a bare class name?
+   *
+   * Shared with the options page so what it draws and what the content script
+   * looks for can never disagree about what a value means.
+   */
+  static isSelector(target: string): boolean {
+    return /^[#.[]/.test(target.trim())
+  }
+
+  /**
+   * The element an insert rule points at.
+   *
+   * A bare word is a class name, which is what every configuration written so
+   * far contains. A value starting with `#`, `.` or `[` is a CSS selector
+   * instead, because a site's stable anchor is not always a class: GitHub's
+   * repository header is identified by an id, and the classes beside it are
+   * generated and change without notice.
+   *
+   * The distinction is drawn on the first character on purpose. Whitespace is
+   * not a signal, since `getElementsByClassName('a b')` already means "has
+   * both classes" and reading it as a selector would silently change what an
+   * existing config matches.
+   */
+  static findAnchor(target: string): HTMLElement | null {
+    const value = target.trim()
+    if (!value) {
+      return null
     }
 
-    /**
-     * Insets element before
-     *
-     * @param notice
-     * @param className
-     */
-    public static insertBefore(notice, className): boolean {
-        const referenceNode = this.findClass(className);
-        if (referenceNode) {
-            referenceNode.parentNode.insertBefore(notice, referenceNode);
-            return true;
-        }
-        return false;
+    if (Methods.isSelector(value)) {
+      try {
+        const element = document.querySelector(value)
+        return element instanceof HTMLElement ? element : null
+      } catch {
+        // An unparseable selector is a typo in the config, not a crash.
+        return null
+      }
     }
 
-    /**
-     * Update the html of an element based upon class name
-     *
-     * @param text
-     * @param className
-     */
-    public static updateHtml(text, className): boolean {
-        const referenceNode = this.findClass(className);
-        if (referenceNode) {
-            referenceNode.innerHTML = text;
-            return true;
-        }
-        return false;
-    }
+    return Methods.findClass(value)
+  }
 
-    /**
-     * update the class name of an element base upon finding an element by class
-     *
-     * @param setClass
-     * @param className
-     */
-    public static updateClassName(setClass, className): boolean {
-        const referenceNode = this.findClass(className);
-        if (referenceNode) {
-            referenceNode.className = setClass;
-            return true;
-        }
-        return false;
-    }
+  /**
+   * First element in the document with `className`.
+   *
+   * Only for locating host page insert anchors. The notice's own parts are
+   * held as references from build time - see Notice - because a document-wide
+   * lookup can match an element belonging to the page we injected into.
+   */
+  static findClass(className: string): HTMLElement | null {
+    const element = document.getElementsByClassName(className)[0]
+    return element instanceof HTMLElement ? element : null
+  }
 
-    /**
-     * Helper method to find class
-     *
-     * @param className
-     */
-    public static findClass(className: string) {
-        const elm = document.getElementsByClassName(className)[0];
-        if (typeof elm !== "undefined") {
-            return elm as HTMLElement;
-        }
-        return false;
-    }
+  static isHidden(element: HTMLElement): boolean {
+    const style = window.getComputedStyle(element)
+    return style.display === 'none' || style.visibility === 'hidden'
+  }
 
-    /**
-     * States if an element is hidden or not
-     *
-     * @param elem
-     */
-    public static isHidden(elem): boolean {
-        return window.getComputedStyle(elem).display === "none" || window.getComputedStyle(elem).visibility === "hidden";
+  /**
+   * Localised message lookup.
+   *
+   * Guarded because the content script keeps running in pages that were open
+   * when the extension was reloaded, at which point chrome.* is torn down.
+   *
+   * A missing message resolves to an empty string, and since every visible
+   * label in the UI comes through here that turned an out of date catalogue
+   * into a page of blank controls rather than anything diagnosable. Chrome
+   * caches _locales for the loaded extension, so a rebuilt unpacked extension
+   * that has not been reloaded hits exactly that. The key is humanised instead:
+   * approximate wording beats no wording. check-locales.js is what stops a
+   * genuinely missing message reaching a build.
+   */
+  static i18n(key: string): string {
+    try {
+      return chrome?.i18n?.getMessage(key) || Methods.humaniseKey(key)
+    } catch {
+      return 'Translation lost, please reload.'
     }
+  }
 
-    /**
-     * Helper method that helps prevent errors when reloading.
-     *
-     * @param string
-     */
-    public static i18n(string: string) {
-        if (typeof chrome.i18n === 'undefined') {
-            return '';
-        }
-        try {
-            return chrome.i18n.getMessage(string);
-        } catch (e) {
-            return 'Translation lost, please reload.';
-        }
-    }
+  /** `l10nAddDeployment` -> `Add deployment`. */
+  private static humaniseKey(key: string): string {
+    const words = key
+      .replace(/^l10n/, '')
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .trim()
 
-    /**
-     * Helper method to update icons, prevent errors when reloading.
-     *
-     * @param icon
-     */
-    public static updateIcon(icon: string) {
-        if (typeof chrome.runtime === 'undefined') {
-            return '';
-        }
-        try {
-            chrome.runtime.sendMessage({"newIconPath": icon});
-        } catch (e) {
-            return '';
-        }
+    if (!words) {
+      return key
     }
+    return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase()
+  }
+
+  /** Ask the service worker to swap the toolbar icon. Never throws. */
+  static updateIcon(icon: IconState): void {
+    try {
+      void chrome?.runtime?.sendMessage({ icon })?.catch(() => {
+        // The worker may be asleep or the extension reloaded; nothing to do.
+      })
+    } catch {
+      // chrome.* is gone after an extension reload - ignore.
+    }
+  }
 }

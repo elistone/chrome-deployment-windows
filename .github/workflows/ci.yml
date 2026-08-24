@@ -1,0 +1,133 @@
+name: CI
+
+# Every push to a long-lived branch, and every pull request that is not already
+# covered by one of those pushes.
+#
+# Pushes used to be limited to the trunk, so that a branch with an open pull
+# request was not built twice. That left 2.x checked only for as long as its
+# pull request happened to be open, and unchecked from the moment it merged -
+# which is precisely when the trunk starts depending on it. Checks are keyed to
+# the commit rather than to the branch, so the push build is what such a pull
+# request shows anyway; the job-level condition below is what stops the second
+# copy without giving up cover for anything else.
+on:
+  push:
+    branches: [main, '2.x']
+  pull_request:
+  # So a branch that is not built on push can still be checked on demand.
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # corepack fetches the pinned pnpm on first use; without this it can stop to
+  # ask for confirmation.
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: 0
+
+jobs:
+  verify:
+    name: Typecheck, lint and unit tests
+    runs-on: ubuntu-latest
+    # Skipped only where the push trigger has already built this exact commit:
+    # a pull request from main or 2.x, in this repository. A fork's pushes are
+    # not visible here, and neither are a feature branch's, so both still build.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      !contains(fromJSON('["main", "2.x"]'), github.head_ref)
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      # Every visible label goes through chrome.i18n, and a missing message
+      # renders as nothing, so this failing loudly beats a blank control.
+      - name: Check the message catalogue matches the source
+        run: pnpm check:locales
+
+      - name: Unit and component tests
+        run: pnpm test:coverage
+
+      - name: Upload coverage
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  build:
+    name: Build extension
+    runs-on: ubuntu-latest
+    # Skipped only where the push trigger has already built this exact commit:
+    # a pull request from main or 2.x, in this repository. A fork's pushes are
+    # not visible here, and neither are a feature branch's, so both still build.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      !contains(fromJSON('["main", "2.x"]'), github.head_ref)
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+
+      - name: Build
+        run: pnpm build
+
+      - name: Check the built manifest is valid MV3
+        run: pnpm check:manifest
+
+      # The build succeeds even when dev/ is imported from src/, so this is the
+      # only thing standing between a stray import and shipping the harness's
+      # fake chrome API to users.
+      - name: Check no dev-harness code leaked into the build
+        run: pnpm check:bundle
+
+      - name: Upload unpacked extension
+        uses: actions/upload-artifact@v7
+        with:
+          name: extension-unpacked
+          path: dist/
+          retention-days: 7
+
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-latest
+    # E2E drives a real Chromium, so only run it once the cheap checks are green.
+    needs: [verify, build]
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+
+      - name: Cache the Playwright browser
+        id: playwright-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build extension
+        run: pnpm build
+
+      - name: Run Playwright tests
+        run: pnpm exec playwright test
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
