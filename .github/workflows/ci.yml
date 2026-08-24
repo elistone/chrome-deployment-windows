@@ -1,14 +1,20 @@
 name: CI
 
-# A branch with an open PR would otherwise be built twice: once for the push
-# and again for the pull_request. Pushes are therefore limited to the trunk,
-# and everything else is covered by its PR.
+# Every push to a long-lived branch, and every pull request that is not already
+# covered by one of those pushes.
+#
+# Pushes used to be limited to the trunk, so that a branch with an open pull
+# request was not built twice. That left 2.x checked only for as long as its
+# pull request happened to be open, and unchecked from the moment it merged -
+# which is precisely when the trunk starts depending on it. Checks are keyed to
+# the commit rather than to the branch, so the push build is what such a pull
+# request shows anyway; the job-level condition below is what stops the second
+# copy without giving up cover for anything else.
 on:
   push:
-    branches: [main]
-  pull_request:
     branches: [main, '2.x']
-  # So long-lived branches without an open PR can still be checked on demand.
+  pull_request:
+  # So a branch that is not built on push can still be checked on demand.
   workflow_dispatch:
 
 concurrency:
@@ -24,6 +30,13 @@ jobs:
   verify:
     name: Typecheck, lint and unit tests
     runs-on: ubuntu-latest
+    # Skipped only where the push trigger has already built this exact commit:
+    # a pull request from main or 2.x, in this repository. A fork's pushes are
+    # not visible here, and neither are a feature branch's, so both still build.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      !contains(fromJSON('["main", "2.x"]'), github.head_ref)
 
     steps:
       - uses: actions/checkout@v7
@@ -54,6 +67,13 @@ jobs:
   build:
     name: Build extension
     runs-on: ubuntu-latest
+    # Skipped only where the push trigger has already built this exact commit:
+    # a pull request from main or 2.x, in this repository. A fork's pushes are
+    # not visible here, and neither are a feature branch's, so both still build.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      !contains(fromJSON('["main", "2.x"]'), github.head_ref)
 
     steps:
       - uses: actions/checkout@v7

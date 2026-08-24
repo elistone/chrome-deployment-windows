@@ -1,12 +1,10 @@
 name: CodeQL
 
-# Same de-duplication as ci.yml: pushes only on the trunk, everything else via
-# its pull request.
+# Same triggers and the same de-duplication as ci.yml; see the comment there.
 on:
   push:
-    branches: [main]
-  pull_request:
     branches: [main, '2.x']
+  pull_request:
   schedule:
     - cron: '0 14 * * 5'
   workflow_dispatch:
@@ -19,6 +17,10 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      !contains(fromJSON('["main", "2.x"]'), github.head_ref)
     permissions:
       actions: read
       contents: read
