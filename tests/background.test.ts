@@ -36,7 +36,7 @@ describe('background service worker', () => {
   it('sets the icon for the sending tab', async () => {
     const sendResponse = vi.fn()
     const keepChannelOpen = listener(
-      { newIconPath: 'icons/success/icon48.png' },
+      { icon: 'success' },
       senderWithTab,
       sendResponse,
     )
@@ -46,13 +46,22 @@ describe('background service worker', () => {
 
     await vi.waitFor(() => expect(sendResponse).toHaveBeenCalled())
 
+    // Every size, not just one for Chrome to scale down.
     expect(chromeMock().setIcons).toEqual([
-      { path: 'icons/success/icon48.png', tabId: 7 },
+      {
+        path: {
+          16: 'icons/success/icon16.png',
+          32: 'icons/success/icon32.png',
+          48: 'icons/success/icon48.png',
+          128: 'icons/success/icon128.png',
+        },
+        tabId: 7,
+      },
     ])
     expect(sendResponse).toHaveBeenCalledWith({ error: false })
   })
 
-  it('rejects a message without an icon path', () => {
+  it('rejects a message without an icon state', () => {
     const sendResponse = vi.fn()
     const result = listener({ somethingElse: true }, senderWithTab, sendResponse)
 
@@ -79,7 +88,7 @@ describe('background service worker', () => {
   it('rejects a message with no sender tab', () => {
     const sendResponse = vi.fn()
     const result = listener(
-      { newIconPath: 'icons/error/icon48.png' },
+      { icon: 'error' },
       {} as chrome.runtime.MessageSender,
       sendResponse,
     )
@@ -96,7 +105,7 @@ describe('background service worker', () => {
     vi.mocked(chrome.action.setIcon).mockRejectedValue(new Error('tab gone'))
     const sendResponse = vi.fn()
 
-    listener({ newIconPath: 'icons/error/icon48.png' }, senderWithTab, sendResponse)
+    listener({ icon: 'error' }, senderWithTab, sendResponse)
 
     await vi.waitFor(() => expect(sendResponse).toHaveBeenCalled())
     expect(sendResponse).toHaveBeenCalledWith({

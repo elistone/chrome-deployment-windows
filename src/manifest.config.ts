@@ -1,5 +1,6 @@
 import { defineManifest } from '@crxjs/vite-plugin'
 
+import { iconPaths } from './app/icons'
 import pkg from '../package.json' with { type: 'json' }
 
 /**
@@ -15,7 +16,8 @@ import pkg from '../package.json' with { type: 'json' }
  *
  * Icon paths are runtime paths: everything under public/ is copied to the root
  * of dist/ by Vite, so public/icons/default/icon16.png is served as
- * icons/default/icon16.png.
+ * icons/default/icon16.png. src/app/icons.ts owns that mapping, because the
+ * service worker needs the same paths at runtime.
  */
 export default defineManifest({
   manifest_version: 3,
@@ -25,11 +27,7 @@ export default defineManifest({
     'Apply reminders on to sites to give information about deployment windows.',
   default_locale: 'en',
 
-  icons: {
-    16: 'icons/default/icon16.png',
-    48: 'icons/default/icon48.png',
-    128: 'icons/default/icon128.png',
-  },
+  icons: iconPaths('default'),
 
   action: {
     default_title: 'Deployment windows',

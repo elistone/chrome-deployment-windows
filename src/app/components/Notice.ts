@@ -1,5 +1,6 @@
 import type { ResolvedDeployment, SiteStyle } from '../config/types'
 import { GLYPHS, GLYPH_VIEWBOX, glyphFor } from '../glyphs'
+import type { IconState } from '../icons'
 import { isCssSpacing } from '../config/schema'
 import { Methods } from './Methods'
 import { TextFormatter } from './TextFormatter'
@@ -9,10 +10,11 @@ import noticeStyles from '../../styles/notice.css?inline'
 
 const REALTIME_INTERVAL_MS = 1000
 
+/** Which artwork the toolbar wears for each state of the window. */
 export const ICONS = {
-  open: 'icons/success/icon48.png',
-  closed: 'icons/error/icon48.png',
-} as const
+  open: 'success',
+  closed: 'error',
+} as const satisfies Record<'open' | 'closed', IconState>
 
 export type NoticeTone = 'open' | 'closed' | 'notes'
 

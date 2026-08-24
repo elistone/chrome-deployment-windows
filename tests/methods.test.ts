@@ -168,18 +168,16 @@ describe('Methods', () => {
   })
 
   describe('updateIcon', () => {
-    it('messages the service worker with the icon path', () => {
-      Methods.updateIcon('icons/success/icon48.png')
-      expect(chromeMock().sentMessages).toEqual([
-        { newIconPath: 'icons/success/icon48.png' },
-      ])
+    it('messages the service worker with the icon state', () => {
+      Methods.updateIcon('success')
+      expect(chromeMock().sentMessages).toEqual([{ icon: 'success' }])
     })
 
     it('swallows a rejected sendMessage', async () => {
       vi.mocked(chrome.runtime.sendMessage).mockRejectedValue(
         new Error('worker asleep'),
       )
-      expect(() => Methods.updateIcon('icons/error/icon48.png')).not.toThrow()
+      expect(() => Methods.updateIcon('error')).not.toThrow()
       await Promise.resolve()
     })
 
@@ -188,7 +186,7 @@ describe('Methods', () => {
       // @ts-expect-error - deliberately removing the API the guard protects against
       delete globalThis.chrome
       try {
-        expect(() => Methods.updateIcon('icons/error/icon48.png')).not.toThrow()
+        expect(() => Methods.updateIcon('error')).not.toThrow()
       } finally {
         globalThis.chrome = original
       }

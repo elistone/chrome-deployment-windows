@@ -31,8 +31,12 @@ const OUT = path.join(ROOT, 'public', 'icons')
  */
 const SOURCE = path.join(ROOT, 'assets', 'icons')
 
-/** Chrome asks for these three; everything else it scales itself. */
-export const SIZES = [16, 48, 128]
+/**
+ * Every size Chrome asks for. Kept in step with ICON_SIZES in src/app/icons.ts
+ * by tests/icons.test.ts - this file has to run as plain JavaScript outside the
+ * bundle, so it cannot import it.
+ */
+export const SIZES = [16, 32, 48, 128]
 
 /**
  * Tones, lifted from the palettes in src/styles/tokens.css.

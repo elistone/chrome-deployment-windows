@@ -448,7 +448,7 @@ describe('Notice', () => {
       notice = new Notice(resolve(DAYTIME))
       notice.insert()
 
-      expect(chromeMock().sentMessages).toEqual([{ newIconPath: ICONS.open }])
+      expect(chromeMock().sentMessages).toEqual([{ icon: ICONS.open }])
     })
 
     it('sends the closed icon while the window is closed', () => {
@@ -458,7 +458,7 @@ describe('Notice', () => {
       notice = new Notice(resolve(DAYTIME))
       notice.insert()
 
-      expect(chromeMock().sentMessages).toEqual([{ newIconPath: ICONS.closed }])
+      expect(chromeMock().sentMessages).toEqual([{ icon: ICONS.closed }])
     })
 
     it('only messages the worker when the icon actually changes', () => {

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 // @ts-expect-error - plain JS build script, no type declarations
 import { GLYPHS as DRAWN, SIZES, svgFor } from '../scripts/icons.js'
 import { GLYPHS, type GlyphName, glyphFor } from '../src/app/glyphs'
+import { ICON_SIZES, ICON_STATES, iconPaths, isIconState } from '../src/app/icons'
 
 /**
  * Which icon state carries which mark. The icons are named for what the toolbar
@@ -31,9 +32,36 @@ describe('status glyphs', () => {
       expect(svg).toContain('viewBox="0 0 128 128"')
     })
 
-    it('draws every size Chrome is told about', () => {
-      expect(SIZES).toEqual([16, 48, 128])
+    // Same reason as the marks: the renderer and the runtime keep separate
+    // lists, so a size added to one and not the other would be a manifest
+    // pointing at a file nobody drew.
+    it('draws every size the extension claims', () => {
+      expect(SIZES).toEqual([...ICON_SIZES])
     })
+  })
+
+  describe('icon paths', () => {
+    it.each(ICON_STATES)('names a file per size for %s', (state) => {
+      expect(iconPaths(state)).toEqual({
+        16: `icons/${state}/icon16.png`,
+        32: `icons/${state}/icon32.png`,
+        48: `icons/${state}/icon48.png`,
+        128: `icons/${state}/icon128.png`,
+      })
+    })
+
+    it('renders artwork for every state the runtime can ask for', () => {
+      expect([...ICON_STATES].sort()).toEqual(Object.keys(DRAWN).sort())
+    })
+
+    // The worker expands whatever it is given into paths, so anything that is
+    // not a known state has to be turned away before it gets there.
+    it.each([null, undefined, 42, '', 'open', '../../etc/passwd'])(
+      'refuses %j as a state',
+      (value) => {
+        expect(isIconState(value)).toBe(false)
+      },
+    )
   })
 
   describe('glyphFor', () => {

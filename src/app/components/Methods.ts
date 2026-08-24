@@ -1,3 +1,5 @@
+import type { IconState } from '../icons'
+
 /**
  * Small DOM / extension-API helpers shared by the content script and UI.
  */
@@ -118,9 +120,9 @@ export class Methods {
   }
 
   /** Ask the service worker to swap the toolbar icon. Never throws. */
-  static updateIcon(icon: string): void {
+  static updateIcon(icon: IconState): void {
     try {
-      void chrome?.runtime?.sendMessage({ newIconPath: icon })?.catch(() => {
+      void chrome?.runtime?.sendMessage({ icon })?.catch(() => {
         // The worker may be asleep or the extension reloaded; nothing to do.
       })
     } catch {

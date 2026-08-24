@@ -163,7 +163,14 @@ test.describe('toolbar icon', () => {
       async () =>
         new Promise((resolve) => {
           chrome.action
-            .setIcon({ path: 'icons/success/icon48.png' })
+            .setIcon({
+              path: {
+                16: 'icons/success/icon16.png',
+                32: 'icons/success/icon32.png',
+                48: 'icons/success/icon48.png',
+                128: 'icons/success/icon128.png',
+              },
+            })
             .then(() => resolve(true))
             .catch(() => resolve(false))
         }),

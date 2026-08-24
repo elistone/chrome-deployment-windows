@@ -158,6 +158,7 @@ src/
   manifest.config.ts     Manifest V3, generated at build time by @crxjs/vite-plugin
   app/
     background.ts        MV3 service worker (toolbar icon swapping)
+    icons.ts             Toolbar icon states, sizes and paths
     content.ts           Content script entry point
     components/          DW (resolution), Notice (injection), Timezones, helpers
     config/              Storage access, types and validation
@@ -190,7 +191,7 @@ scripts/                 Build checks, icon drawing and release packaging
 pnpm icons
 ```
 
-Renders `public/icons/<state>/icon{16,48,128}.png` from the geometry in
+Renders `public/icons/<state>/icon{16,32,48,128}.png` from the geometry in
 `scripts/icons.js`, and writes the SVG source to `assets/icons/` alongside. The
 three states share one disc, one stroke weight and one set of tones, and only
 the glyph changes — a ring for the extension itself, a chevron while the window

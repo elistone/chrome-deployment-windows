@@ -12,7 +12,7 @@ export interface ChromeMock {
   /** Messages passed to chrome.runtime.sendMessage. */
   sentMessages: unknown[]
   /** Icon paths applied via chrome.action.setIcon. */
-  setIcons: { path: string; tabId?: number }[]
+  setIcons: { path: string | Record<number, string>; tabId?: number }[]
   /** When true, storage reads/writes reject. */
   failStorage: boolean
 }
@@ -113,9 +113,14 @@ export function installChromeMock(): void {
     },
 
     action: {
-      setIcon: vi.fn(async (details: { path: string; tabId?: number }) => {
-        state.setIcons.push(details)
-      }),
+      setIcon: vi.fn(
+        async (details: {
+          path: string | Record<number, string>
+          tabId?: number
+        }) => {
+          state.setIcons.push(details)
+        },
+      ),
     },
 
     // Reads the real messages.json so tests assert against the strings users
