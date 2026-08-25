@@ -7,10 +7,12 @@ import type {
 } from '../config/types'
 import { matchesAny } from '../matching/MatchPattern'
 import { Methods } from './Methods'
-import { Timezones, isValidTimezone } from './Timezones'
+import { Timezones, type WindowSpec, isValidTimezone } from './Timezones'
+import { shiftDays, toWeekdays } from './weekdays'
 
 const DEFAULT_TIME = '00:00'
 const MINUTES_PER_HOUR = 60
+const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
 
 /**
  * Resolves "what, if anything, should be shown for this URL".
@@ -125,7 +127,6 @@ export class DW {
     domainKey: string,
   ): ResolvedDeployment {
     const timeObj = DW.buildTimes(deployment)
-    const { start, end } = timeObj.local
 
     return {
       key,
@@ -136,8 +137,8 @@ export class DW {
       domainKey,
       domainInfo: this.config.sites[domainKey],
       timeObj,
-      status: DW.statusText(start, end),
-      canDeploy: DW.canDeploy(start, end),
+      status: DW.statusText(timeObj.local),
+      canDeploy: DW.canDeploy(timeObj.local),
     }
   }
 
@@ -159,27 +160,36 @@ export class DW {
 
     const startTime = new Timezones(start, timezone)
     const endTime = new Timezones(end, timezone)
+    const days = toWeekdays(time?.days)
 
     return {
       original: {
         start: startTime.toOriginalTime(),
         end: endTime.toOriginalTime(),
         timezone: endTime.getOriginalTimezone(),
+        days,
       },
       local: {
         start: startTime.toLocalTime(),
         end: endTime.toLocalTime(),
         timezone: endTime.getLocalTimezone(),
+        // Shifted by the *start*, because that is the moment a day names.
+        days: shiftDays(days, startTime.dayShift()),
       },
     }
   }
 
-  static canDeploy(startTime: string, endTime: string): boolean {
-    return Timezones.isDeploymentWindow(startTime, endTime)
+  /**
+   * These take the window rather than two loose strings on purpose. Days were
+   * added later, and a signature of `(start, end)` is one every existing call
+   * site would have gone on satisfying while quietly ignoring them.
+   */
+  static canDeploy(window: WindowSpec): boolean {
+    return Timezones.isOpen(window)
   }
 
-  static statusText(startTime: string, endTime: string): string {
-    return DW.canDeploy(startTime, endTime)
+  static statusText(window: WindowSpec): string {
+    return DW.canDeploy(window)
       ? Methods.i18n('l10nDeploymentOpen')
       : Methods.i18n('l10nDeploymentClosed')
   }
@@ -192,8 +202,8 @@ export class DW {
    * around. Empty when the times cannot be read, so every caller can render it
    * unconditionally.
    */
-  static countdownText(startTime: string, endTime: string): string {
-    const countdown = Timezones.countdown(startTime, endTime)
+  static countdownText(window: WindowSpec): string {
+    const countdown = Timezones.countdownFor(window)
     if (!countdown) {
       return ''
     }
@@ -204,10 +214,11 @@ export class DW {
   }
 
   /**
-   * Whole minutes as "2h 10m".
+   * Whole minutes as "2h 10m", or "3d 4h" once a window is days away.
    *
-   * A window never sits more than a day away, so hours are the largest unit
-   * needed. Anything under a minute is worded rather than shown as "0m", which
+   * Two units at most. "3d 4h 12m" is a worse answer than "3d 4h" for anything
+   * anyone plans around, and the minutes on the end of a three day wait are
+   * noise. Anything under a minute is worded rather than shown as "0m", which
    * reads as though it has already happened.
    */
   private static duration(minutes: number): string {
@@ -215,9 +226,18 @@ export class DW {
       return Methods.i18n('l10nUnderAMinute')
     }
 
-    const hours = Math.floor(minutes / MINUTES_PER_HOUR)
+    const days = Math.floor(minutes / MINUTES_PER_DAY)
+    const hours = Math.floor((minutes % MINUTES_PER_DAY) / MINUTES_PER_HOUR)
     const rest = minutes % MINUTES_PER_HOUR
     const parts: string[] = []
+
+    if (days > 0) {
+      parts.push(`${days}${Methods.i18n('l10nDaysShort')}`)
+      if (hours > 0) {
+        parts.push(`${hours}${Methods.i18n('l10nHoursShort')}`)
+      }
+      return parts.join(' ')
+    }
 
     if (hours > 0) {
       parts.push(`${hours}${Methods.i18n('l10nHoursShort')}`)

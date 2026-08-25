@@ -1,5 +1,11 @@
 import { Methods } from '../../../app/components/Methods'
 import { Timezones, isValidTimezone } from '../../../app/components/Timezones'
+import {
+  WEEKDAYS,
+  type Weekday,
+  isEveryDay,
+  toWeekdays,
+} from '../../../app/components/weekdays'
 import { MatchPattern } from '../../../app/matching/MatchPattern'
 import { isCssSpacing } from '../../../app/config/css'
 import type {
@@ -39,6 +45,12 @@ export interface DeploymentDraft {
   start: string
   end: string
   timezone: string
+  /**
+   * Days the window opens on. All seven, which is the default, means the same
+   * as none - the form ticks them all rather than showing an empty row that
+   * reads as a window that never opens.
+   */
+  days: Weekday[]
   /** domain key -> url fragment, one entry per configured site. */
   fragments: Record<string, string>
 }
@@ -71,6 +83,7 @@ export function toDeploymentDraft(
   }
 
   const time = deployment.time
+  const stored = toWeekdays(time?.days)
 
   return {
     key,
@@ -81,6 +94,7 @@ export function toDeploymentDraft(
     start: time?.start ?? '09:00',
     end: time?.end ?? '17:00',
     timezone: time?.timezone ?? Timezones.findLocalTimezone(),
+    days: stored.length > 0 ? stored : [...WEEKDAYS],
     fragments,
   }
 }
@@ -109,6 +123,11 @@ export function fromDeploymentDraft(draft: DeploymentDraft): DeploymentConfig {
       start: draft.start.trim(),
       end: draft.end.trim(),
       timezone: draft.timezone.trim(),
+    }
+    // Left off entirely when the window opens every day, so a config that
+    // never cared about days does not grow a key saying so.
+    if (!isEveryDay(draft.days)) {
+      deployment.time.days = WEEKDAYS.filter((day) => draft.days.includes(day))
     }
   }
 
@@ -149,6 +168,10 @@ export function validateDeploymentDraft(
     }
     if (!isValidTimezone(draft.timezone.trim())) {
       errors.timezone = Methods.i18n('l10nInvalidTimezone')
+    }
+    // A window with no days can never open, which is never what was meant.
+    if (draft.days.length === 0) {
+      errors.days = Methods.i18n('l10nDaysRequired')
     }
   }
 

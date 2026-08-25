@@ -392,3 +392,119 @@ describe('SiteForm', () => {
     expect(screen.getByLabelText(/^Site key/)).toHaveValue('my-site')
   })
 })
+
+describe('DeploymentForm days', () => {
+  function dayToggle(label: string): HTMLInputElement {
+    const box = screen
+      .getAllByRole('checkbox')
+      .find((input) => input.closest('label')?.textContent?.trim() === label)
+    if (!box) {
+      throw new Error(`no day toggle for ${label}`)
+    }
+    return box as HTMLInputElement
+  }
+
+  it('starts with every day on', () => {
+    // A new window opens every day until told otherwise, and an empty row of
+    // days would read as one that never opens.
+    renderDeploymentForm()
+
+    for (const day of ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) {
+      expect(dayToggle(day).checked).toBe(true)
+    }
+  })
+
+  it('shows the week starting on Monday', () => {
+    renderDeploymentForm()
+    const labels = screen
+      .getAllByRole('checkbox')
+      .map((input) => input.closest('label')?.textContent?.trim())
+      .filter((text) => text && text.length === 3)
+
+    expect(labels).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+  })
+
+  it('reads the days off an existing entry', () => {
+    const config = testConfig()
+    config.deployments.daytime.time = {
+      start: '09:00',
+      end: '17:00',
+      timezone: 'Europe/London',
+      days: ['mon', 'tue'],
+    }
+    renderDeploymentForm({
+      originalKey: 'daytime',
+      initial: toDeploymentDraft('daytime', config.deployments.daytime, DOMAINS),
+    })
+
+    expect(dayToggle('Mon').checked).toBe(true)
+    expect(dayToggle('Wed').checked).toBe(false)
+  })
+
+  it('writes the days back when some are off', async () => {
+    const user = userEvent.setup()
+    const props = renderDeploymentForm({
+      initial: {
+        ...emptyDeploymentDraft(DOMAINS),
+        name: 'Weekdays',
+        key: 'weekdays',
+        fragments: { ...emptyDeploymentDraft(DOMAINS).fragments, github: 'acme/x' },
+      },
+    })
+
+    await user.click(dayToggle('Sat'))
+    await user.click(dayToggle('Sun'))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(props.onSubmit).toHaveBeenCalledWith(
+      'weekdays',
+      expect.objectContaining({
+        time: expect.objectContaining({
+          days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+        }),
+      }),
+    )
+  })
+
+  it('writes no days at all when every one is on', async () => {
+    const user = userEvent.setup()
+    const props = renderDeploymentForm({
+      initial: {
+        ...emptyDeploymentDraft(DOMAINS),
+        name: 'Any day',
+        key: 'any-day',
+        fragments: { ...emptyDeploymentDraft(DOMAINS).fragments, github: 'acme/x' },
+      },
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    // A config that never cared about days should not grow a key saying so.
+    expect(props.onSubmit).toHaveBeenCalledWith(
+      'any-day',
+      expect.objectContaining({
+        time: expect.not.objectContaining({ days: expect.anything() }),
+      }),
+    )
+  })
+
+  it('refuses a window with no days at all', async () => {
+    const user = userEvent.setup()
+    const props = renderDeploymentForm({
+      initial: {
+        ...emptyDeploymentDraft(DOMAINS),
+        name: 'Never',
+        key: 'never',
+        days: [],
+        fragments: { ...emptyDeploymentDraft(DOMAINS).fragments, github: 'acme/x' },
+      },
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      screen.getByText('Pick at least one day, or the window can never open.'),
+    ).toBeInTheDocument()
+    expect(props.onSubmit).not.toHaveBeenCalled()
+  })
+})

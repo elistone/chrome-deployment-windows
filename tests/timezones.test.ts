@@ -220,3 +220,157 @@ describe('Timezones', () => {
     })
   })
 })
+
+/** 2024-06-03 is a Monday, which every date below is anchored against. */
+const MONDAY = '2024-06-03'
+const TUESDAY = '2024-06-04'
+const FRIDAY = '2024-06-07'
+const SATURDAY = '2024-06-08'
+
+function at(date: string, time: string): Date {
+  return new Date(`${date}T${time}:00`)
+}
+
+describe('windows with days', () => {
+  describe('isOpen', () => {
+    it('is open inside the hours on a day it names', () => {
+      expect(
+        Timezones.isOpen(
+          { start: '09:00', end: '17:00', days: ['mon'] },
+          at(MONDAY, '12:00'),
+        ),
+      ).toBe(true)
+    })
+
+    it('is shut inside the hours on a day it does not', () => {
+      expect(
+        Timezones.isOpen(
+          { start: '09:00', end: '17:00', days: ['mon'] },
+          at(TUESDAY, '12:00'),
+        ),
+      ).toBe(false)
+    })
+
+    it('is shut outside the hours on a day it does name', () => {
+      expect(
+        Timezones.isOpen(
+          { start: '09:00', end: '17:00', days: ['mon'] },
+          at(MONDAY, '18:00'),
+        ),
+      ).toBe(false)
+    })
+
+    it('is open every day when no days are named', () => {
+      for (const date of [MONDAY, TUESDAY, SATURDAY]) {
+        expect(
+          Timezones.isOpen({ start: '09:00', end: '17:00' }, at(date, '12:00')),
+        ).toBe(true)
+      }
+    })
+
+    it('treats an empty list as no constraint', () => {
+      expect(
+        Timezones.isOpen(
+          { start: '09:00', end: '17:00', days: [] },
+          at(SATURDAY, '12:00'),
+        ),
+      ).toBe(true)
+    })
+
+    describe('past midnight', () => {
+      // A Monday 23:00-02:00 window is one window - Monday night - not two
+      // hours of Monday and two hours of Tuesday.
+      const overnight = {
+        start: '23:00',
+        end: '02:00',
+        days: ['mon'] as const,
+      }
+
+      it('is open before midnight on the day it names', () => {
+        expect(Timezones.isOpen(overnight, at(MONDAY, '23:30'))).toBe(true)
+      })
+
+      it('is still open after midnight, on the following morning', () => {
+        expect(Timezones.isOpen(overnight, at(TUESDAY, '01:00'))).toBe(true)
+      })
+
+      it('is shut on the named day before it opens', () => {
+        expect(Timezones.isOpen(overnight, at(MONDAY, '01:00'))).toBe(false)
+      })
+
+      it('is shut on the following evening', () => {
+        expect(Timezones.isOpen(overnight, at(TUESDAY, '23:30'))).toBe(false)
+      })
+    })
+
+    it('refuses a window it cannot read', () => {
+      expect(
+        Timezones.isOpen({ start: 'lunchtime', end: '17:00' }, at(MONDAY, '12:00')),
+      ).toBe(false)
+    })
+  })
+
+  describe('countdownFor', () => {
+    it('counts down to closing while it is open', () => {
+      expect(
+        Timezones.countdownFor(
+          { start: '09:00', end: '17:00', days: ['mon'] },
+          at(MONDAY, '15:30'),
+        ),
+      ).toEqual({ open: true, minutes: 90 })
+    })
+
+    it('counts down to the same day when the opening is still ahead', () => {
+      expect(
+        Timezones.countdownFor(
+          { start: '09:00', end: '17:00', days: ['mon'] },
+          at(MONDAY, '07:00'),
+        ),
+      ).toEqual({ open: false, minutes: 120 })
+    })
+
+    it('counts across days to the next one it opens on', () => {
+      // Friday evening, next window Monday morning: two whole days plus the
+      // rest of Friday night. Counting to "tomorrow" would be a lie.
+      expect(
+        Timezones.countdownFor(
+          { start: '09:00', end: '17:00', days: ['mon'] },
+          at(FRIDAY, '18:00'),
+        ),
+      ).toEqual({ open: false, minutes: 3 * 24 * 60 + 9 * 60 - 18 * 60 })
+    })
+
+    it('skips today once its opening has been and gone', () => {
+      // Monday at 18:00 with a Monday-only window: the next one is a week off.
+      expect(
+        Timezones.countdownFor(
+          { start: '09:00', end: '17:00', days: ['mon'] },
+          at(MONDAY, '18:00'),
+        ),
+      ).toEqual({ open: false, minutes: 7 * 24 * 60 + 9 * 60 - 18 * 60 })
+    })
+
+    it('finds the nearest of several days', () => {
+      expect(
+        Timezones.countdownFor(
+          { start: '09:00', end: '17:00', days: ['mon', 'wed', 'fri'] },
+          at(MONDAY, '18:00'),
+        ),
+      ).toEqual({ open: false, minutes: 2 * 24 * 60 + 9 * 60 - 18 * 60 })
+    })
+
+    it('behaves like the time-only countdown when no days are named', () => {
+      const spec = { start: '09:00', end: '17:00' }
+      expect(Timezones.countdownFor(spec, at(SATURDAY, '18:00'))).toEqual({
+        open: false,
+        minutes: 15 * 60,
+      })
+    })
+
+    it('refuses a window it cannot read', () => {
+      expect(
+        Timezones.countdownFor({ start: '09:00', end: 'teatime' }, at(MONDAY, '12:00')),
+      ).toBeNull()
+    })
+  })
+})

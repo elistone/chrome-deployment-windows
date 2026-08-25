@@ -355,3 +355,65 @@
   align-self: start;
   margin-top: var(--dw-field-label-offset);
 }
+
+/* ------------------------------------------------------------------ */
+/* days                                                                */
+/* ------------------------------------------------------------------ */
+
+/* Which days a window opens on, shown beside its hours. Reads ahead of them
+   because it is the coarser fact: there is no point reading 09:00 before
+   knowing whether today is one of the days at all. */
+.dw-days {
+  font-size: 0.82rem;
+  font-weight: 640;
+  color: var(--dw-accent-soft-text);
+  background: var(--dw-accent-soft);
+  padding: 1px 7px;
+  border-radius: var(--dw-radius-sm);
+  white-space: nowrap;
+}
+
+/* A row of days to tick, rather than seven stacked checkboxes. The week is
+   something people read across, and a set of toggles you can run a finger
+   along says "pick some of these" better than a column of labels does. */
+.dw-daypicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dw-day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--dw-text-muted);
+  background: var(--dw-surface);
+  border: 1px solid var(--dw-border-strong);
+  border-radius: var(--dw-radius-sm);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--dw-transition),
+    color var(--dw-transition),
+    border-color var(--dw-transition);
+}
+
+.dw-day:hover {
+  border-color: var(--dw-accent);
+}
+
+.dw-day-on {
+  color: var(--dw-accent-text);
+  background: var(--dw-accent);
+  border-color: var(--dw-accent);
+}
+
+/* The input is visually hidden, so the ring has to be put on the label. */
+.dw-day:has(:focus-visible) {
+  outline: 2px solid var(--dw-focus);
+  outline-offset: 2px;
+}

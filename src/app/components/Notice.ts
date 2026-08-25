@@ -3,6 +3,7 @@ import { GLYPHS, GLYPH_VIEWBOX, glyphFor } from '../glyphs'
 import type { IconState } from '../icons'
 import { isCssSpacing } from '../config/css'
 import { Methods } from './Methods'
+import { daysLabel } from './dayLabels'
 import { renderNotes as renderMarkdown } from './Markdown'
 import { TextFormatter } from './TextFormatter'
 import { Timezones } from './Timezones'
@@ -94,8 +95,7 @@ export class Notice {
     if (this.deployment.notesOnly) {
       return 'notes'
     }
-    const { start, end } = this.deployment.timeObj.local
-    return DW.canDeploy(start, end) ? 'open' : 'closed'
+    return DW.canDeploy(this.deployment.timeObj.local) ? 'open' : 'closed'
   }
 
   /** Build the notice element. Does not touch the document. */
@@ -322,13 +322,13 @@ export class Notice {
 
   /** "Closes in 2h 10m", for the head. */
   private countdownText(): string {
-    const { start, end } = this.deployment.timeObj.local
-    return DW.countdownText(start, end)
+    return DW.countdownText(this.deployment.timeObj.local)
   }
 
   private statusPill(): string {
-    const { start, end } = this.deployment.timeObj.local
-    const status = TextFormatter.stripTags(DW.statusText(start, end))
+    const status = TextFormatter.stripTags(
+      DW.statusText(this.deployment.timeObj.local),
+    )
     // role="status" is a polite live region: the window opening or closing is
     // the one thing here worth interrupting for, and it happens while the page
     // is just sitting there with nobody looking at this corner of it.
@@ -366,9 +366,11 @@ export class Notice {
     window: ResolvedDeployment['timeObj']['original'],
   ): string {
     const t = TextFormatter.stripTags
+    const days = daysLabel(window.days)
     return `<div class="row">
       <dt>${label}</dt>
       <dd>
+        ${days ? `<span class="days">${t(days)}</span>` : ''}
         <span class="time">${t(window.start)} &ndash; ${t(window.end)}</span>
         <span class="zone">${t(window.timezone)}</span>
       </dd>
@@ -395,8 +397,9 @@ export class Notice {
 
   /** Push the open/closed icon to the service worker, but only on change. */
   updateIcon(): void {
-    const { start, end } = this.deployment.timeObj.local
-    const icon = DW.canDeploy(start, end) ? ICONS.open : ICONS.closed
+    const icon = DW.canDeploy(this.deployment.timeObj.local)
+      ? ICONS.open
+      : ICONS.closed
     if (icon !== this.lastIcon) {
       this.lastIcon = icon
       Methods.updateIcon(icon)
@@ -542,15 +545,13 @@ export class Notice {
 
   /** One tick: refresh the clock, the status text and the notice's tone. */
   realTime(): void {
-    const { start, end } = this.deployment.timeObj.local
-
     if (this.clock) {
       this.clock.textContent = Timezones.getCurrentTime()
     }
     // Only written when it actually changed. It is a live region and this runs
     // every second, so re-assigning the same sentence would have a screen
     // reader announce "deployment window open" once a second, all day.
-    const status = DW.statusText(start, end)
+    const status = DW.statusText(this.deployment.timeObj.local)
     if (this.statusText && this.statusText.textContent !== status) {
       this.statusText.textContent = status
     }

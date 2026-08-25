@@ -328,6 +328,15 @@
 /* the times                                                           */
 /* ------------------------------------------------------------------ */
 
+/* Which days the window opens on, when it is not all of them. Reads ahead of
+   the hours because it is the coarser fact: there is no point reading 09:00
+   before knowing whether today is one of the days at all. */
+.days {
+  font-weight: 640;
+  color: var(--dw-tone);
+  white-space: nowrap;
+}
+
 .rows {
   display: flex;
   flex-wrap: wrap;

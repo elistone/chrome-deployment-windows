@@ -129,6 +129,22 @@ The GitHub and Jira entries a fresh install starts with are a demonstration
 rather than a saved config, so connecting a shared config replaces them. Add
 them back from the Sites section if you need them.
 
+### Which days it opens on
+
+By default a window opens every day. Untick the days it should not, and the card
+and the notice will say so — "Mon–Fri", or "Mon, Wed, Fri".
+
+**A day is when the window opens.** That matters for a window that runs past
+midnight: `23:00`–`02:00` on Monday is Monday night, and it stays open into
+Tuesday morning. It is one window, and it belongs to the day it started.
+
+If the window is written in someone else's timezone, the days move with the
+hours. A Monday morning in Tokyo is Sunday afternoon in Los Angeles, so that is
+what the converted row says — the notice tells you what your own calendar says,
+not what the person who wrote the config was looking at.
+
+When the next window is days away, the countdown says so: "Opens in 2d 4h".
+
 ---
 
 ## Editing the JSON directly
@@ -170,7 +186,8 @@ The stored config has three parts: `domains`, `sites` and `deployments`.
             "time": {
                 "start": "23:00",
                 "end": "02:00",
-                "timezone": "Europe/Paris"
+                "timezone": "Europe/Paris",
+                "days": ["mon", "tue", "wed", "thu"]
             },
             "notes": "Deploys need **two** approvals."
         }
@@ -212,3 +229,4 @@ time|object[time_data]|The deployment window
 time.time_data.start|time[24]|24 hour time the window opens, e.g. `09:00`
 time.time_data.end|time[24]|24 hour time the window closes; may be earlier than the start to run past midnight
 time.time_data.timezone|string|An [IANA timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) such as `Europe/London`
+time.time_data.days|array[day]|Days the window opens on, e.g. `["mon","tue","wed","thu","fri"]`. Leave it out for every day

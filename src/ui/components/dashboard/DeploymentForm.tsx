@@ -2,6 +2,10 @@ import { useId, useState } from 'react'
 
 import { Methods } from '../../../app/components/Methods'
 import { Timezones } from '../../../app/components/Timezones'
+import {
+  WEEK_DISPLAY_ORDER,
+  dayMessageKey,
+} from '../../../app/components/weekdays'
 import type { DeploymentConfig } from '../../../app/config/types'
 import Field from '../common/Field'
 import Modal from '../common/Modal'
@@ -231,6 +235,45 @@ export function DeploymentForm({
                 <option key={zone} value={zone} />
               ))}
             </datalist>
+
+            <Field
+              label={Methods.i18n('l10nDays')}
+              hint={Methods.i18n('l10nDaysHint')}
+              error={shown('days')}
+            >
+              {({ describedBy }) => (
+                <div
+                  className="dw-daypicker"
+                  role="group"
+                  aria-describedby={describedBy}
+                  aria-label={Methods.i18n('l10nDays')}
+                >
+                  {WEEK_DISPLAY_ORDER.map((day) => {
+                    const on = draft.days.includes(day)
+                    return (
+                      <label
+                        key={day}
+                        className={`dw-day${on ? ' dw-day-on' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="dw-visually-hidden"
+                          checked={on}
+                          onChange={() =>
+                            update({
+                              days: on
+                                ? draft.days.filter((d) => d !== day)
+                                : [...draft.days, day],
+                            })
+                          }
+                        />
+                        {Methods.i18n(dayMessageKey(day))}
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+            </Field>
           </fieldset>
         )}
 

@@ -1,4 +1,5 @@
 import { DW } from '../../../app/components/DW'
+import { daysLabel } from '../../../app/components/dayLabels'
 import { Methods } from '../../../app/components/Methods'
 import { TextFormatter } from '../../../app/components/TextFormatter'
 import type { DeploymentConfig } from '../../../app/config/types'
@@ -33,7 +34,7 @@ export function statusFor(deployment: DeploymentConfig): StatusTone {
     return 'unset'
   }
   const { local } = DW.buildTimes(deployment)
-  return DW.canDeploy(local.start, local.end) ? 'open' : 'closed'
+  return DW.canDeploy(local) ? 'open' : 'closed'
 }
 
 /**
@@ -103,7 +104,7 @@ export function DeploymentCard({
         <div className="dw-card-status">
           <StatusPill tone={tone} />
           {times && tone !== 'notes' && tone !== 'unset' && (
-            <Countdown start={times.local.start} end={times.local.end} />
+            <Countdown window={times.local} />
           )}
         </div>
       </header>
@@ -120,6 +121,11 @@ export function DeploymentCard({
               </span>
             </dt>
             <dd>
+              {daysLabel(times.original.days) && (
+                <span className="dw-days">
+                  {daysLabel(times.original.days)}
+                </span>
+              )}
               <span className="dw-mono">
                 {times.original.start} &ndash; {times.original.end}
               </span>
@@ -130,6 +136,9 @@ export function DeploymentCard({
             <div className="dw-card-row dw-card-row-subtle">
               <dt>{Methods.i18n('l10nYourTimezone')}</dt>
               <dd>
+                {daysLabel(times.local.days) && (
+                  <span className="dw-days">{daysLabel(times.local.days)}</span>
+                )}
                 <span className="dw-mono">
                   {times.local.start} &ndash; {times.local.end}
                 </span>
