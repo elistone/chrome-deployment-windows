@@ -508,3 +508,117 @@ describe('DeploymentForm days', () => {
     expect(props.onSubmit).not.toHaveBeenCalled()
   })
 })
+
+describe('DeploymentForm freezes', () => {
+  function filled(overrides = {}) {
+    const base = emptyDeploymentDraft(DOMAINS)
+    return {
+      ...base,
+      name: 'Checkout',
+      key: 'checkout',
+      fragments: { ...base.fragments, github: 'acme/checkout' },
+      ...overrides,
+    }
+  }
+
+  it('starts with none, since most entries never freeze', () => {
+    renderDeploymentForm()
+    expect(screen.queryByLabelText(/^From/)).toBeNull()
+  })
+
+  it('adds a row to fill in', async () => {
+    const user = userEvent.setup()
+    renderDeploymentForm()
+
+    await user.click(screen.getByRole('button', { name: /Add freeze/ }))
+
+    expect(screen.getByLabelText(/^From/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^To/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^Reason/)).toBeInTheDocument()
+  })
+
+  it('saves a freeze outside the time block', async () => {
+    const user = userEvent.setup()
+    const props = renderDeploymentForm({ initial: filled() })
+
+    await user.click(screen.getByRole('button', { name: /Add freeze/ }))
+    await user.type(screen.getByLabelText(/^From/), '2026-12-20')
+    await user.type(screen.getByLabelText(/^To/), '2027-01-02')
+    await user.type(screen.getByLabelText(/^Reason/), 'Christmas')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    // A freeze overrides the window rather than being part of it.
+    expect(props.onSubmit).toHaveBeenCalledWith(
+      'checkout',
+      expect.objectContaining({
+        freezes: [
+          { from: '2026-12-20', to: '2027-01-02', reason: 'Christmas' },
+        ],
+      }),
+    )
+  })
+
+  it('leaves the reason off when it was not given', async () => {
+    const user = userEvent.setup()
+    const props = renderDeploymentForm({
+      initial: filled({
+        freezes: [{ from: '2026-12-24', to: '2026-12-26', reason: '' }],
+      }),
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(props.onSubmit).toHaveBeenCalledWith(
+      'checkout',
+      expect.objectContaining({
+        freezes: [{ from: '2026-12-24', to: '2026-12-26' }],
+      }),
+    )
+  })
+
+  it('refuses a date it cannot read', async () => {
+    const user = userEvent.setup()
+    const props = renderDeploymentForm({
+      initial: filled({
+        freezes: [{ from: 'christmas', to: '2027-01-02', reason: '' }],
+      }),
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      screen.getByText('Use a real date, as YYYY-MM-DD.'),
+    ).toBeInTheDocument()
+    expect(props.onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('refuses a range that ends before it starts', async () => {
+    const user = userEvent.setup()
+    const props = renderDeploymentForm({
+      initial: filled({
+        freezes: [{ from: '2027-01-02', to: '2026-12-20', reason: '' }],
+      }),
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      screen.getByText('The last day cannot be before the first.'),
+    ).toBeInTheDocument()
+    expect(props.onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('ignores a row nobody filled in', async () => {
+    const user = userEvent.setup()
+    const props = renderDeploymentForm({ initial: filled() })
+
+    await user.click(screen.getByRole('button', { name: /Add freeze/ }))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    // An empty row is a row nobody filled in, not a mistake to shout about.
+    expect(props.onSubmit).toHaveBeenCalledWith(
+      'checkout',
+      expect.not.objectContaining({ freezes: expect.anything() }),
+    )
+  })
+})

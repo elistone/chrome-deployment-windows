@@ -129,6 +129,7 @@ describe('DW', () => {
         timezone: 'Europe/London',
         // No days configured, which means every day.
         days: [],
+        freeze: null,
       })
       expect(times.local.timezone).toBe(Timezones.findLocalTimezone())
       expect(times.local.start).toMatch(/^\d{2}:\d{2}$/)
@@ -314,5 +315,100 @@ describe('DW with days', () => {
 
     expect(info.timeObj.original.days).toEqual([])
     expect(info.canDeploy).toBe(true)
+  })
+})
+
+describe('DW with freezes', () => {
+  function frozen(freezes: unknown) {
+    const config = testConfig()
+    config.deployments.daytime.time = {
+      start: '09:00',
+      end: '17:00',
+      timezone: 'America/New_York',
+    }
+    ;(config.deployments.daytime as Record<string, unknown>).freezes = freezes
+    return config
+  }
+
+  function resolve(config: ReturnType<typeof testConfig>) {
+    return new DW(config, 'https://github.com/acme/daytime').getDeploymentInfo()!
+  }
+
+  const CHRISTMAS = [
+    { from: '2026-12-20', to: '2027-01-02', reason: 'Christmas change freeze' },
+  ]
+
+  it('shuts an otherwise open window', () => {
+    // Midday on a weekday, inside the hours: open on every other measure.
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    const info = resolve(frozen(CHRISTMAS))
+
+    expect(info.canDeploy).toBe(false)
+    expect(info.status).toBe('Deployment frozen')
+  })
+
+  it('says when it lifts rather than when the window next opens', () => {
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    const info = resolve(frozen(CHRISTMAS))
+
+    // "Opens in 21h" would be true of the window and false of the day.
+    const text = DW.countdownText(info.timeObj.local)
+    expect(text).toContain('Frozen until')
+    // The date is written the viewer's way round - "3 Jan" or "Jan 3" - so
+    // this asserts the day it lifts, not one locale's way of spelling it.
+    expect(text).toContain('Jan')
+    expect(text).toContain('3')
+  })
+
+  it('carries the reason through to be shown', () => {
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    expect(resolve(frozen(CHRISTMAS)).timeObj.original.freeze?.reason).toBe(
+      'Christmas change freeze',
+    )
+  })
+
+  it('is over on the day after the last frozen day', () => {
+    vi.setSystemTime(new Date('2027-01-03T12:00:00'))
+    const info = resolve(frozen(CHRISTMAS))
+
+    expect(info.timeObj.original.freeze).toBeNull()
+    expect(info.canDeploy).toBe(true)
+  })
+
+  it('is already on for the whole of its first day', () => {
+    vi.setSystemTime(new Date('2026-12-20T09:30:00'))
+    expect(resolve(frozen(CHRISTMAS)).canDeploy).toBe(false)
+  })
+
+  it('leaves an entry with no freezes alone', () => {
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    const info = resolve(testConfig())
+
+    expect(info.timeObj.original.freeze).toBeNull()
+    expect(info.canDeploy).toBe(true)
+  })
+
+  it('ignores a range that ends before it starts', () => {
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    const info = resolve(
+      frozen([{ from: '2027-01-02', to: '2026-12-20' }]),
+    )
+
+    // Nothing can fall inside it, so it must not quietly freeze anything.
+    expect(info.canDeploy).toBe(true)
+  })
+
+  it('beats the days as well as the hours', () => {
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    const config = frozen(CHRISTMAS)
+    config.deployments.daytime.time = {
+      start: '09:00',
+      end: '17:00',
+      timezone: 'America/New_York',
+      days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+    }
+
+    // 23 December 2026 is a Wednesday, so the window would otherwise be open.
+    expect(resolve(config).canDeploy).toBe(false)
   })
 })

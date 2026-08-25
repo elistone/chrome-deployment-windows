@@ -3,6 +3,10 @@
     "message": "Deployment window closed",
     "description": "Statement that the deployment window has closed."
   },
+  "l10nDeploymentFrozen": {
+    "message": "Deployment frozen",
+    "description": "Status when a dated freeze is in force."
+  },
   "l10nDeploymentOpen": {
     "message": "Deployment window open",
     "description": "Statement that the deployment window is open."
@@ -11,9 +15,9 @@
     "message": "Deployment window",
     "description": "What is the original deployment window."
   },
-  "l10nYourTimezone": {
-    "message": "Your timezone",
-    "description": "What is the deployment window in your local timezone."
+  "l10nSetIn": {
+    "message": "Set in",
+    "description": "Precedes the timezone a window was configured in, e.g. \"Set in Europe/Zurich\"."
   },
   "l10nCurrentTime": {
     "message": "Current time",
@@ -682,5 +686,45 @@
   "l10nDaysRequired": {
     "message": "Pick at least one day, or the window can never open.",
     "description": "Error when every day has been unticked."
+  },
+  "l10nFrozenUntil": {
+    "message": "Frozen until",
+    "description": "Precedes the date a freeze lifts."
+  },
+  "l10nFreezes": {
+    "message": "Freezes",
+    "description": "Label for the list of dated freezes."
+  },
+  "l10nFreezesHint": {
+    "message": "Dates when nothing ships, whatever the window says. Both days are included.",
+    "description": "Hint for the freeze list."
+  },
+  "l10nFreezeFrom": {
+    "message": "From",
+    "description": "Label for the first day of a freeze."
+  },
+  "l10nFreezeTo": {
+    "message": "To",
+    "description": "Label for the last day of a freeze."
+  },
+  "l10nFreezeReason": {
+    "message": "Reason",
+    "description": "Label for why a freeze is in place."
+  },
+  "l10nAddFreeze": {
+    "message": "Add freeze",
+    "description": "Button that adds a dated freeze."
+  },
+  "l10nInvalidDate": {
+    "message": "Use a real date, as YYYY-MM-DD.",
+    "description": "Error when a freeze date cannot be read."
+  },
+  "l10nFreezeBackwards": {
+    "message": "The last day cannot be before the first.",
+    "description": "Error when a freeze range ends before it starts."
+  },
+  "l10nConfig": {
+    "message": "Config",
+    "description": "Groups the shared config and JSON config panels."
   }
 }

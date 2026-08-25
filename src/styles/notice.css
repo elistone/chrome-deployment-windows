@@ -324,9 +324,30 @@
   opacity: 1;
 }
 
+/* Why the freeze is on - and only that. The pill says what is happening and
+   the head says until when, so this is the one thing neither of them can say.
+   Tinted with the card's own tone rather than a colour of its own: the tone
+   already means "not today". */
+.frozen {
+  margin: 0;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 560;
+  color: var(--dw-tone);
+  background: var(--dw-tone-soft);
+  border-radius: 8px;
+}
+
 /* ------------------------------------------------------------------ */
 /* the times                                                           */
 /* ------------------------------------------------------------------ */
+
+/* Where the window was written, as against where it is being read. Quieter
+   than the row above it, because it is provenance rather than the answer. */
+.row-quiet dt,
+.row-quiet dd {
+  opacity: 0.72;
+}
 
 /* Which days the window opens on, when it is not all of them. Reads ahead of
    the hours because it is the coarser fact: there is no point reading 09:00

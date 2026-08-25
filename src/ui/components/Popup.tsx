@@ -130,6 +130,9 @@ function toneFor(deployment: ResolvedDeployment): StatusTone {
   if (deployment.notesOnly) {
     return 'notes'
   }
+  if (deployment.timeObj.local.freeze) {
+    return 'frozen'
+  }
   return DW.canDeploy(deployment.timeObj.local) ? 'open' : 'closed'
 }
 
@@ -217,39 +220,47 @@ function SettingsButton({ compact }: { compact: boolean }) {
 
 function Window({ deployment }: { deployment: ResolvedDeployment }) {
   const { original, local } = deployment.timeObj
-  // The converted window is only worth the space when it actually differs.
-  const showLocal = original.timezone !== local.timezone
-  const originalDays = daysLabel(original.days)
+  // Your own window leads, and does not name your zone; what the config says
+  // follows as provenance, and only when it differs.
+  const showSource = original.timezone !== local.timezone
   const localDays = daysLabel(local.days)
+  const sourceDays = daysLabel(original.days)
 
   return (
-    <dl className="dw-popup-rows">
-      <div className="dw-popup-row">
-        <dt>
-          <ClockIcon size={14} />
-          {Methods.i18n('l10nDeploymentWindow')}
-        </dt>
-        <dd>
-          {originalDays && <span className="dw-days">{originalDays}</span>}
-          <span className="dw-mono">
-            {original.start} &ndash; {original.end}
-          </span>
-          <span className="dw-popup-zone">{original.timezone}</span>
-        </dd>
-      </div>
-      {showLocal && (
-        <div className="dw-popup-row dw-popup-row-subtle">
-          <dt>{Methods.i18n('l10nYourTimezone')}</dt>
+    <>
+      {original.freeze?.reason && (
+        <p className="dw-frozen">{original.freeze.reason}</p>
+      )}
+      <dl className="dw-popup-rows">
+        <div className="dw-popup-row">
+          <dt>
+            <ClockIcon size={14} />
+            {Methods.i18n('l10nDeploymentWindow')}
+          </dt>
           <dd>
             {localDays && <span className="dw-days">{localDays}</span>}
             <span className="dw-mono">
               {local.start} &ndash; {local.end}
             </span>
-            <span className="dw-popup-zone">{local.timezone}</span>
           </dd>
         </div>
-      )}
-    </dl>
+        {showSource && (
+          <div className="dw-popup-row dw-popup-row-subtle">
+            <dt>
+              {Methods.i18n('l10nSetIn')} {original.timezone}
+            </dt>
+            <dd>
+              {sourceDays !== localDays && sourceDays && (
+                <span className="dw-days">{sourceDays}</span>
+              )}
+              <span className="dw-mono">
+                {original.start} &ndash; {original.end}
+              </span>
+            </dd>
+          </div>
+        )}
+      </dl>
+    </>
   )
 }
 

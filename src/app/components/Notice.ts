@@ -95,6 +95,8 @@ export class Notice {
     if (this.deployment.notesOnly) {
       return 'notes'
     }
+    // A freeze is not a fourth colour: red already means "not today", and the
+    // reason line beside it is what says which kind of not-today this is.
     return DW.canDeploy(this.deployment.timeObj.local) ? 'open' : 'closed'
   }
 
@@ -294,11 +296,50 @@ export class Notice {
     // room it does not need is room it should not take.
     const showLocal = timeObj.original.timezone !== timeObj.local.timezone
 
+    // Only the reason. The pill already says "Deployment frozen" and the head
+    // already says until when, so repeating either here would be the notice
+    // saying the same thing three times in three places.
+    const freeze = notesOnly ? null : timeObj.original.freeze
+    const frozen =
+      freeze && freeze.reason
+        ? `<p class="frozen">${t(freeze.reason)}</p>`
+        : ''
+
+    // Your own window first, and without naming your zone: it is the one you
+    // act on, and you already know where you are. What the config actually
+    // says follows as provenance - useful for checking the notice against what
+    // the team agreed, and not the thing being read at a glance.
+    const { local, original } = timeObj
+    const localDays = daysLabel(local.days)
+    const sourceDays = daysLabel(original.days)
+
     const times = notesOnly
       ? ''
       : `<dl class="rows">
-          ${Notice.row(Methods.i18n('l10nDeploymentWindow'), timeObj.original)}
-          ${showLocal ? Notice.row(Methods.i18n('l10nYourTimezone'), timeObj.local) : ''}
+          <div class="row">
+            <dt>${Methods.i18n('l10nDeploymentWindow')}</dt>
+            <dd>
+              ${localDays ? `<span class="days">${t(localDays)}</span>` : ''}
+              <span class="time">${t(local.start)} &ndash; ${t(local.end)}</span>
+            </dd>
+          </div>
+          ${
+            showLocal
+              ? `<div class="row row-quiet">
+                  <dt>${Methods.i18n('l10nSetIn')} ${t(original.timezone)}</dt>
+                  <dd>
+                    ${
+                      // Only when the conversion actually moved them; saying
+                      // "Mon-Thu" twice was most of what made this too long.
+                      sourceDays && sourceDays !== localDays
+                        ? `<span class="days">${t(sourceDays)}</span>`
+                        : ''
+                    }
+                    <span class="time">${t(original.start)} &ndash; ${t(original.end)}</span>
+                  </dd>
+                </div>`
+              : ''
+          }
           <div class="row">
             <dt>${Methods.i18n('l10nCurrentTime')}</dt>
             <dd><span class="time clock">${t(Timezones.getCurrentTime())}</span></dd>
@@ -317,7 +358,7 @@ export class Notice {
         </div>`
       : ''
 
-    return `<div class="head">${heading}</div>${times}${details}`
+    return `<div class="head">${heading}</div>${frozen}${times}${details}`
   }
 
   /** "Closes in 2h 10m", for the head. */
@@ -361,21 +402,6 @@ export class Notice {
     this.markPath?.setAttribute('stroke-width', String(glyph.width))
   }
 
-  private static row(
-    label: string,
-    window: ResolvedDeployment['timeObj']['original'],
-  ): string {
-    const t = TextFormatter.stripTags
-    const days = daysLabel(window.days)
-    return `<div class="row">
-      <dt>${label}</dt>
-      <dd>
-        ${days ? `<span class="days">${t(days)}</span>` : ''}
-        <span class="time">${t(window.start)} &ndash; ${t(window.end)}</span>
-        <span class="zone">${t(window.timezone)}</span>
-      </dd>
-    </div>`
-  }
 
   /**
    * Play the attention animation once.

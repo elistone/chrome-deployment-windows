@@ -8,6 +8,12 @@ import type {
 import { matchesAny } from '../matching/MatchPattern'
 import { Methods } from './Methods'
 import { Timezones, type WindowSpec, isValidTimezone } from './Timezones'
+import {
+  type ActiveFreeze,
+  activeFreeze,
+  toFreezes,
+  todayIn,
+} from './freezes'
 import { shiftDays, toWeekdays } from './weekdays'
 
 const DEFAULT_TIME = '00:00'
@@ -161,6 +167,13 @@ export class DW {
     const startTime = new Timezones(start, timezone)
     const endTime = new Timezones(end, timezone)
     const days = toWeekdays(time?.days)
+    // Against the window's own calendar, not the viewer's: a freeze is written
+    // by the same people who wrote the window, and 20 December means their
+    // 20 December.
+    const freeze = activeFreeze(
+      toFreezes(deployment.freezes),
+      todayIn(startTime.getOriginalTimezone()),
+    )
 
     return {
       original: {
@@ -168,6 +181,7 @@ export class DW {
         end: endTime.toOriginalTime(),
         timezone: endTime.getOriginalTimezone(),
         days,
+        freeze,
       },
       local: {
         start: startTime.toLocalTime(),
@@ -175,6 +189,7 @@ export class DW {
         timezone: endTime.getLocalTimezone(),
         // Shifted by the *start*, because that is the moment a day names.
         days: shiftDays(days, startTime.dayShift()),
+        freeze,
       },
     }
   }
@@ -189,9 +204,37 @@ export class DW {
   }
 
   static statusText(window: WindowSpec): string {
+    if (window.freeze) {
+      return Methods.i18n('l10nDeploymentFrozen')
+    }
     return DW.canDeploy(window)
       ? Methods.i18n('l10nDeploymentOpen')
       : Methods.i18n('l10nDeploymentClosed')
+  }
+
+  /**
+   * "Frozen until 3 Jan".
+   *
+   * The date the freeze lifts rather than its last frozen day: the question
+   * being answered is when deploying resumes, and "frozen until the 2nd" and
+   * "frozen through the 2nd" are a day apart in most people's reading.
+   */
+  static freezeText(freeze: ActiveFreeze): string {
+    return `${Methods.i18n('l10nFrozenUntil')} ${DW.shortDate(freeze.until)}`
+  }
+
+  /** A `YYYY-MM-DD` date as the viewer's locale writes a day and a month. */
+  private static shortDate(date: string): string {
+    const [year, month, day] = date.split('-').map(Number)
+    if (!year || !month || !day) {
+      return date
+    }
+    // Built from the parts rather than parsed: `new Date('2027-01-03')` is
+    // midnight UTC, which is the previous day for anyone west of it.
+    return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+      day: 'numeric',
+      month: 'short',
+    })
   }
 
   /**
@@ -203,6 +246,10 @@ export class DW {
    * unconditionally.
    */
   static countdownText(window: WindowSpec): string {
+    if (window.freeze) {
+      return DW.freezeText(window.freeze)
+    }
+
     const countdown = Timezones.countdownFor(window)
     if (!countdown) {
       return ''

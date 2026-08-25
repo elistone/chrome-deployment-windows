@@ -417,3 +417,26 @@
   outline: 2px solid var(--dw-focus);
   outline-offset: 2px;
 }
+
+/* ------------------------------------------------------------------ */
+/* freezes                                                             */
+/* ------------------------------------------------------------------ */
+
+/* Why the freeze is on - and only that. The status pill says what is happening
+   and the countdown says until when, so this is the one thing neither of them
+   can say. Shown above the hours it overrides: reading the times first only to
+   be told they do not apply is the wrong way round. */
+.dw-frozen {
+  margin: 0 0 var(--dw-space-3);
+  padding: 7px 12px;
+  font-size: 0.85rem;
+  font-weight: 560;
+  color: var(--dw-danger);
+  background: var(--dw-danger-soft);
+  border-radius: var(--dw-radius-sm);
+}
+
+/* Two dates and a reason, rather than one field and a button. */
+.dw-repeat-row-freeze {
+  grid-template-columns: minmax(120px, 0.7fr) minmax(120px, 0.7fr) 1fr auto;
+}

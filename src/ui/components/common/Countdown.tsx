@@ -17,7 +17,7 @@ export function Countdown({ window }: { window: ResolvedTimeWindow }) {
     return null
   }
 
-  const tone = DW.canDeploy(window) ? 'open' : 'closed'
+  const tone = window.freeze ? 'frozen' : DW.canDeploy(window) ? 'open' : 'closed'
   return <span className={`dw-countdown dw-countdown-${tone}`}>{text}</span>
 }
 

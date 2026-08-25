@@ -82,17 +82,18 @@ describe('DeploymentCard', () => {
 
     expect(screen.getByRole('heading', { name: 'Daytime project' })).toBeInTheDocument()
     expect(screen.getByText('daytime')).toBeInTheDocument()
-    expect(screen.getByText('09:00 – 17:00')).toBeInTheDocument()
-    expect(screen.getByText('Europe/London')).toBeInTheDocument()
+    // The viewer's own window leads, without naming their zone. Tests run in
+    // America/New_York against a London window.
+    expect(screen.getByText('04:00 – 12:00')).toBeInTheDocument()
+    expect(screen.queryByText('America/New_York')).toBeNull()
   })
 
-  it('also shows the window in the viewer timezone', () => {
+  it('shows what the config actually says, as provenance', () => {
     atMidday()
     renderDeployment('daytime')
 
-    expect(screen.getByText('Your timezone')).toBeInTheDocument()
-    expect(screen.getByText('04:00 – 12:00')).toBeInTheDocument()
-    expect(screen.getByText('America/New_York')).toBeInTheDocument()
+    expect(screen.getByText(/Set in Europe\/London/)).toBeInTheDocument()
+    expect(screen.getByText('09:00 – 17:00')).toBeInTheDocument()
   })
 
   it('shows the window once when it is already in the viewer timezone', () => {
@@ -561,5 +562,89 @@ describe('HowToUse', () => {
     expect(
       await screen.findByRole('heading', { name: 'Quick start' }),
     ).toBeInTheDocument()
+  })
+})
+
+describe('a frozen card', () => {
+  function frozenConfig(reason?: string) {
+    const config = testConfig()
+    config.deployments.daytime.time = {
+      start: '09:00',
+      end: '17:00',
+      timezone: 'America/New_York',
+    }
+    ;(config.deployments.daytime as Record<string, unknown>).freezes = [
+      { from: '2026-12-20', to: '2027-01-02', ...(reason ? { reason } : {}) },
+    ]
+    return config
+  }
+
+  function renderFrozen(reason?: string) {
+    const config = frozenConfig(reason)
+    return render(
+      <DeploymentCard
+        configKey="daytime"
+        deployment={config.deployments.daytime}
+        domainKeys={DOMAINS}
+        editing={false}
+        onEdit={vi.fn()}
+        onDuplicate={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    )
+  }
+
+  it('says frozen rather than closed', () => {
+    // The same word the notice and the popup use; a card saying "closed" for
+    // the same state would read as a different one.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    renderFrozen()
+
+    expect(screen.getByText('Deployment frozen')).toBeInTheDocument()
+    expect(screen.queryByText('Deployment window closed')).toBeNull()
+    vi.useRealTimers()
+  })
+
+  it('says when it lifts', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    const { container } = renderFrozen()
+
+    expect(container.querySelector('.dw-countdown')?.textContent).toContain(
+      'Frozen until',
+    )
+    vi.useRealTimers()
+  })
+
+  it('gives the reason its own line, and only the reason', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    const { container } = renderFrozen('Christmas change freeze')
+
+    const banner = container.querySelector('.dw-frozen')
+    expect(banner?.textContent).toBe('Christmas change freeze')
+    // The pill says what and the countdown says until when; repeating either
+    // here would be the card saying one thing three times.
+    expect(banner?.textContent).not.toContain('Frozen until')
+    vi.useRealTimers()
+  })
+
+  it('shows no banner when no reason was given', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    const { container } = renderFrozen()
+
+    expect(container.querySelector('.dw-frozen')).toBeNull()
+    vi.useRealTimers()
+  })
+
+  it('goes back to normal once the freeze has lifted', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2027-01-03T12:00:00'))
+    renderFrozen('Christmas change freeze')
+
+    expect(screen.getByText('Deployment window open')).toBeInTheDocument()
+    vi.useRealTimers()
   })
 })

@@ -75,10 +75,14 @@ describe('Notice', () => {
       const rows = [...root.querySelectorAll('.row')].map(
         (row) => row.textContent?.replace(/\s+/g, ' ').trim(),
       )
-      expect(rows[0]).toContain('09:00 – 17:00')
-      expect(rows[0]).toContain('Europe/London')
-      expect(rows[1]).toContain('04:00 – 12:00')
-      expect(rows[1]).toContain('America/New_York')
+      // Your own window leads, and does not name your zone - you know where
+      // you are. Tests run in America/New_York against a London window.
+      expect(rows[0]).toContain('Deployment window')
+      expect(rows[0]).toContain('04:00 – 12:00')
+      expect(rows[0]).not.toContain('America/New_York')
+      // What the config actually says follows, named, as provenance.
+      expect(rows[1]).toContain('Set in Europe/London')
+      expect(rows[1]).toContain('09:00 – 17:00')
       expect(root.querySelector('.status-text')?.textContent).toBe(
         'Deployment window open',
       )
@@ -168,18 +172,45 @@ describe('Notice', () => {
 
       expect(rows).toHaveLength(2)
       expect(rows[0]).toContain('Deployment window')
-      expect(rows[0]).toContain('Europe/London')
+      expect(rows[0]).toContain('09:00 – 17:00')
       // The clock keeps its row; it is the one thing that is not a repeat.
       expect(rows[1]).toContain('Current time')
-      expect(root.textContent).not.toContain('Your timezone')
+      expect(root.textContent).not.toContain('Set in')
     })
 
     it('still shows both when the window is somewhere else', () => {
       notice = new Notice(resolve(DAYTIME))
       const root = inside(notice.build())
 
-      expect(root.textContent).toContain('Your timezone')
+      expect(root.textContent).toContain('Set in Europe/London')
       expect(root.querySelectorAll('.row')).toHaveLength(3)
+    })
+
+    it('names the days once when the conversion did not move them', () => {
+      // "Mon-Thu 18:00-07:00 Zurich / Mon-Thu 17:00-06:00 London" said the
+      // days twice, and that was most of what made the strip too long.
+      const deployment = resolve(DAYTIME)
+      deployment.timeObj.original.days = ['mon', 'tue', 'wed', 'thu']
+      deployment.timeObj.local.days = ['mon', 'tue', 'wed', 'thu']
+
+      notice = new Notice(deployment)
+      const root = inside(notice.build())
+
+      expect(root.querySelectorAll('.days')).toHaveLength(1)
+      expect(root.querySelector('.days')?.textContent).toBe('Mon–Thu')
+    })
+
+    it('names them twice when the conversion did move them', () => {
+      // A Tokyo Monday is a Sunday in New York, and then both are worth saying.
+      const deployment = resolve(DAYTIME)
+      deployment.timeObj.original.days = ['mon']
+      deployment.timeObj.local.days = ['sun']
+
+      notice = new Notice(deployment)
+      const root = inside(notice.build())
+
+      const days = [...root.querySelectorAll('.days')].map((d) => d.textContent)
+      expect(days).toEqual(['Sun', 'Mon'])
     })
 
     it('omits the toggle entirely when there are no notes', () => {
@@ -813,6 +844,84 @@ describe('Notice', () => {
     it('is offered on a notes-only entry too', () => {
       notice = new Notice(resolve(NOTES_ONLY))
       expect(dismissButton(inside(notice.build()))).toBeTruthy()
+    })
+  })
+
+  describe('a freeze', () => {
+    function frozen(reason?: string) {
+      const config = testConfig()
+      config.deployments.daytime.time = {
+        start: '09:00',
+        end: '17:00',
+        timezone: 'America/New_York',
+      }
+      ;(config.deployments.daytime as Record<string, unknown>).freezes = [
+        { from: '2026-12-20', to: '2027-01-02', ...(reason ? { reason } : {}) },
+      ]
+      const info = new DW(config, DAYTIME).getDeploymentInfo()
+      if (!info) {
+        throw new Error('no deployment resolved')
+      }
+      return info
+    }
+
+    it('says frozen, and says until when', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+
+      notice = new Notice(frozen('Christmas change freeze'))
+      const root = inside(notice.build())
+
+      expect(root.querySelector('.status-text')?.textContent).toBe(
+        'Deployment frozen',
+      )
+      expect(root.querySelector('.countdown')?.textContent).toContain(
+        'Frozen until',
+      )
+      vi.useRealTimers()
+    })
+
+    it('gives the reason a line of its own, and nothing else', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+
+      notice = new Notice(frozen('Christmas change freeze'))
+      const root = inside(notice.build())
+
+      expect(root.querySelector('.frozen')?.textContent?.trim()).toBe(
+        'Christmas change freeze',
+      )
+      vi.useRealTimers()
+    })
+
+    it('stays red rather than inventing a fourth colour', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+
+      notice = new Notice(frozen())
+      const root = inside(notice.build())
+
+      // Red already means "not today"; the reason line says which kind.
+      expect(root.querySelector('.notice')).toHaveAttribute(
+        'data-status',
+        'closed',
+      )
+      expect(root.querySelector('.frozen')).toBeNull()
+      vi.useRealTimers()
+    })
+
+    it('leaves the window alone once it has lifted', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2027-01-03T12:00:00'))
+
+      notice = new Notice(frozen('Christmas change freeze'))
+      const root = inside(notice.build())
+
+      expect(root.querySelector('.frozen')).toBeNull()
+      expect(root.querySelector('.status-text')?.textContent).toBe(
+        'Deployment window open',
+      )
+      vi.useRealTimers()
     })
   })
 })

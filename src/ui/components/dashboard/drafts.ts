@@ -1,6 +1,11 @@
 import { Methods } from '../../../app/components/Methods'
 import { Timezones, isValidTimezone } from '../../../app/components/Timezones'
 import {
+  type Freeze,
+  isCalendarDate,
+  toFreezes,
+} from '../../../app/components/freezes'
+import {
   WEEKDAYS,
   type Weekday,
   isEveryDay,
@@ -32,6 +37,7 @@ export const DEPLOYMENT_RESERVED_KEYS = new Set([
   'name',
   'notes',
   'time',
+  'freezes',
   'case-sensitive',
   'notes-only',
 ])
@@ -51,6 +57,8 @@ export interface DeploymentDraft {
    * reads as a window that never opens.
    */
   days: Weekday[]
+  /** Dated freezes, as typed. Blank rows are dropped rather than saved. */
+  freezes: Freeze[]
   /** domain key -> url fragment, one entry per configured site. */
   fragments: Record<string, string>
 }
@@ -95,6 +103,10 @@ export function toDeploymentDraft(
     end: time?.end ?? '17:00',
     timezone: time?.timezone ?? Timezones.findLocalTimezone(),
     days: stored.length > 0 ? stored : [...WEEKDAYS],
+    freezes: toFreezes(deployment.freezes).map((freeze) => ({
+      ...freeze,
+      reason: freeze.reason ?? '',
+    })),
     fragments,
   }
 }
@@ -129,6 +141,19 @@ export function fromDeploymentDraft(draft: DeploymentDraft): DeploymentConfig {
     if (!isEveryDay(draft.days)) {
       deployment.time.days = WEEKDAYS.filter((day) => draft.days.includes(day))
     }
+  }
+
+  // Outside the time block: a freeze overrides the window rather than being
+  // part of it, and an entry with no window can still be frozen.
+  const freezes = draft.freezes
+    .filter((freeze) => freeze.from.trim() || freeze.to.trim())
+    .map((freeze) => ({
+      from: freeze.from.trim(),
+      to: freeze.to.trim(),
+      ...(freeze.reason?.trim() ? { reason: freeze.reason.trim() } : {}),
+    }))
+  if (freezes.length > 0) {
+    deployment.freezes = freezes
   }
 
   for (const [domainKey, fragment] of Object.entries(draft.fragments)) {
@@ -178,6 +203,23 @@ export function validateDeploymentDraft(
   if (draft.notesOnly && !draft.notes.trim()) {
     errors.notes = Methods.i18n('l10nNotesRequired')
   }
+
+  draft.freezes.forEach((freeze, index) => {
+    const from = freeze.from.trim()
+    const to = freeze.to.trim()
+    if (!from && !to && !freeze.reason?.trim()) {
+      // An untouched row is not a mistake, it is a row nobody filled in.
+      return
+    }
+    if (!isCalendarDate(from)) {
+      errors[`freeze.${index}.from`] = Methods.i18n('l10nInvalidDate')
+    }
+    if (!isCalendarDate(to)) {
+      errors[`freeze.${index}.to`] = Methods.i18n('l10nInvalidDate')
+    } else if (isCalendarDate(from) && to < from) {
+      errors[`freeze.${index}.to`] = Methods.i18n('l10nFreezeBackwards')
+    }
+  })
 
   // Without a fragment for at least one site there is no URL this entry could
   // ever match, so it would save cleanly and then silently do nothing.

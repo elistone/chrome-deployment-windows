@@ -28,12 +28,12 @@ describe('Popup', () => {
 
     expect(await screen.findByText('Daytime project')).toBeInTheDocument()
     expect(screen.getByText('Deployment window')).toBeInTheDocument()
-    // Tests run in America/New_York, so the configured London window is shown
-    // alongside its converted local equivalent.
-    expect(screen.getByText('09:00 – 17:00')).toBeInTheDocument()
-    expect(screen.getByText('Europe/London')).toBeInTheDocument()
+    // Tests run in America/New_York against a London window. The viewer's own
+    // window leads and does not name their zone; the config follows, named.
     expect(screen.getByText('04:00 – 12:00')).toBeInTheDocument()
-    expect(screen.getByText('America/New_York')).toBeInTheDocument()
+    expect(screen.queryByText('America/New_York')).toBeNull()
+    expect(screen.getByText(/Set in Europe\/London/)).toBeInTheDocument()
+    expect(screen.getByText('09:00 – 17:00')).toBeInTheDocument()
     expect(screen.getByText('Deployment window open')).toBeInTheDocument()
     expect(container.querySelector('.dw-popup')).toHaveAttribute(
       'data-status',
@@ -56,7 +56,7 @@ describe('Popup', () => {
 
     await screen.findByText('Daytime project')
     expect(screen.getByText('09:00 – 17:00')).toBeInTheDocument()
-    expect(screen.queryByText('Your timezone')).toBeNull()
+    expect(screen.queryByText(/Set in/)).toBeNull()
   })
 
   it('says how much longer the window has', async () => {
