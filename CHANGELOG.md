@@ -4,6 +4,40 @@ Notable changes to Deployment windows. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-08-25
+
+Housekeeping for the notice, and a large weight off every page you visit.
+
+### Added
+
+- A way to put the notice away. The **×** in its corner hides it for as long as
+  you stay on the page; reloading, navigating, or the window opening or closing
+  brings it back. Nothing is stored, so it can never be missing at the moment
+  you needed it.
+
+### Changed
+
+- **The content script is about a quarter of the size it was.** It runs on every
+  https page you visit, and it was loading a markdown parser on all of them for
+  the sake of notes that most pages do not have and that start folded away. The
+  parser is fetched when notes are actually opened. 294 kB down to 85 kB, before
+  anything on the page has been touched.
+- **The notice stops moving once it has been seen.** The sweep across the card
+  and the pulse behind the status mark used to run forever; they now run on
+  arrival, and again when the status changes.
+- **A window already in your own timezone is shown once**, rather than as two
+  rows of identical hours under different labels. The popup and the options page
+  already did this.
+- The popup opens without waiting for the markdown parser it only needs if the
+  entry has notes.
+
+### Fixed
+
+- **The notice tells a screen reader when the window opens or closes.** It is a
+  labelled region that can be navigated to and skipped past, and its status is a
+  polite live region - which also meant stopping it rewriting the same sentence
+  once a second.
+
 ## [2.0.0] - 2026-08-25
 
 A rebuild rather than an upgrade. Manifest V2 stops being loadable, so
@@ -105,6 +139,7 @@ rejected.
 
 First release.
 
+[2.1.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.1.0
 [2.0.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.0.0
 [1.1.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v1.1.0
 [1.0.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v1.0.0
