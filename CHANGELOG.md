@@ -4,6 +4,40 @@ Notable changes to Deployment windows. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-08-25
+
+### Added
+
+- **Windows can be limited to certain days.** "No deploys on Fridays" is the
+  rule almost every team has, and until now there was nowhere to write it down -
+  a window was a time of day and nothing else, so a Saturday morning read as
+  open. Tick the days in the form, or write them in the JSON:
+
+  ```json
+  "time": {
+      "start": "09:00",
+      "end": "17:00",
+      "timezone": "Europe/London",
+      "days": ["mon", "tue", "wed", "thu", "fri"]
+  }
+  ```
+
+  A day is when the window *opens*, so an overnight `23:00`-`02:00` window on a
+  Monday is Monday's window and stays open into Tuesday morning. Leave `days`
+  out for a window that opens every day, which is what every config written
+  before this means and goes on meaning.
+
+### Changed
+
+- The days move with the hours when a window is written in another timezone. A
+  Monday morning in Tokyo is a Sunday afternoon in Los Angeles, and that is what
+  the converted row now says.
+- The countdown counts past tomorrow. On a Friday evening with a weekday-only
+  window it says "Opens in 2d 15h" rather than wrapping to a morning the window
+  will not open on.
+- The notice, the popup and the dashboard show which days a window opens on,
+  collapsing runs into ranges - "Mon-Fri" rather than five separate days.
+
 ## [2.1.0] - 2026-08-25
 
 Housekeeping for the notice, and a large weight off every page you visit.
@@ -139,6 +173,7 @@ rejected.
 
 First release.
 
+[2.2.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.2.0
 [2.1.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.1.0
 [2.0.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.0.0
 [1.1.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v1.1.0
