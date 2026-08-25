@@ -146,6 +146,15 @@ page loads cleanly under the Manifest V3 content security policy — a check wor
 keeping, since MV3 forbids `unsafe-eval` and that has already broken one
 dependency here.
 
+**Every end-to-end test fails on a dirty console.** A warning, an error or an
+uncaught exception on any page the test opened fails it, whatever the
+assertions said. It is attached to the browser context rather than to
+individual pages, so nothing has to opt in — which is the point, because the
+messages this catches are the ones nobody is looking for. A build change once
+filled every extension page with preload warnings and the suite drove a real
+Chromium past them for weeks without looking. If something is genuinely
+expected, add it to `EXPECTED_CONSOLE` in `e2e/fixtures.ts` with a reason.
+
 ### Packaging a release
 
 ```text

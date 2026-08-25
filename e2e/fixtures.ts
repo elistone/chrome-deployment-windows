@@ -22,6 +22,29 @@ const STORAGE_KEYS = {
   deployments: 'DEPLOYMENTS',
 } as const
 
+/**
+ * Console output that is expected, and why.
+ *
+ * Deliberately empty. Every entry here is a message nobody will ever look at
+ * again, so each one needs a reason that survives being read in a year - and
+ * the moment this list is easier to add to than the underlying noise is to
+ * fix, it has stopped doing its job.
+ */
+const EXPECTED_CONSOLE: { pattern: RegExp; because: string }[] = []
+
+/** Levels worth failing a test over. `log`, `info` and `debug` are not. */
+const LOUD_LEVELS = new Set(['error', 'warning'])
+
+interface CapturedMessage {
+  where: string
+  level: string
+  text: string
+}
+
+function isExpected(text: string): boolean {
+  return EXPECTED_CONSOLE.some((entry) => entry.pattern.test(text))
+}
+
 export interface ExtensionFixtures {
   context: BrowserContext
   extensionId: string
@@ -32,6 +55,8 @@ export interface ExtensionFixtures {
    * running an http test server the response is fulfilled locally.
    */
   openStubbedPage: (url: string, body: string) => Promise<Page>
+  /** Fails the test if any page it opened logged a warning or an error. */
+  consoleGuard: void
 }
 
 export const test = base.extend<ExtensionFixtures>({
@@ -59,6 +84,61 @@ export const test = base.extend<ExtensionFixtures>({
     await context.close()
     fs.rmSync(userDataDir, { recursive: true, force: true })
   },
+
+  /**
+   * Fail a test that leaves warnings or errors in the console.
+   *
+   * Attached to the context rather than to individual pages, so it covers
+   * every page a spec opens including the ones it makes itself. `auto` means
+   * no test has to remember to ask for it - which is the point, since the
+   * warnings this exists to catch are exactly the ones nobody was looking for.
+   *
+   * It was added after a build change filled every extension page with preload
+   * warnings for weeks. The suite drove a real Chromium the whole time and
+   * never once looked at what it was saying.
+   */
+  consoleGuard: [
+    async ({ context }, use) => {
+      const captured: CapturedMessage[] = []
+
+      const watch = (page: Page) => {
+        const where = () => page.url() || 'about:blank'
+        page.on('console', (message) => {
+          if (!LOUD_LEVELS.has(message.type())) {
+            return
+          }
+          const text = message.text()
+          if (!isExpected(text)) {
+            captured.push({ where: where(), level: message.type(), text })
+          }
+        })
+        page.on('pageerror', (error) => {
+          captured.push({
+            where: where(),
+            level: 'pageerror',
+            text: String(error),
+          })
+        })
+      }
+
+      context.pages().forEach(watch)
+      context.on('page', watch)
+
+      await use()
+
+      if (captured.length > 0) {
+        const lines = captured
+          .map((m) => `  [${m.level}] ${m.text}\n      on ${m.where}`)
+          .join('\n')
+        throw new Error(
+          `The console was not clean. ${String(captured.length)} message(s):\n${lines}\n\n` +
+            'Fix the cause, or add it to EXPECTED_CONSOLE in e2e/fixtures.ts ' +
+            'with a reason.',
+        )
+      }
+    },
+    { auto: true },
+  ],
 
   extensionId: async ({ context }, use) => {
     // The MV3 service worker registers on load; wait for it to learn the id.
