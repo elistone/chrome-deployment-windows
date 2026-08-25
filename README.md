@@ -194,6 +194,7 @@ dev/                     Browser-only dev harness (never built into the extensio
 tests/                   Vitest unit and component tests
 e2e/                     Playwright end-to-end tests
 scripts/                 Build checks, icon drawing and release packaging
+CHANGELOG.md             What changed in each release
 ```
 
 ### Redrawing the icons
