@@ -630,5 +630,13 @@
   "l10nSharedUpdate": {
     "message": "Update URL",
     "description": "Button that points the shared config at a different address."
+  },
+  "l10nDismiss": {
+    "message": "Hide this notice",
+    "description": "Accessible name of the control that puts the in-page notice away."
+  },
+  "l10nDismissHint": {
+    "message": "Hidden until you reload, or the window opens or closes",
+    "description": "Tooltip saying how long dismissing the notice lasts."
   }
 }

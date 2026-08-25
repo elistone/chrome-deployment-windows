@@ -11,6 +11,14 @@ import noticeStyles from '../../styles/notice.css?inline'
 
 const REALTIME_INTERVAL_MS = 1000
 
+/**
+ * The id the notice's own heading carries, so the card can be labelled by it.
+ *
+ * Safe as a fixed id: it only exists inside the shadow root, where it cannot
+ * collide with anything the host page has.
+ */
+const NAME_ID = 'dw-notice-name'
+
 /** Which artwork the toolbar wears for each state of the window. */
 export const ICONS = {
   open: 'success',
@@ -56,6 +64,17 @@ export class Notice {
   private toggle: HTMLElement | null = null
   /** The notes have been rendered, or are being rendered right now. */
   private notesRequested = false
+  private close: HTMLElement | null = null
+  private closeHandler: ((event: Event) => void) | null = null
+  /**
+   * Hidden by hand, for this page view only.
+   *
+   * Hidden rather than destroyed, deliberately: the notice's own timer is what
+   * keeps the toolbar icon honest and what notices the window opening or
+   * closing, and both of those should carry on after someone has waved the
+   * card away.
+   */
+  private dismissed = false
 
   constructor(deployment: ResolvedDeployment) {
     this.deployment = deployment
@@ -86,6 +105,12 @@ export class Notice {
 
     const card = document.createElement('div')
     card.className = 'notice'
+    // A named region rather than an anonymous div: this arrives uninvited on
+    // someone else's page, so it needs to be something a screen reader user can
+    // find deliberately and skip past. Labelled by its own heading, which is
+    // already the thing that says which project it is about.
+    card.setAttribute('role', 'region')
+    card.setAttribute('aria-labelledby', NAME_ID)
     card.dataset.status = this.tone()
     card.innerHTML = this.getContent()
     root.append(card)
@@ -99,6 +124,7 @@ export class Notice {
     this.details = card.querySelector('.details')
     this.notesBody = card.querySelector('.notes-body')
     this.toggle = card.querySelector('.toggle')
+    this.close = card.querySelector('.close')
 
     return host
   }
@@ -131,6 +157,7 @@ export class Notice {
 
     if (this.inserted) {
       this.enableToggleDetails()
+      this.enableDismiss()
       this.enableRealTime()
       // A notes-only entry opens with its notes showing, so there is nothing
       // to wait for - the renderer is wanted now rather than on a click that
@@ -176,6 +203,10 @@ export class Notice {
       this.toggle.removeEventListener('click', this.toggleHandler)
     }
     this.toggleHandler = null
+    if (this.close && this.closeHandler) {
+      this.close.removeEventListener('click', this.closeHandler)
+    }
+    this.closeHandler = null
     this.element?.remove()
     // Dropped so a render still in flight writes into nothing rather than into
     // a card that has been taken off the page.
@@ -235,12 +266,13 @@ export class Notice {
     const countdown = notesOnly
       ? ''
       : `<span class="countdown">${t(this.countdownText())}</span>`
+    const close = `<button type="button" class="close" aria-label="${Methods.i18n(
+      'l10nDismiss',
+    )}" title="${Methods.i18n('l10nDismissHint')}">${Notice.CLOSE_GLYPH}</button>`
     const heading = [
       notesOnly ? '' : this.statusPill(),
-      `<h2 class="name">${t(name)}</h2>`,
-      countdown || toggle
-        ? `<div class="head-end">${countdown}${toggle}</div>`
-        : '',
+      `<h2 class="name" id="${NAME_ID}">${t(name)}</h2>`,
+      `<div class="head-end">${countdown}${toggle}${close}</div>`,
     ].join('')
 
     const times = notesOnly
@@ -278,7 +310,10 @@ export class Notice {
   private statusPill(): string {
     const { start, end } = this.deployment.timeObj.local
     const status = TextFormatter.stripTags(DW.statusText(start, end))
-    return `<span class="pill">${Notice.mark(this.tone())}<span class="status-text">${status}</span></span>`
+    // role="status" is a polite live region: the window opening or closing is
+    // the one thing here worth interrupting for, and it happens while the page
+    // is just sitting there with nobody looking at this corner of it.
+    return `<span class="pill">${Notice.mark(this.tone())}<span class="status-text" role="status">${status}</span></span>`
   }
 
   /**
@@ -293,6 +328,12 @@ export class Notice {
     const glyph = GLYPHS[glyphFor(tone)]
     return `<span class="mark"><svg viewBox="${GLYPH_VIEWBOX}" aria-hidden="true" focusable="false"><circle cx="64" cy="64" r="60" fill="currentColor"></circle><path d="${glyph.d}" fill="none" stroke="#fff" stroke-width="${glyph.width}" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>`
   }
+
+  /** The cross on the dismiss control. Drawn here; the shadow root has no React. */
+  private static readonly CLOSE_GLYPH =
+    '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
+    '<path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.7" stroke-linecap="round"></path></svg>'
 
   /** Redraw the mark for the current status. */
   private applyMark(): void {
@@ -361,6 +402,42 @@ export class Notice {
     this.toggle.addEventListener('click', this.toggleHandler)
   }
 
+  private enableDismiss(): void {
+    if (!this.close || this.closeHandler) {
+      return
+    }
+    this.closeHandler = (event: Event) => {
+      event.preventDefault()
+      this.dismiss()
+    }
+    this.close.addEventListener('click', this.closeHandler)
+  }
+
+  /**
+   * Put the notice away for this page view.
+   *
+   * Not stored anywhere. A reload or a navigation brings it back, and so does
+   * the window opening or closing - which is the one thing that could have
+   * happened since that is worth saying again.
+   */
+  dismiss(): void {
+    this.dismissed = true
+    if (this.element) {
+      this.element.dataset.dismissed = ''
+    }
+  }
+
+  isDismissed(): boolean {
+    return this.dismissed
+  }
+
+  private restore(): void {
+    this.dismissed = false
+    if (this.element) {
+      delete this.element.dataset.dismissed
+    }
+  }
+
   private toggleDetails(event: Event): void {
     event.preventDefault()
     if (!this.details || !this.toggle) {
@@ -412,8 +489,12 @@ export class Notice {
     if (this.clock) {
       this.clock.textContent = Timezones.getCurrentTime()
     }
-    if (this.statusText) {
-      this.statusText.textContent = DW.statusText(start, end)
+    // Only written when it actually changed. It is a live region and this runs
+    // every second, so re-assigning the same sentence would have a screen
+    // reader announce "deployment window open" once a second, all day.
+    const status = DW.statusText(start, end)
+    if (this.statusText && this.statusText.textContent !== status) {
+      this.statusText.textContent = status
     }
     if (this.countdown) {
       this.countdown.textContent = this.countdownText()
@@ -421,6 +502,8 @@ export class Notice {
     if (this.card && this.card.dataset.status !== this.tone()) {
       this.card.dataset.status = this.tone()
       this.applyMark()
+      // Whatever was true when it was waved away is not true any more.
+      this.restore()
       this.flip()
     }
 

@@ -241,4 +241,64 @@ test.describe('in-page notice', () => {
     await page.waitForTimeout(1500)
     await expect(page.locator('.dw-notification')).toHaveCount(0)
   })
+
+  test('is a labelled region, and says its status politely', async ({
+    openStubbedPage,
+  }) => {
+    const page = await openStubbedPage(
+      'https://github.com/acme/always',
+      githubPageHtml(),
+    )
+    const notice = page.locator('.dw-notification')
+    await expect(notice).toBeVisible()
+
+    // It arrives uninvited on someone else's page, so it has to be findable
+    // and skippable rather than an anonymous div in the middle of the content.
+    const card = notice.locator('.notice')
+    await expect(card).toHaveAttribute('role', 'region')
+    await expect(card).toHaveAccessibleName(/Always open project/)
+
+    await expect(notice.locator('.status-text')).toHaveAttribute(
+      'role',
+      'status',
+    )
+  })
+
+  test('can be dismissed, and stops taking up room when it is', async ({
+    openStubbedPage,
+  }) => {
+    const page = await openStubbedPage(
+      'https://github.com/acme/always',
+      githubPageHtml(),
+    )
+    const notice = page.locator('.dw-notification')
+    await expect(notice).toBeVisible()
+
+    const close = notice.locator('.close')
+    await expect(close).toHaveAccessibleName('Hide this notice')
+    await close.click()
+
+    await expect(notice).toBeHidden()
+    // Hidden rather than removed: its timer is what keeps the toolbar icon
+    // honest, and what would notice the window opening or closing.
+    await expect(notice).toHaveCount(1)
+    expect(await notice.evaluate((el) => el.getBoundingClientRect().height)).toBe(
+      0,
+    )
+  })
+
+  test('comes back after navigating away and returning', async ({
+    openStubbedPage,
+  }) => {
+    const page = await openStubbedPage(
+      'https://github.com/acme/always',
+      githubPageHtml(),
+    )
+    await page.locator('.dw-notification .close').click()
+    await expect(page.locator('.dw-notification')).toBeHidden()
+
+    await page.reload()
+
+    await expect(page.locator('.dw-notification')).toBeVisible()
+  })
 })

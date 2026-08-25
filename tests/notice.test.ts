@@ -561,4 +561,170 @@ describe('Notice', () => {
       expect(chromeMock().sentMessages).toHaveLength(before)
     })
   })
+
+  describe('being someone else\'s guest', () => {
+    it('is a region a screen reader can find and skip', () => {
+      notice = new Notice(resolve(DAYTIME))
+      const root = inside(notice.build())
+      const card = root.querySelector('.notice')
+
+      // It arrives uninvited on a page, so it has to be something that can be
+      // navigated to deliberately - and past.
+      expect(card).toHaveAttribute('role', 'region')
+
+      const labelledBy = card?.getAttribute('aria-labelledby')
+      expect(labelledBy).toBeTruthy()
+      expect(root.getElementById(labelledBy!)?.textContent).toBe(
+        'Daytime project',
+      )
+    })
+
+    it('announces the status politely rather than not at all', () => {
+      notice = new Notice(resolve(DAYTIME))
+      const root = inside(notice.build())
+
+      expect(root.querySelector('.status-text')).toHaveAttribute(
+        'role',
+        'status',
+      )
+    })
+
+    it('does not re-announce a status that has not changed', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T12:00:00'))
+
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+      const root = onPage()
+      const status = root.querySelector('.status-text')!
+
+      const mutations: MutationRecord[] = []
+      const observer = new MutationObserver((records) => {
+        mutations.push(...records)
+      })
+      observer.observe(status, { childList: true, characterData: true, subtree: true })
+
+      // The clock ticks every second. Writing the same sentence back each time
+      // would have a screen reader say "deployment window open" once a second,
+      // all day, because it is a live region.
+      notice.realTime()
+      notice.realTime()
+      notice.realTime()
+      await Promise.resolve()
+
+      expect(mutations).toHaveLength(0)
+      expect(status.textContent).toBe('Deployment window open')
+
+      observer.disconnect()
+      vi.useRealTimers()
+    })
+
+    it('does announce when the window actually closes', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T12:00:00'))
+
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+      const root = onPage()
+      const status = root.querySelector('.status-text')!
+      expect(status.textContent).toBe('Deployment window open')
+
+      vi.setSystemTime(new Date('2024-06-03T22:00:00'))
+      notice.realTime()
+
+      expect(status.textContent).toBe('Deployment window closed')
+      vi.useRealTimers()
+    })
+  })
+
+  describe('dismissing', () => {
+    function dismissButton(root: ShadowRoot): HTMLElement {
+      const button = root.querySelector<HTMLElement>('.close')
+      if (!button) {
+        throw new Error('the notice has no dismiss control')
+      }
+      return button
+    }
+
+    it('puts the notice away without taking it off the page', () => {
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+      const host = document.querySelector<HTMLElement>('.dw-notification')!
+
+      dismissButton(onPage()).click()
+
+      expect(notice.isDismissed()).toBe(true)
+      expect(host.dataset.dismissed).toBe('')
+      // Still there, still ticking - hiding it must not stop the toolbar icon
+      // and the status from keeping up.
+      expect(host.isConnected).toBe(true)
+    })
+
+    it('keeps updating the toolbar icon while it is hidden', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T12:00:00'))
+
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+      dismissButton(onPage()).click()
+      chromeMock().sentMessages.length = 0
+
+      vi.setSystemTime(new Date('2024-06-03T22:00:00'))
+      notice.realTime()
+
+      expect(chromeMock().sentMessages).toEqual([{ icon: ICONS.closed }])
+      vi.useRealTimers()
+    })
+
+    it('comes back when the window opens or closes', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T12:00:00'))
+
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+      const host = document.querySelector<HTMLElement>('.dw-notification')!
+      dismissButton(onPage()).click()
+      expect(host.dataset.dismissed).toBe('')
+
+      // Whatever was true when it was waved away is not true any more.
+      vi.setSystemTime(new Date('2024-06-03T22:00:00'))
+      notice.realTime()
+
+      expect(notice.isDismissed()).toBe(false)
+      expect(host.dataset.dismissed).toBeUndefined()
+      vi.useRealTimers()
+    })
+
+    it('stays put while the status is unchanged', () => {
+      vi.useFakeTimers()
+      // Tests run in America/New_York, where the configured London window is
+      // 04:00-12:00. Both of these times are inside it, so nothing changes.
+      vi.setSystemTime(new Date('2024-06-03T10:00:00'))
+
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+      const host = document.querySelector<HTMLElement>('.dw-notification')!
+      dismissButton(onPage()).click()
+
+      vi.setSystemTime(new Date('2024-06-03T11:00:00'))
+      notice.realTime()
+
+      expect(host.dataset.dismissed).toBe('')
+      expect(notice.isDismissed()).toBe(true)
+      vi.useRealTimers()
+    })
+
+    it('says how long it will last, rather than leaving it to be guessed', () => {
+      notice = new Notice(resolve(DAYTIME))
+      const button = dismissButton(inside(notice.build()))
+
+      expect(button).toHaveAttribute('aria-label', 'Hide this notice')
+      expect(button.getAttribute('title')).toContain('until you reload')
+    })
+
+    it('is offered on a notes-only entry too', () => {
+      notice = new Notice(resolve(NOTES_ONLY))
+      expect(dismissButton(inside(notice.build()))).toBeTruthy()
+    })
+  })
 })

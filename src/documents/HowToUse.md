@@ -28,6 +28,10 @@ Each card shows its live status and how long that status has left — "Closes in
 is open right now, and what is about to change. The notice and the toolbar popup
 say the same thing on the page itself.
 
+The notice on the page can be put away with the **×** in its corner. That lasts
+for as long as you stay on the page — reloading brings it back, and so does the
+window opening or closing, since that is the one thing worth telling you again.
+
 You do not have to come back here to change one of them. The popup edits the
 entry for whatever page you are on, and offers to create one where a site is set
 up but the page has nothing on it yet — the times, the notes and the matching

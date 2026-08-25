@@ -12,6 +12,12 @@
  * custom properties inherit, so importing it would repaint the host page.
  */
 
+/* Waved away for this page view. The host rather than the card, so it stops
+   taking up room in the page's layout as well as being invisible. */
+:host([data-dismissed]) {
+  display: none;
+}
+
 :host {
   --dw-font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
@@ -110,7 +116,13 @@
 }
 
 /* A slow sweep of light across the card. Enough movement to catch the eye on a
-   page you have already scrolled past twice, not enough to sit and watch. */
+   page you have already scrolled past twice, not enough to sit and watch.
+
+   Twice, then it stops. It used to run forever, which is a different thing
+   altogether: this sits on a page someone is trying to read, and permanent
+   motion in the corner of the eye is the kind of thing people install
+   extensions to get rid of. Catching the eye is a job with a beginning and an
+   end - arriving, and the status changing - and both of those are moments. */
 .notice::after {
   content: '';
   position: absolute;
@@ -123,8 +135,16 @@
   );
   opacity: 0.6;
   transform: translateX(-100%);
-  animation: dw-sweep 7s ease-in-out 1.2s infinite;
+  animation: dw-sweep 7s ease-in-out 1.2s 2;
   pointer-events: none;
+}
+
+/* The status has just changed, so the sweep runs again - without the arrival
+   delay this time, since the flip has already drawn the eye here. The differing
+   shorthand is also what restarts it: an identical animation value would not.
+   `data-flip` is set on every change, so this re-triggers on every change. */
+.notice[data-flip]::after {
+  animation: dw-sweep 7s ease-in-out 2;
 }
 
 /* ------------------------------------------------------------------ */
@@ -187,12 +207,18 @@
   inset: 0;
   border-radius: 50%;
   background: currentColor;
-  animation: dw-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  /* The resting state, spelled out rather than left to the last keyframe: the
+     animation is bounded now, so it ends and this is what is left. Without it
+     the halo would settle as a solid disc behind the mark. */
+  opacity: 0;
+  /* Three pulses on arrival, for the same reason as the sweep. After that the
+     countdown ticking is what says the notice is live. */
+  animation: dw-ping 2.4s cubic-bezier(0, 0, 0.2, 1) 0.3s 3;
 }
 
-/* The countdown and the toggle share the right hand end of the head, so the
-   name keeps whatever width is left rather than being pushed onto its own
-   line by two separately floated things. */
+/* The countdown, the toggle and the dismiss control share the right hand end
+   of the head, so the name keeps whatever width is left rather than being
+   pushed onto its own line by separately floated things. */
 .head-end {
   display: flex;
   align-items: center;
@@ -231,6 +257,45 @@
   outline: 2px solid var(--dw-accent);
   outline-offset: 3px;
   border-radius: 4px;
+}
+
+/* Quiet until wanted: this is a control for getting rid of something, so it
+   should not be the brightest thing on the card. */
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  flex: none;
+  color: var(--dw-text-faint);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.65;
+  transition:
+    opacity 140ms ease,
+    color 140ms ease,
+    background 140ms ease;
+}
+
+.close svg {
+  width: 13px;
+  height: 13px;
+}
+
+.close:hover {
+  color: var(--dw-text);
+  background: var(--dw-tone-soft);
+  opacity: 1;
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--dw-tone);
+  outline-offset: 1px;
+  opacity: 1;
 }
 
 /* ------------------------------------------------------------------ */
