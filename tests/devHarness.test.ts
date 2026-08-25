@@ -64,6 +64,7 @@ describe('dev harness', () => {
         end: '17:00',
         timezone: 'Asia/Tokyo',
         days: [],
+        freeze: null,
       })
       // Tests are pinned to America/New_York, so the local window must differ.
       expect(info?.timeObj.local.timezone).toBe('America/New_York')

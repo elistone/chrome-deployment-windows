@@ -145,6 +145,23 @@ not what the person who wrote the config was looking at.
 
 When the next window is days away, the countdown says so: "Opens in 2d 4h".
 
+### Freezes
+
+A **freeze** is a run of calendar days when nothing ships, whatever the window
+says — a Christmas change freeze, a conference week, the fortnight the people
+who would fix it are away.
+
+Add one with a first day, a last day and, if it helps, a reason. Both days are
+included, so 20 December to 2 January is frozen for the whole of both. While it
+is on, the status reads "Deployment frozen", the countdown says when it lifts
+rather than when the window next opens, and the reason is shown beside it.
+
+Dates are read against the window's own timezone — the same calendar the window
+was written in.
+
+A freeze beats everything else. It does not matter what the hours say or which
+days are ticked.
+
 ---
 
 ## Editing the JSON directly
@@ -189,7 +206,14 @@ The stored config has three parts: `domains`, `sites` and `deployments`.
                 "timezone": "Europe/Paris",
                 "days": ["mon", "tue", "wed", "thu"]
             },
-            "notes": "Deploys need **two** approvals."
+            "notes": "Deploys need **two** approvals.",
+            "freezes": [
+                {
+                    "from": "2026-12-20",
+                    "to": "2027-01-02",
+                    "reason": "Christmas change freeze"
+                }
+            ]
         }
     }
 }
@@ -230,3 +254,7 @@ time.time_data.start|time[24]|24 hour time the window opens, e.g. `09:00`
 time.time_data.end|time[24]|24 hour time the window closes; may be earlier than the start to run past midnight
 time.time_data.timezone|string|An [IANA timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) such as `Europe/London`
 time.time_data.days|array[day]|Days the window opens on, e.g. `["mon","tue","wed","thu","fri"]`. Leave it out for every day
+freezes|array[freeze_data]|Runs of days when nothing ships, whatever the window says
+freezes.freeze_data.from|date|First frozen day, `YYYY-MM-DD`, included
+freezes.freeze_data.to|date|Last frozen day, `YYYY-MM-DD`, included
+freezes.freeze_data.reason|string|Optional, shown wherever the freeze is reported

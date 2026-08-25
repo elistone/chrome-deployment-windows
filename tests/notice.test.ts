@@ -815,4 +815,82 @@ describe('Notice', () => {
       expect(dismissButton(inside(notice.build()))).toBeTruthy()
     })
   })
+
+  describe('a freeze', () => {
+    function frozen(reason?: string) {
+      const config = testConfig()
+      config.deployments.daytime.time = {
+        start: '09:00',
+        end: '17:00',
+        timezone: 'America/New_York',
+      }
+      ;(config.deployments.daytime as Record<string, unknown>).freezes = [
+        { from: '2026-12-20', to: '2027-01-02', ...(reason ? { reason } : {}) },
+      ]
+      const info = new DW(config, DAYTIME).getDeploymentInfo()
+      if (!info) {
+        throw new Error('no deployment resolved')
+      }
+      return info
+    }
+
+    it('says frozen, and says until when', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+
+      notice = new Notice(frozen('Christmas change freeze'))
+      const root = inside(notice.build())
+
+      expect(root.querySelector('.status-text')?.textContent).toBe(
+        'Deployment frozen',
+      )
+      expect(root.querySelector('.countdown')?.textContent).toContain(
+        'Frozen until',
+      )
+      vi.useRealTimers()
+    })
+
+    it('gives the reason a line of its own, and nothing else', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+
+      notice = new Notice(frozen('Christmas change freeze'))
+      const root = inside(notice.build())
+
+      expect(root.querySelector('.frozen')?.textContent?.trim()).toBe(
+        'Christmas change freeze',
+      )
+      vi.useRealTimers()
+    })
+
+    it('stays red rather than inventing a fourth colour', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+
+      notice = new Notice(frozen())
+      const root = inside(notice.build())
+
+      // Red already means "not today"; the reason line says which kind.
+      expect(root.querySelector('.notice')).toHaveAttribute(
+        'data-status',
+        'closed',
+      )
+      expect(root.querySelector('.frozen')).toBeNull()
+      vi.useRealTimers()
+    })
+
+    it('leaves the window alone once it has lifted', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2027-01-03T12:00:00'))
+
+      notice = new Notice(frozen('Christmas change freeze'))
+      const root = inside(notice.build())
+
+      expect(root.querySelector('.frozen')).toBeNull()
+      expect(root.querySelector('.status-text')?.textContent).toBe(
+        'Deployment window open',
+      )
+      vi.useRealTimers()
+    })
+  })
 })

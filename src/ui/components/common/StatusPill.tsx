@@ -2,11 +2,12 @@ import { glyphFor } from '../../../app/glyphs'
 import { Methods } from '../../../app/components/Methods'
 import { StatusMark } from './Icons'
 
-export type StatusTone = 'open' | 'closed' | 'notes' | 'unset'
+export type StatusTone = 'open' | 'closed' | 'frozen' | 'notes' | 'unset'
 
 const LABEL_KEYS: Record<StatusTone, string> = {
   open: 'l10nDeploymentOpen',
   closed: 'l10nDeploymentClosed',
+  frozen: 'l10nDeploymentFrozen',
   notes: 'l10nNotesOnly',
   unset: 'l10nNoWindowSet',
 }

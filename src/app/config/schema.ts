@@ -16,6 +16,7 @@ import type { DeploymentWindowsConfig } from './types'
  * "must ..." message - so they stay familiar and are safe to show verbatim.
  */
 
+import { isCalendarDate } from '../components/freezes'
 import { WEEKDAYS, isWeekday } from '../components/weekdays'
 import { isCssSpacing } from './css'
 
@@ -28,6 +29,7 @@ const DEPLOYMENT_KNOWN_KEYS = new Set([
   'name',
   'notes',
   'time',
+  'freezes',
   'case-sensitive',
   'notes-only',
 ])
@@ -266,6 +268,57 @@ function validateDays(value: unknown, path: string, errors: Errors): void {
   })
 }
 
+/**
+ * Dated freezes on a deployment.
+ *
+ * A range that ends before it starts is refused rather than ignored: it looks
+ * like a rule, it can never contain a day, and the only symptom of getting it
+ * backwards would be a freeze that silently never happens.
+ */
+function validateFreezes(value: unknown, path: string, errors: Errors): void {
+  if (!Array.isArray(value)) {
+    errors.type(path, 'array')
+    return
+  }
+
+  value.forEach((entry, index) => {
+    const at = `${path}/${String(index)}`
+    if (!isPlainObject(entry)) {
+      errors.type(at, 'object')
+      return
+    }
+
+    for (const key of ['from', 'to'] as const) {
+      if (!(key in entry)) {
+        errors.required(at, key)
+      } else if (!isCalendarDate(entry[key])) {
+        errors.add(
+          join(at, key),
+          'must be a real date written as YYYY-MM-DD',
+        )
+      }
+    }
+
+    if (
+      isCalendarDate(entry.from) &&
+      isCalendarDate(entry.to) &&
+      entry.to < entry.from
+    ) {
+      errors.add(at, 'must not end before it starts')
+    }
+
+    if ('reason' in entry && typeof entry.reason !== 'string') {
+      errors.type(join(at, 'reason'), 'string')
+    }
+
+    for (const extra of Object.keys(entry)) {
+      if (extra !== 'from' && extra !== 'to' && extra !== 'reason') {
+        errors.add(at, `must NOT have additional properties ('${extra}')`)
+      }
+    }
+  })
+}
+
 function validateDeployments(value: unknown, path: string, errors: Errors): void {
   if (!isPlainObject(value)) {
     errors.type(path, 'object')
@@ -292,6 +345,9 @@ function validateDeployments(value: unknown, path: string, errors: Errors): void
     }
     if ('time' in deployment) {
       validateTime(deployment.time, join(at, 'time'), errors)
+    }
+    if ('freezes' in deployment) {
+      validateFreezes(deployment.freezes, join(at, 'freezes'), errors)
     }
 
     // Anything else is a per-domain url fragment and must be a string.

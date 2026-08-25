@@ -34,6 +34,9 @@ export function statusFor(deployment: DeploymentConfig): StatusTone {
     return 'unset'
   }
   const { local } = DW.buildTimes(deployment)
+  if (local.freeze) {
+    return 'frozen'
+  }
   return DW.canDeploy(local) ? 'open' : 'closed'
 }
 
@@ -109,6 +112,9 @@ export function DeploymentCard({
         </div>
       </header>
 
+      {times?.original.freeze?.reason && (
+        <p className="dw-frozen">{times.original.freeze.reason}</p>
+      )}
       {times && (
         <dl className="dw-card-rows">
           <div className="dw-card-row">

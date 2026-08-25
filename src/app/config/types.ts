@@ -3,6 +3,7 @@
  * deployment that the notice and popup render from.
  */
 
+import type { ActiveFreeze, Freeze } from '../components/freezes'
 import type { Weekday } from '../components/weekdays'
 
 export type InsertPosition = 'before' | 'after'
@@ -59,9 +60,17 @@ export interface DeploymentConfig {
   name?: string
   notes?: string
   time?: DeploymentTime
+  /**
+   * Stretches of the calendar when nothing ships, whatever the window says.
+   *
+   * Not part of `time` on purpose: a window says when deploying is allowed in
+   * the ordinary run of things, and a freeze suspends that. One is a rule, the
+   * other overrides it.
+   */
+  freezes?: Freeze[]
   'case-sensitive'?: boolean
   'notes-only'?: boolean
-  [domainKey: string]: string | boolean | DeploymentTime | undefined
+  [domainKey: string]: string | boolean | DeploymentTime | Freeze[] | undefined
 }
 
 export interface DeploymentWindowsConfig {
@@ -84,6 +93,13 @@ export interface ResolvedTimeWindow {
    * calendar actually says.
    */
   days: Weekday[]
+  /**
+   * The freeze covering today, or null.
+   *
+   * Carried on the window rather than beside it so that anything asking "is
+   * this open" is holding everything that decides the answer.
+   */
+  freeze: ActiveFreeze | null
 }
 
 export interface ResolvedTimes {
@@ -110,7 +126,7 @@ export interface ResolvedDeployment {
   /** Insert locations and classes for the matched domain. */
   domainInfo: SiteConfig
   timeObj: ResolvedTimes
-  /** Localised "open"/"closed" text. */
+  /** Localised "open"/"closed"/"frozen" text. */
   status: string
   canDeploy: boolean
 }

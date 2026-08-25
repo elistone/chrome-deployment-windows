@@ -95,6 +95,8 @@ export class Notice {
     if (this.deployment.notesOnly) {
       return 'notes'
     }
+    // A freeze is not a fourth colour: red already means "not today", and the
+    // reason line beside it is what says which kind of not-today this is.
     return DW.canDeploy(this.deployment.timeObj.local) ? 'open' : 'closed'
   }
 
@@ -294,6 +296,15 @@ export class Notice {
     // room it does not need is room it should not take.
     const showLocal = timeObj.original.timezone !== timeObj.local.timezone
 
+    // Only the reason. The pill already says "Deployment frozen" and the head
+    // already says until when, so repeating either here would be the notice
+    // saying the same thing three times in three places.
+    const freeze = notesOnly ? null : timeObj.original.freeze
+    const frozen =
+      freeze && freeze.reason
+        ? `<p class="frozen">${t(freeze.reason)}</p>`
+        : ''
+
     const times = notesOnly
       ? ''
       : `<dl class="rows">
@@ -317,7 +328,7 @@ export class Notice {
         </div>`
       : ''
 
-    return `<div class="head">${heading}</div>${times}${details}`
+    return `<div class="head">${heading}</div>${frozen}${times}${details}`
   }
 
   /** "Closes in 2h 10m", for the head. */

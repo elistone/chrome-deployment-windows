@@ -39,6 +39,11 @@ starts on, and the days move with the hours when the window is written in
 another timezone. When the next one is days away the countdown says "Opens in
 2d 4h" rather than pretending it is tomorrow.
 
+A **freeze** covers a run of calendar days when nothing ships, whatever the
+window says — a Christmas change freeze, or a conference week. While one is on
+the status reads "Deployment frozen", the countdown says when it lifts rather
+than when the window next opens, and the reason is shown beside it.
+
 A **shared config** can be pointed at a JSON file on an https address, for a
 team that deploys the same projects to the same windows. It is fetched hourly
 and merged *underneath* everything configured locally, so any single entry can
@@ -184,6 +189,7 @@ src/
     components/          DW (resolution), Notice (injection), Timezones, helpers
                          Markdown lives here, behind a dynamic import
                          weekdays.ts is the day-of-week model
+                         freezes.ts is the dated-freeze model
     config/              Storage access, types, validation, shared config
     matching/            Chrome match-pattern implementation
   ui/

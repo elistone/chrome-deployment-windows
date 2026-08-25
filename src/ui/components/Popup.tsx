@@ -130,6 +130,9 @@ function toneFor(deployment: ResolvedDeployment): StatusTone {
   if (deployment.notesOnly) {
     return 'notes'
   }
+  if (deployment.timeObj.local.freeze) {
+    return 'frozen'
+  }
   return DW.canDeploy(deployment.timeObj.local) ? 'open' : 'closed'
 }
 
@@ -223,7 +226,11 @@ function Window({ deployment }: { deployment: ResolvedDeployment }) {
   const localDays = daysLabel(local.days)
 
   return (
-    <dl className="dw-popup-rows">
+    <>
+      {original.freeze?.reason && (
+        <p className="dw-frozen">{original.freeze.reason}</p>
+      )}
+      <dl className="dw-popup-rows">
       <div className="dw-popup-row">
         <dt>
           <ClockIcon size={14} />
@@ -249,7 +256,8 @@ function Window({ deployment }: { deployment: ResolvedDeployment }) {
           </dd>
         </div>
       )}
-    </dl>
+      </dl>
+    </>
   )
 }
 

@@ -8,6 +8,7 @@ import {
 } from '../../../app/components/weekdays'
 import type { DeploymentConfig } from '../../../app/config/types'
 import Field from '../common/Field'
+import { PlusIcon, TrashIcon } from '../common/Icons'
 import Modal from '../common/Modal'
 import Toggle from '../common/Toggle'
 import {
@@ -52,6 +53,14 @@ export function DeploymentForm({
     if (submitted) {
       setErrors(validateDeploymentDraft(next, takenKeys))
     }
+  }
+
+  const setFreeze = (index: number, patch: Partial<DeploymentDraft['freezes'][number]>) => {
+    update({
+      freezes: draft.freezes.map((freeze, position) =>
+        position === index ? { ...freeze, ...patch } : freeze,
+      ),
+    })
   }
 
   const setName = (name: string) => {
@@ -276,6 +285,89 @@ export function DeploymentForm({
             </Field>
           </fieldset>
         )}
+
+        <fieldset className="dw-fieldset">
+          <legend>{Methods.i18n('l10nFreezes')}</legend>
+          <p className="dw-fieldset-hint">{Methods.i18n('l10nFreezesHint')}</p>
+
+          {draft.freezes.map((freeze, index) => (
+            <div className="dw-repeat-row dw-repeat-row-freeze" key={index}>
+              <Field
+                label={Methods.i18n('l10nFreezeFrom')}
+                error={shown(`freeze.${index}.from`)}
+              >
+                {({ id }) => (
+                  <input
+                    id={id}
+                    className="dw-input"
+                    type="date"
+                    value={freeze.from}
+                    onChange={(event) =>
+                      setFreeze(index, { from: event.target.value })
+                    }
+                  />
+                )}
+              </Field>
+              <Field
+                label={Methods.i18n('l10nFreezeTo')}
+                error={shown(`freeze.${index}.to`)}
+              >
+                {({ id }) => (
+                  <input
+                    id={id}
+                    className="dw-input"
+                    type="date"
+                    value={freeze.to}
+                    onChange={(event) =>
+                      setFreeze(index, { to: event.target.value })
+                    }
+                  />
+                )}
+              </Field>
+              <Field label={Methods.i18n('l10nFreezeReason')}>
+                {({ id }) => (
+                  <input
+                    id={id}
+                    className="dw-input"
+                    type="text"
+                    placeholder="Christmas change freeze"
+                    value={freeze.reason ?? ''}
+                    onChange={(event) =>
+                      setFreeze(index, { reason: event.target.value })
+                    }
+                  />
+                )}
+              </Field>
+              <button
+                type="button"
+                className="dw-icon-button dw-icon-button-danger"
+                aria-label={`${Methods.i18n('l10nRemove')} ${Methods.i18n('l10nFreezes')} ${index + 1}`}
+                onClick={() =>
+                  update({
+                    freezes: draft.freezes.filter(
+                      (_, position) => position !== index,
+                    ),
+                  })
+                }
+              >
+                <TrashIcon size={15} />
+              </button>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            className="dw-button dw-button-ghost dw-button-small"
+            onClick={() =>
+              update({
+                freezes: [...draft.freezes, { from: '', to: '', reason: '' }],
+              })
+            }
+          >
+            <PlusIcon size={14} />
+            {Methods.i18n('l10nAddFreeze')}
+          </button>
+        </fieldset>
 
         <fieldset className="dw-fieldset">
           <legend>{Methods.i18n('l10nUrlFragments')}</legend>

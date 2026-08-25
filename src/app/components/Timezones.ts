@@ -7,6 +7,7 @@ dayjs.extend(utc)
 dayjs.extend(customParseFormat)
 dayjs.extend(timezone)
 
+import type { ActiveFreeze } from './freezes'
 import {
   WEEKDAYS,
   type Weekday,
@@ -51,6 +52,8 @@ export interface WindowSpec {
   end: string
   /** Days the window opens on. Empty means every day. */
   days?: readonly Weekday[]
+  /** A freeze covering today, which shuts the window whatever the hours say. */
+  freeze?: ActiveFreeze | null
 }
 
 export interface CurrentDate {
@@ -281,6 +284,12 @@ export class Timezones {
    * hours after midnight belong to the day before.
    */
   static isOpen(spec: WindowSpec, at: Date = new Date()): boolean {
+    // A freeze is the whole answer: there is no hour of a frozen day when
+    // deploying is allowed, so nothing below it needs asking.
+    if (spec.freeze) {
+      return false
+    }
+
     const start = toMinutesOfDay(spec.start)
     const end = toMinutesOfDay(spec.end)
     if (start === null || end === null) {
@@ -325,6 +334,12 @@ export class Timezones {
     }
 
     const now = at.getHours() * 60 + at.getMinutes()
+
+    // A frozen window has no next opening to count down to; when it lifts is
+    // a date, and DW words it as one.
+    if (spec.freeze) {
+      return null
+    }
 
     if (Timezones.isOpen(spec, at)) {
       return { open: true, minutes: (end - now + MINUTES_PER_DAY) % MINUTES_PER_DAY }
