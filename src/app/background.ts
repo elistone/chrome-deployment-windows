@@ -7,7 +7,10 @@
  * to live here now lives in the content script's Notice, which is long-lived.
  */
 
-import { REFRESH_INTERVAL_MINUTES, refreshRemote } from './config/remote'
+import {
+  REFRESH_INTERVAL_MINUTES,
+  refreshRemote,
+} from './config/remoteFetch'
 import { type IconState, iconPaths, isIconState } from './icons'
 
 /** The recurring re-fetch of the shared config, if one is configured. */

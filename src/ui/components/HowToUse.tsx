@@ -1,7 +1,7 @@
 import { Methods } from '../../app/components/Methods'
-import { TextFormatter } from '../../app/components/TextFormatter'
 import howToUseMarkdown from '../../documents/HowToUse.md?raw'
 import Modal from './common/Modal'
+import { useMarkdown } from './common/useMarkdown'
 
 /**
  * Renders the bundled how-to document.
@@ -10,13 +10,15 @@ import Modal from './common/Modal'
  * `?raw` import keeps it as source and it is rendered here instead.
  */
 export function HowToUse() {
+  const html = useMarkdown(howToUseMarkdown, true)
+
   return (
     <div className="dw-prose dw-prose-doc">
-      <div
-        dangerouslySetInnerHTML={{
-          __html: TextFormatter.renderTrustedMarkdown(howToUseMarkdown),
-        }}
-      />
+      {html === null ? (
+        <p className="dw-loading">{Methods.i18n('l10nLoading')}</p>
+      ) : (
+        <div dangerouslySetInnerHTML={{ __html: html }} />
+      )}
     </div>
   )
 }

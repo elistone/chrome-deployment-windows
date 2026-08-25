@@ -19,6 +19,7 @@ import {
 } from './common/Icons'
 import StatusPill, { type StatusTone } from './common/StatusPill'
 import { THEME_META } from './common/themeMeta'
+import { useMarkdown } from './common/useMarkdown'
 import { useNow } from './common/useNow'
 import { faviconUrl, siteInitials } from './dashboard/siteBranding'
 import DeploymentEditor from './popup/DeploymentEditor'
@@ -248,6 +249,21 @@ function Window({ deployment }: { deployment: ResolvedDeployment }) {
   )
 }
 
+/**
+ * The rendered notes.
+ *
+ * Its own component so the markdown renderer loading does not re-render the
+ * status and the countdown around it.
+ */
+function Notes({ text }: { text: string }) {
+  const html = useMarkdown(text)
+
+  if (html === null) {
+    return null
+  }
+  return <div className="dw-prose" dangerouslySetInnerHTML={{ __html: html }} />
+}
+
 function Deployment({
   deployment,
   host,
@@ -294,12 +310,7 @@ function Deployment({
               <NoteIcon size={14} />
               {Methods.i18n('l10nNotes')}
             </h2>
-            <div
-              className="dw-prose"
-              dangerouslySetInnerHTML={{
-                __html: TextFormatter.toMarkdown(notes),
-              }}
-            />
+            <Notes text={notes} />
           </section>
         )}
       </div>

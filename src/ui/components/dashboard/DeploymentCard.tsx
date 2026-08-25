@@ -6,6 +6,7 @@ import ConfirmDelete from '../common/ConfirmDelete'
 import Countdown from '../common/Countdown'
 import StatusPill, { type StatusTone } from '../common/StatusPill'
 import { ClockIcon, CopyIcon, NoteIcon, PencilIcon } from '../common/Icons'
+import { useMarkdown } from '../common/useMarkdown'
 import { useNow } from '../common/useNow'
 
 interface DeploymentCardProps {
@@ -79,6 +80,7 @@ export function DeploymentCard({
       ? deployment.name
       : configKey
   const notes = typeof deployment.notes === 'string' ? deployment.notes : ''
+  const notesHtml = useMarkdown(notes)
   const times = deployment.time ? DW.buildTimes(deployment) : null
   // The converted window is only worth the space when it actually differs.
   const showLocal =
@@ -165,7 +167,7 @@ export function DeploymentCard({
         )}
       </ul>
 
-      {notes && (
+      {notes && notesHtml !== null && (
         <div className="dw-card-notes">
           <h4 className="dw-card-notes-title">
             <NoteIcon size={14} />
@@ -173,7 +175,7 @@ export function DeploymentCard({
           </h4>
           <div
             className="dw-prose"
-            dangerouslySetInnerHTML={{ __html: TextFormatter.toMarkdown(notes) }}
+            dangerouslySetInnerHTML={{ __html: notesHtml }}
           />
         </div>
       )}

@@ -9,11 +9,10 @@ import {
   isUsableRemoteUrl,
   mergeConfigs,
   readCache,
-  refreshRemote,
-  setRemoteUrl,
   splitLocal,
   visibleRemote,
 } from '../src/app/config/remote'
+import { refreshRemote, setRemoteUrl } from '../src/app/config/remoteFetch'
 import type { DeploymentWindowsConfig } from '../src/app/config/types'
 
 const URL_ = 'https://example.com/windows.json'

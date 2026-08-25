@@ -28,7 +28,8 @@
     "check": "pnpm typecheck && pnpm lint && pnpm check:locales && pnpm test",
     "check:locales": "node scripts/check-locales.js",
     "check:manifest": "node scripts/check-manifest.js",
-    "check:bundle": "node scripts/check-bundle.js"
+    "check:bundle": "node scripts/check-bundle.js",
+    "check:payload": "node scripts/check-payload.js"
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",

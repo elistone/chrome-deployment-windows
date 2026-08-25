@@ -16,6 +16,8 @@ import type { DeploymentWindowsConfig } from './types'
  * "must ..." message - so they stay familiar and are safe to show verbatim.
  */
 
+import { isCssSpacing } from './css'
+
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/
 const INSERT_POSITIONS = ['before', 'after'] as const
 
@@ -122,24 +124,6 @@ function validateInsert(value: unknown, path: string, errors: Errors): void {
       }
     }
   })
-}
-
-/**
- * CSS lengths, and only CSS lengths.
- *
- * These end up on the notice as inline custom properties. A browser would
- * discard anything malformed rather than act on it, but a config is also
- * something people read and copy between machines, so a typo is worth naming
- * where it was made instead of silently doing nothing.
- */
-const CSS_LENGTH = /^(auto|0|[+-]?(\d+\.?\d*|\.\d+)(px|em|rem|%|vh|vw|ch|pt))$/
-
-export function isCssSpacing(value: string): boolean {
-  const parts = value.trim().split(/\s+/)
-  if (parts.length === 0 || parts.length > 4) {
-    return false
-  }
-  return parts.every((part) => CSS_LENGTH.test(part))
 }
 
 function validateStyle(value: unknown, path: string, errors: Errors): void {

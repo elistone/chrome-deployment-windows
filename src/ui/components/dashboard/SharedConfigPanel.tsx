@@ -5,10 +5,9 @@ import {
   isUsableRemoteUrl,
   readCache,
   readRemoteUrl,
-  refreshRemote,
-  setRemoteUrl,
   type RemoteCache,
 } from '../../../app/config/remote'
+import { refreshRemote, setRemoteUrl } from '../../../app/config/remoteFetch'
 import Field from '../common/Field'
 import { ChevronIcon, DownloadIcon } from '../common/Icons'
 

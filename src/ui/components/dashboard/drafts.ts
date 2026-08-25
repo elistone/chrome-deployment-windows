@@ -1,7 +1,7 @@
 import { Methods } from '../../../app/components/Methods'
 import { Timezones, isValidTimezone } from '../../../app/components/Timezones'
 import { MatchPattern } from '../../../app/matching/MatchPattern'
-import { isCssSpacing } from '../../../app/config/schema'
+import { isCssSpacing } from '../../../app/config/css'
 import type {
   DeploymentConfig,
   DeploymentWindowsConfig,

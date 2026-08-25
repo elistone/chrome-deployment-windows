@@ -144,7 +144,7 @@ pnpm package
 Builds, then writes `release/deployment-windows-v<version>.zip`, ready to upload.
 Source maps are excluded from the zip.
 
-Three build checks run in CI and can be run locally:
+Four build checks run in CI and can be run locally:
 
 * `pnpm check:locales` — every visible label goes through `chrome.i18n`, and a
   missing message renders as nothing at all, so this fails the build if a key is
@@ -159,6 +159,12 @@ Three build checks run in CI and can be run locally:
   Importing `dev/` from `src/` builds perfectly happily, so without this a stray
   import would ship the harness's fake `chrome` API to users. It checks both
   sentinel identifiers and source-map `sources`, so a rename cannot slip past.
+* `pnpm check:payload` — the content script runs on every https page the user
+  visits, so what it loads eagerly is paid for by pages that get nothing back.
+  This walks the static imports out from the content script and fails if the
+  total passes its budget, or if `markdown-it` — which the notes render through,
+  behind a dynamic import — reappears on that path. One ordinary-looking static
+  import puts it back and nothing else would notice.
 
 ## Project layout
 
@@ -170,6 +176,7 @@ src/
     icons.ts             Toolbar icon states, sizes and paths
     content.ts           Content script entry point
     components/          DW (resolution), Notice (injection), Timezones, helpers
+                         Markdown lives here, behind a dynamic import
     config/              Storage access, types, validation, shared config
     matching/            Chrome match-pattern implementation
   ui/

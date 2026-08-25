@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { waitFor } from '@testing-library/dom'
 
 import { DW } from '../src/app/components/DW'
 import { ICONS, Notice } from '../src/app/components/Notice'
@@ -27,6 +28,22 @@ function inside(host: Element | null | undefined): ShadowRoot {
 /** The live notice on the page. */
 function onPage(): ShadowRoot {
   return inside(document.querySelector('.dw-notification'))
+}
+
+/**
+ * Wait for the notes to be rendered.
+ *
+ * markdown-it is behind a dynamic import, so notes arrive a tick after whatever
+ * asked for them - inserting a notes-only entry, or opening the details.
+ */
+async function notes(root: ShadowRoot): Promise<Element> {
+  return waitFor(() => {
+    const body = root.querySelector('.notes-body')
+    if (!body?.innerHTML) {
+      throw new Error('notes not rendered yet')
+    }
+    return body
+  })
 }
 
 const DAYTIME = 'https://github.com/acme/daytime'
@@ -110,7 +127,7 @@ describe('Notice', () => {
       vi.unstubAllGlobals()
     })
 
-    it('renders notes as markdown behind a toggle', () => {
+    it('keeps the notes shut, and unrendered, until they are asked for', () => {
       notice = new Notice(resolve(DAYTIME))
       const root = inside(notice.build())
 
@@ -119,8 +136,21 @@ describe('Notice', () => {
         'data-open',
         'false',
       )
+      // Nothing has asked to see them, so the parser has not been fetched.
+      expect(root.querySelector('.notes-body')?.innerHTML).toBe('')
+    })
+
+    it('renders notes as markdown once the details are opened', async () => {
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+      const root = onPage()
+
+      root.querySelector<HTMLElement>('.toggle')?.click()
+
       // The markdown '**two**' inside the notes body, not the "Notes" heading.
-      expect(root.querySelector('.notes strong')?.textContent).toBe('two')
+      const body = await notes(root)
+      expect(body.querySelector('strong')?.textContent).toBe('two')
+      expect(root.querySelector('.details')).toHaveAttribute('data-open', 'true')
     })
 
     it('omits the toggle entirely when there are no notes', () => {
@@ -243,18 +273,18 @@ describe('Notice', () => {
     })
 
     describe('notes-only', () => {
-      it('shows notes without any window or status', () => {
+      it('shows notes without any window or status', async () => {
         notice = new Notice(resolve(NOTES_ONLY))
-        const root = inside(notice.build())
+        notice.insert()
+        const root = onPage()
 
         expect(root.querySelector('.name')?.textContent).toBe(
           'Notes only project',
         )
         expect(root.querySelector('.rows')).toBeNull()
         expect(root.querySelector('.pill')).toBeNull()
-        expect(root.querySelector('.notes')?.textContent).toContain(
-          'Frozen until Q3.',
-        )
+        // Nothing to click, so these are fetched and rendered on insert.
+        expect((await notes(root)).textContent).toContain('Frozen until Q3.')
       })
 
       it('shows the notes immediately rather than behind a toggle', () => {
