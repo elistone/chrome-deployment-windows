@@ -19,6 +19,14 @@ const REALTIME_INTERVAL_MS = 1000
  */
 const NAME_ID = 'dw-notice-name'
 
+/**
+ * How long the notice takes to fold away, in step with the transition in
+ * notice.css. Only used to decide when to stop animating and go to
+ * `display: none` - the animation itself is CSS, and a reduced-motion
+ * preference collapses it there, not here.
+ */
+const DISMISS_MS = 260
+
 /** Which artwork the toolbar wears for each state of the window. */
 export const ICONS = {
   open: 'success',
@@ -75,6 +83,7 @@ export class Notice {
    * card away.
    */
   private dismissed = false
+  private dismissTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor(deployment: ResolvedDeployment) {
     this.deployment = deployment
@@ -198,6 +207,10 @@ export class Notice {
     if (this.realTimeTimer !== null) {
       clearInterval(this.realTimeTimer)
       this.realTimeTimer = null
+    }
+    if (this.dismissTimer !== null) {
+      clearTimeout(this.dismissTimer)
+      this.dismissTimer = null
     }
     if (this.toggle && this.toggleHandler) {
       this.toggle.removeEventListener('click', this.toggleHandler)
@@ -422,9 +435,42 @@ export class Notice {
    */
   dismiss(): void {
     this.dismissed = true
-    if (this.element) {
-      this.element.dataset.dismissed = ''
+    const host = this.element
+    if (!host) {
+      return
     }
+
+    host.dataset.dismissed = ''
+
+    // Folding the space up rather than dropping it, so the page below does not
+    // jump by the height of the card. A transition needs a number to go from,
+    // and `overflow: hidden` while dismissing is also what stops the card's
+    // margin escaping the host - so what is measured is the room the notice is
+    // actually taking up.
+    host.dataset.dismissing = ''
+    host.style.height = `${host.scrollHeight}px`
+    void host.offsetHeight
+    host.style.height = '0px'
+
+    // Nothing here reads the clock, so a fixed wait is honest: this only ends
+    // the animation, and CSS has already decided how long that was - including
+    // deciding it was instant, for anyone who asked for reduced motion.
+    if (this.dismissTimer !== null) {
+      clearTimeout(this.dismissTimer)
+    }
+    this.dismissTimer = setTimeout(() => {
+      this.dismissTimer = null
+      this.settleDismissed()
+    }, DISMISS_MS)
+  }
+
+  /** Stop animating and let the notice go to `display: none`. */
+  private settleDismissed(): void {
+    if (!this.element) {
+      return
+    }
+    delete this.element.dataset.dismissing
+    this.element.style.removeProperty('height')
   }
 
   isDismissed(): boolean {
@@ -433,8 +479,14 @@ export class Notice {
 
   private restore(): void {
     this.dismissed = false
+    if (this.dismissTimer !== null) {
+      clearTimeout(this.dismissTimer)
+      this.dismissTimer = null
+    }
     if (this.element) {
       delete this.element.dataset.dismissed
+      delete this.element.dataset.dismissing
+      this.element.style.removeProperty('height')
     }
   }
 

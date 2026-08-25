@@ -27,8 +27,17 @@ import { pathToFileURL } from 'node:url'
  * Raw rather than gzipped so the number is deterministic and easy to check by
  * hand. Raise it deliberately, with a reason - it is meant to be a decision,
  * not a formality.
+ *
+ * Set well clear of where the payload actually sits rather than just above it.
+ * The precise guard is FORBIDDEN_EAGER, which names what must not come back;
+ * this is the coarse one, and a coarse guard tuned to the last byte only ever
+ * fires on ordinary growth, which teaches people to raise it without reading
+ * it. Even so it is 80 kB below what re-importing the markdown parser costs.
+ *
+ * Raised from 96 kB on 2026-08-25, when the notice's dismiss control took the
+ * payload to 92.3 kB and left no room to move.
  */
-export const BUDGET_BYTES = 96 * 1024
+export const BUDGET_BYTES = 128 * 1024
 
 /** Modules that must never be reachable without a click. */
 export const FORBIDDEN_EAGER = ['markdown-it']

@@ -714,6 +714,65 @@ describe('Notice', () => {
       vi.useRealTimers()
     })
 
+    it('folds the space up instead of dropping it', () => {
+      vi.useFakeTimers()
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+      const host = document.querySelector<HTMLElement>('.dw-notification')!
+
+      dismissButton(onPage()).click()
+
+      // Mid-flight: still laid out, but on its way to nothing. Going straight
+      // to display:none would take the card's height out from under the page
+      // in one frame.
+      expect(host.dataset.dismissing).toBe('')
+      expect(host.style.height).toBe('0px')
+
+      vi.advanceTimersByTime(300)
+
+      // Landed: the inline height goes with the animation that needed it.
+      expect(host.dataset.dismissing).toBeUndefined()
+      expect(host.style.height).toBe('')
+      expect(host.dataset.dismissed).toBe('')
+      vi.useRealTimers()
+    })
+
+    it('does not leave the notice mid-animation when it comes back', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2024-06-03T12:00:00'))
+
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+      const host = document.querySelector<HTMLElement>('.dw-notification')!
+      dismissButton(onPage()).click()
+
+      // The window closes while the card is still folding away.
+      vi.setSystemTime(new Date('2024-06-03T22:00:00'))
+      notice.realTime()
+
+      expect(host.dataset.dismissing).toBeUndefined()
+      expect(host.dataset.dismissed).toBeUndefined()
+      expect(host.style.height).toBe('')
+
+      // And the timer that would have hidden it does not fire late.
+      vi.advanceTimersByTime(300)
+      expect(host.dataset.dismissed).toBeUndefined()
+      vi.useRealTimers()
+    })
+
+    it('leaves no timer running once the notice is gone', () => {
+      vi.useFakeTimers()
+      notice = new Notice(resolve(DAYTIME))
+      notice.insert()
+      dismissButton(onPage()).click()
+
+      notice.destroy()
+      notice = null
+
+      expect(vi.getTimerCount()).toBe(0)
+      vi.useRealTimers()
+    })
+
     it('says how long it will last, rather than leaving it to be guessed', () => {
       notice = new Notice(resolve(DAYTIME))
       const button = dismissButton(inside(notice.build()))

@@ -13,9 +13,20 @@
  */
 
 /* Waved away for this page view. The host rather than the card, so it stops
-   taking up room in the page's layout as well as being invisible. */
-:host([data-dismissed]) {
+   taking up room in the page's layout as well as being invisible - but only
+   once it has finished folding away, or there would be nothing to animate. */
+:host([data-dismissed]:not([data-dismissing])) {
   display: none;
+}
+
+/* The space closing up. Without this the page below jumps by the height of the
+   card the instant the button is pressed, which reads as something breaking
+   rather than something being put away. The height is set inline, in JS: a
+   transition needs a number to count down from, and `auto` is not one. */
+:host([data-dismissing]) {
+  display: block;
+  overflow: hidden;
+  transition: height 240ms cubic-bezier(0.4, 0, 1, 1);
 }
 
 :host {
@@ -259,6 +270,12 @@
   border-radius: 4px;
 }
 
+/* The card leaves slightly before the space does, so it is out of the way
+   rather than being squashed as the gap closes. */
+:host([data-dismissing]) .notice {
+  animation: dw-leave 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
 /* Quiet until wanted: this is a control for getting rid of something, so it
    should not be the brightest thing on the card. */
 .close {
@@ -278,7 +295,8 @@
   transition:
     opacity 140ms ease,
     color 140ms ease,
-    background 140ms ease;
+    background 140ms ease,
+    transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .close svg {
@@ -290,6 +308,14 @@
   color: var(--dw-text);
   background: var(--dw-tone-soft);
   opacity: 1;
+  transform: scale(1.08);
+}
+
+/* Gives the press somewhere to go, so the control acknowledges the click on
+   its own account rather than leaving the card's exit to speak for it. */
+.close:active {
+  transform: scale(0.88);
+  transition-duration: 60ms;
 }
 
 .close:focus-visible {
@@ -494,6 +520,13 @@
   }
 }
 
+@keyframes dw-leave {
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+}
+
 @keyframes dw-sweep {
   0% {
     transform: translateX(-100%);
@@ -541,5 +574,25 @@
 
   .details {
     transition: none;
+  }
+
+  /* Not `animation: none` for the exit: the notice is meant to be gone, and
+     the timer that finishes the job is running either way. Making it instant
+     is the honest reduced-motion answer, not making it never happen. */
+  :host([data-dismissing]) {
+    transition-duration: 0s;
+  }
+
+  :host([data-dismissing]) .notice {
+    animation-duration: 0s;
+  }
+
+  .close {
+    transition: none;
+  }
+
+  .close:hover,
+  .close:active {
+    transform: none;
   }
 }
