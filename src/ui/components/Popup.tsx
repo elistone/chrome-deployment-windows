@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { DW } from '../../app/components/DW'
 import { Methods } from '../../app/components/Methods'
+import { daysLabel } from '../../app/components/dayLabels'
 import { TextFormatter } from '../../app/components/TextFormatter'
 import { Config } from '../../app/config/Config'
 import type {
@@ -129,8 +130,7 @@ function toneFor(deployment: ResolvedDeployment): StatusTone {
   if (deployment.notesOnly) {
     return 'notes'
   }
-  const { start, end } = deployment.timeObj.local
-  return DW.canDeploy(start, end) ? 'open' : 'closed'
+  return DW.canDeploy(deployment.timeObj.local) ? 'open' : 'closed'
 }
 
 /** The active tab's favicon, from Chrome's own cache, or its initial. */
@@ -219,6 +219,8 @@ function Window({ deployment }: { deployment: ResolvedDeployment }) {
   const { original, local } = deployment.timeObj
   // The converted window is only worth the space when it actually differs.
   const showLocal = original.timezone !== local.timezone
+  const originalDays = daysLabel(original.days)
+  const localDays = daysLabel(local.days)
 
   return (
     <dl className="dw-popup-rows">
@@ -228,6 +230,7 @@ function Window({ deployment }: { deployment: ResolvedDeployment }) {
           {Methods.i18n('l10nDeploymentWindow')}
         </dt>
         <dd>
+          {originalDays && <span className="dw-days">{originalDays}</span>}
           <span className="dw-mono">
             {original.start} &ndash; {original.end}
           </span>
@@ -238,6 +241,7 @@ function Window({ deployment }: { deployment: ResolvedDeployment }) {
         <div className="dw-popup-row dw-popup-row-subtle">
           <dt>{Methods.i18n('l10nYourTimezone')}</dt>
           <dd>
+            {localDays && <span className="dw-days">{localDays}</span>}
             <span className="dw-mono">
               {local.start} &ndash; {local.end}
             </span>
@@ -291,10 +295,7 @@ function Deployment({
           {TextFormatter.toPlainText(deployment.name)}
         </h1>
         {!deployment.notesOnly && (
-          <Countdown
-            start={deployment.timeObj.local.start}
-            end={deployment.timeObj.local.end}
-          />
+          <Countdown window={deployment.timeObj.local} />
         )}
       </header>
 

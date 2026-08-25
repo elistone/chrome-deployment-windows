@@ -555,6 +555,10 @@
     "message": "under a minute",
     "description": "Duration shown when the window changes state within the current minute."
   },
+  "l10nDaysShort": {
+    "message": "d",
+    "description": "Short suffix for a number of days, as in \"3d 4h\"."
+  },
   "l10nHoursShort": {
     "message": "h",
     "description": "Single letter suffix for hours in a duration, e.g. the h in '2h 10m'."
@@ -638,5 +642,45 @@
   "l10nDismissHint": {
     "message": "Hidden until you reload, or the window opens or closes",
     "description": "Tooltip saying how long dismissing the notice lasts."
+  },
+  "l10nDayMon": {
+    "message": "Mon",
+    "description": "Short label for Monday."
+  },
+  "l10nDayTue": {
+    "message": "Tue",
+    "description": "Short label for Tuesday."
+  },
+  "l10nDayWed": {
+    "message": "Wed",
+    "description": "Short label for Wednesday."
+  },
+  "l10nDayThu": {
+    "message": "Thu",
+    "description": "Short label for Thursday."
+  },
+  "l10nDayFri": {
+    "message": "Fri",
+    "description": "Short label for Friday."
+  },
+  "l10nDaySat": {
+    "message": "Sat",
+    "description": "Short label for Saturday."
+  },
+  "l10nDaySun": {
+    "message": "Sun",
+    "description": "Short label for Sunday."
+  },
+  "l10nDays": {
+    "message": "Days",
+    "description": "Label for the days a deployment window opens on."
+  },
+  "l10nDaysHint": {
+    "message": "Leave all of them on for a window that opens every day. A day is when the window opens, so an overnight window belongs to the day it starts.",
+    "description": "Hint for the day picker."
+  },
+  "l10nDaysRequired": {
+    "message": "Pick at least one day, or the window can never open.",
+    "description": "Error when every day has been unticked."
   }
 }

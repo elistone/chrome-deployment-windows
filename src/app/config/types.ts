@@ -3,6 +3,8 @@
  * deployment that the notice and popup render from.
  */
 
+import type { Weekday } from '../components/weekdays'
+
 export type InsertPosition = 'before' | 'after'
 
 export interface InsertLocation {
@@ -38,6 +40,14 @@ export interface DeploymentTime {
   end: string
   /** IANA timezone, e.g. Europe/London */
   timezone: string
+  /**
+   * Days the window opens on, e.g. `["mon", "tue", "wed", "thu"]`.
+   *
+   * Absent means every day, which is what every config written before this
+   * existed means. A day names when the window *opens*: a Monday 23:00-02:00
+   * window runs into Tuesday morning and is still Monday's window.
+   */
+  days?: Weekday[]
 }
 
 /**
@@ -67,6 +77,13 @@ export interface ResolvedTimeWindow {
   start: string
   end: string
   timezone: string
+  /**
+   * Days this window opens on, in this window's own terms. Empty means every
+   * day. On the local window these are shifted with the times, so a Monday in
+   * Tokyo can read as a Sunday in Los Angeles - which is what the viewer's
+   * calendar actually says.
+   */
+  days: Weekday[]
 }
 
 export interface ResolvedTimes {

@@ -2,9 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DW } from '../src/app/components/DW'
 import { Timezones } from '../src/app/components/Timezones'
+import type { Weekday } from '../src/app/components/weekdays'
 import { Config, STORAGE_KEYS, defaultConfig } from '../src/app/config/Config'
 import { seedStorage } from './helpers/chromeMock'
 import { testConfig } from './helpers/fixtures'
+
+/** A window to ask about, with no day constraint. */
+function win(start: string, end: string, days: Weekday[] = []) {
+  return { start, end, timezone: 'Europe/London', days }
+}
 
 describe('DW', () => {
   beforeEach(() => {
@@ -121,6 +127,8 @@ describe('DW', () => {
         start: '09:00',
         end: '17:00',
         timezone: 'Europe/London',
+        // No days configured, which means every day.
+        days: [],
       })
       expect(times.local.timezone).toBe(Timezones.findLocalTimezone())
       expect(times.local.start).toMatch(/^\d{2}:\d{2}$/)
@@ -139,21 +147,21 @@ describe('DW', () => {
     it('reports open inside the window', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2024-06-03T12:00:00'))
-      expect(DW.canDeploy('09:00', '17:00')).toBe(true)
-      expect(DW.statusText('09:00', '17:00')).toBe('Deployment window open')
+      expect(DW.canDeploy(win('09:00', '17:00'))).toBe(true)
+      expect(DW.statusText(win('09:00', '17:00'))).toBe('Deployment window open')
     })
 
     it('reports closed outside the window', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2024-06-03T20:00:00'))
-      expect(DW.canDeploy('09:00', '17:00')).toBe(false)
-      expect(DW.statusText('09:00', '17:00')).toBe('Deployment window closed')
+      expect(DW.canDeploy(win('09:00', '17:00'))).toBe(false)
+      expect(DW.statusText(win('09:00', '17:00'))).toBe('Deployment window closed')
     })
 
     it('handles a window that wraps past midnight', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2024-06-03T00:30:00'))
-      expect(DW.canDeploy('23:00', '02:00')).toBe(true)
+      expect(DW.canDeploy(win('23:00', '02:00'))).toBe(true)
     })
   })
 
@@ -161,37 +169,37 @@ describe('DW', () => {
     it('says how long an open window has left', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2024-06-03T12:50:00'))
-      expect(DW.countdownText('09:00', '17:00')).toBe('Closes in 4h 10m')
+      expect(DW.countdownText(win('09:00', '17:00'))).toBe('Closes in 4h 10m')
     })
 
     it('drops the minutes when there are none', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2024-06-03T12:00:00'))
-      expect(DW.countdownText('09:00', '17:00')).toBe('Closes in 5h')
+      expect(DW.countdownText(win('09:00', '17:00'))).toBe('Closes in 5h')
     })
 
     it('drops the hours when there are none', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2024-06-03T16:45:00'))
-      expect(DW.countdownText('09:00', '17:00')).toBe('Closes in 15m')
+      expect(DW.countdownText(win('09:00', '17:00'))).toBe('Closes in 15m')
     })
 
     it('says how long until a closed window opens', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2024-06-03T07:30:00'))
-      expect(DW.countdownText('09:00', '17:00')).toBe('Opens in 1h 30m')
+      expect(DW.countdownText(win('09:00', '17:00'))).toBe('Opens in 1h 30m')
     })
 
     it('words the last minute rather than showing 0m', () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2024-06-03T17:00:30'))
-      expect(DW.countdownText('09:00', '17:00')).toBe(
+      expect(DW.countdownText(win('09:00', '17:00'))).toBe(
         'Closes in under a minute',
       )
     })
 
     it('says nothing at all when the times cannot be read', () => {
-      expect(DW.countdownText('', '17:00')).toBe('')
+      expect(DW.countdownText(win('', '17:00'))).toBe('')
     })
   })
 
@@ -219,5 +227,92 @@ describe('DW', () => {
       const dw = await DW.create('https://github.com/acme/overnight')
       expect(dw.getDeploymentInfo()?.name).toBe('Overnight project')
     })
+  })
+})
+
+describe('DW with days', () => {
+  const MONDAY = '2024-06-03'
+  const SATURDAY = '2024-06-08'
+
+  function weekdaysOnly() {
+    const config = testConfig()
+    config.deployments.daytime.time = {
+      start: '09:00',
+      end: '17:00',
+      timezone: 'America/New_York',
+      days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+    }
+    return config
+  }
+
+  function resolve(config: ReturnType<typeof testConfig>) {
+    return new DW(config, 'https://github.com/acme/daytime').getDeploymentInfo()!
+  }
+
+  it('carries the days through to the resolved window', () => {
+    vi.setSystemTime(new Date(`${MONDAY}T12:00:00`))
+    const info = resolve(weekdaysOnly())
+
+    expect(info.timeObj.original.days).toEqual([
+      'mon',
+      'tue',
+      'wed',
+      'thu',
+      'fri',
+    ])
+  })
+
+  it('is open inside the hours on a working day', () => {
+    vi.setSystemTime(new Date(`${MONDAY}T12:00:00`))
+    expect(resolve(weekdaysOnly()).canDeploy).toBe(true)
+  })
+
+  it('is shut at the same hour on a Saturday', () => {
+    vi.setSystemTime(new Date(`${SATURDAY}T12:00:00`))
+    const info = resolve(weekdaysOnly())
+
+    expect(info.canDeploy).toBe(false)
+    expect(info.status).toBe('Deployment window closed')
+  })
+
+  it('counts across the weekend rather than to tomorrow', () => {
+    vi.setSystemTime(new Date(`${SATURDAY}T12:00:00`))
+    // Saturday noon to Monday 09:00 is a day and 21 hours. Saying "opens in
+    // 21h" would be a lie the old countdown had no way of avoiding.
+    expect(DW.countdownText(resolve(weekdaysOnly()).timeObj.local)).toBe(
+      'Opens in 1d 21h',
+    )
+  })
+
+  it('drops the hours from a whole number of days', () => {
+    vi.setSystemTime(new Date(`${SATURDAY}T09:00:00`))
+    expect(DW.countdownText(resolve(weekdaysOnly()).timeObj.local)).toBe(
+      'Opens in 2d',
+    )
+  })
+
+  it('shifts the days with the hours across a timezone', () => {
+    // A Monday morning in Tokyo is Sunday afternoon in New York, and the days
+    // have to move with the clock or the notice advertises the wrong one.
+    vi.setSystemTime(new Date(`${MONDAY}T12:00:00`))
+    const config = testConfig()
+    config.deployments.daytime.time = {
+      start: '09:00',
+      end: '17:00',
+      timezone: 'Asia/Tokyo',
+      days: ['mon'],
+    }
+    const info = resolve(config)
+
+    expect(info.timeObj.original.days).toEqual(['mon'])
+    expect(info.timeObj.local.days).toEqual(['sun'])
+  })
+
+  it('says nothing about days when the window opens every day', () => {
+    vi.setSystemTime(new Date(`${SATURDAY}T12:00:00`))
+    const info = resolve(testConfig())
+
+    expect(info.timeObj.original.days).toEqual([])
+    expect(info.canDeploy).toBe(true)
   })
 })

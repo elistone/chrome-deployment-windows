@@ -1,4 +1,5 @@
 import { DW } from '../../../app/components/DW'
+import type { ResolvedTimeWindow } from '../../../app/config/types'
 
 /**
  * How much longer the window stays as it is.
@@ -10,13 +11,13 @@ import { DW } from '../../../app/components/DW'
  * It recomputes rather than taking a snapshot, so it needs its parent to be
  * re-rendering - see useNow.
  */
-export function Countdown({ start, end }: { start: string; end: string }) {
-  const text = DW.countdownText(start, end)
+export function Countdown({ window }: { window: ResolvedTimeWindow }) {
+  const text = DW.countdownText(window)
   if (!text) {
     return null
   }
 
-  const tone = DW.canDeploy(start, end) ? 'open' : 'closed'
+  const tone = DW.canDeploy(window) ? 'open' : 'closed'
   return <span className={`dw-countdown dw-countdown-${tone}`}>{text}</span>
 }
 

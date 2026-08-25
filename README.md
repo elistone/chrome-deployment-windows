@@ -33,6 +33,12 @@ is showing, or a new one for a page that has none yet, so a wrong window can be
 corrected from where it was noticed. It follows the light/dark choice made on
 the options page, and can be switched from its own footer.
 
+A window can be limited to **certain days** — "Mon–Fri", or "Mon, Wed, Fri".
+A day is when the window *opens*, so an overnight window belongs to the day it
+starts on, and the days move with the hours when the window is written in
+another timezone. When the next one is days away the countdown says "Opens in
+2d 4h" rather than pretending it is tomorrow.
+
 A **shared config** can be pointed at a JSON file on an https address, for a
 team that deploys the same projects to the same windows. It is fetched hourly
 and merged *underneath* everything configured locally, so any single entry can
@@ -177,6 +183,7 @@ src/
     content.ts           Content script entry point
     components/          DW (resolution), Notice (injection), Timezones, helpers
                          Markdown lives here, behind a dynamic import
+                         weekdays.ts is the day-of-week model
     config/              Storage access, types, validation, shared config
     matching/            Chrome match-pattern implementation
   ui/

@@ -16,10 +16,13 @@ import type { DeploymentWindowsConfig } from './types'
  * "must ..." message - so they stay familiar and are safe to show verbatim.
  */
 
+import { WEEKDAYS, isWeekday } from '../components/weekdays'
 import { isCssSpacing } from './css'
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/
 const INSERT_POSITIONS = ['before', 'after'] as const
+
+const TIME_KNOWN_KEYS = new Set(['start', 'end', 'timezone', 'days'])
 
 const DEPLOYMENT_KNOWN_KEYS = new Set([
   'name',
@@ -221,11 +224,46 @@ function validateTime(value: unknown, path: string, errors: Errors): void {
     )
   }
 
+  if ('days' in value) {
+    validateDays(value.days, join(path, 'days'), errors)
+  }
+
   for (const extra of Object.keys(value)) {
-    if (extra !== 'start' && extra !== 'end' && extra !== 'timezone') {
+    if (!TIME_KNOWN_KEYS.has(extra)) {
       errors.add(path, `must NOT have additional properties ('${extra}')`)
     }
   }
+}
+
+/**
+ * Which days a window opens on.
+ *
+ * Rejected rather than quietly filtered: a config is something people read and
+ * copy between machines, so `"monday"` where `"mon"` was meant is worth naming
+ * where it was written. At runtime the same value is filtered instead, because
+ * by then there is nobody to tell.
+ */
+function validateDays(value: unknown, path: string, errors: Errors): void {
+  if (!Array.isArray(value)) {
+    errors.type(path, 'array')
+    return
+  }
+
+  const seen = new Set<string>()
+  value.forEach((entry, index) => {
+    const at = `${path}/${String(index)}`
+    if (!isWeekday(entry)) {
+      errors.add(
+        at,
+        `must be one of ${WEEKDAYS.map((day) => `"${day}"`).join(', ')}`,
+      )
+      return
+    }
+    if (seen.has(entry)) {
+      errors.add(at, `must not repeat a day ("${entry}")`)
+    }
+    seen.add(entry)
+  })
 }
 
 function validateDeployments(value: unknown, path: string, errors: Errors): void {

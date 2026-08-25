@@ -184,3 +184,61 @@ describe('config schema', () => {
     })
   })
 })
+
+describe('days', () => {
+  function withDays(days: unknown) {
+    return {
+      domains: { github: ['*://*.github.com/*'] },
+      sites: { github: { insert: [{ class: 'main', position: 'after' }] } },
+      deployments: {
+        a: {
+          name: 'A',
+          github: 'acme/a',
+          time: {
+            start: '09:00',
+            end: '17:00',
+            timezone: 'Europe/London',
+            days,
+          },
+        },
+      },
+    }
+  }
+
+  it('accepts a list of short day names', () => {
+    expect(validateConfig(withDays(['mon', 'tue'])).valid).toBe(true)
+  })
+
+  it('accepts an empty list, which means every day', () => {
+    expect(validateConfig(withDays([])).valid).toBe(true)
+  })
+
+  it('accepts a window with no days at all', () => {
+    const config = withDays([])
+    delete (config.deployments.a.time as Record<string, unknown>).days
+    expect(validateConfig(config).valid).toBe(true)
+  })
+
+  it('names a long day name where it was written', () => {
+    // "monday" for "mon" is the mistake worth catching, and a config is read
+    // and copied by people - so it is rejected rather than quietly dropped.
+    const result = validateConfig(withDays(['monday']))
+    expect(result.valid).toBe(false)
+    expect(result.errors[0]).toContain('/deployments/a/time/days/0')
+    expect(result.errors[0]).toContain('"mon"')
+  })
+
+  it.each([['MON'], [1], [null]])('rejects %j', (entry) => {
+    expect(validateConfig(withDays([entry])).valid).toBe(false)
+  })
+
+  it('rejects a repeated day', () => {
+    const result = validateConfig(withDays(['mon', 'mon']))
+    expect(result.valid).toBe(false)
+    expect(result.errors[0]).toContain('must not repeat')
+  })
+
+  it('rejects days that are not a list', () => {
+    expect(validateConfig(withDays('mon')).valid).toBe(false)
+  })
+})
