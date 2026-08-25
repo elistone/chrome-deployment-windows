@@ -225,4 +225,56 @@ describe('NoticeManager', () => {
       expect(document.querySelector('.dw-notification')).toBeNull()
     })
   })
+
+  describe('a dismissed notice', () => {
+    function dismiss(): void {
+      const button = notice()?.shadowRoot?.querySelector<HTMLElement>('.close')
+      if (!button) {
+        throw new Error('the notice has no dismiss control')
+      }
+      button.click()
+    }
+
+    function host(): HTMLElement | null {
+      return document.querySelector<HTMLElement>('.dw-notification')
+    }
+
+    it('stays hidden while the page stays where it is', async () => {
+      await start()
+      dismiss()
+      expect(host()?.dataset.dismissed).toBe('')
+
+      // A mutation burst is the manager's cue to re-check, and it must not be
+      // read as a reason to put the card back up.
+      document.body.append(document.createElement('div'))
+      await settle()
+
+      expect(host()?.dataset.dismissed).toBe('')
+    })
+
+    it('comes back after navigating somewhere else', async () => {
+      await start()
+      dismiss()
+      expect(host()?.dataset.dismissed).toBe('')
+
+      url = NOTES_ONLY
+      await settle()
+
+      expect(host()?.dataset.dismissed).toBeUndefined()
+      expect(noticeText()).toContain('Notes only project')
+    })
+
+    it('comes back after the config changes underneath it', async () => {
+      await start()
+      dismiss()
+
+      const config = testConfig()
+      config.deployments.daytime.name = 'Renamed'
+      await Config.save(config)
+      await settle()
+
+      expect(host()?.dataset.dismissed).toBeUndefined()
+      expect(noticeText()).toContain('Renamed')
+    })
+  })
 })
