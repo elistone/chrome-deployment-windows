@@ -153,6 +153,35 @@ describe('Notice', () => {
       expect(root.querySelector('.details')).toHaveAttribute('data-open', 'true')
     })
 
+    it('shows the window once when the timezone is already yours', () => {
+      // Not a second row saying the same hours under a different label. The
+      // notice is a strip across someone else's page; the room it does not
+      // need is room it should not take.
+      const deployment = resolve(DAYTIME)
+      deployment.timeObj.local = { ...deployment.timeObj.original }
+
+      notice = new Notice(deployment)
+      const root = inside(notice.build())
+      const rows = [...root.querySelectorAll('.row')].map((row) =>
+        row.textContent?.replace(/\s+/g, ' ').trim(),
+      )
+
+      expect(rows).toHaveLength(2)
+      expect(rows[0]).toContain('Deployment window')
+      expect(rows[0]).toContain('Europe/London')
+      // The clock keeps its row; it is the one thing that is not a repeat.
+      expect(rows[1]).toContain('Current time')
+      expect(root.textContent).not.toContain('Your timezone')
+    })
+
+    it('still shows both when the window is somewhere else', () => {
+      notice = new Notice(resolve(DAYTIME))
+      const root = inside(notice.build())
+
+      expect(root.textContent).toContain('Your timezone')
+      expect(root.querySelectorAll('.row')).toHaveLength(3)
+    })
+
     it('omits the toggle entirely when there are no notes', () => {
       const deployment = resolve(DAYTIME)
       deployment.notes = ''

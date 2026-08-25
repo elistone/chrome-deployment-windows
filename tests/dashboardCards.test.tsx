@@ -95,6 +95,30 @@ describe('DeploymentCard', () => {
     expect(screen.getByText('America/New_York')).toBeInTheDocument()
   })
 
+  it('shows the window once when it is already in the viewer timezone', () => {
+    atMidday()
+    const config = testConfig()
+    config.deployments.daytime.time = {
+      start: '09:00',
+      end: '17:00',
+      timezone: 'America/New_York',
+    }
+    render(
+      <DeploymentCard
+        configKey="daytime"
+        deployment={config.deployments.daytime}
+        domainKeys={DOMAINS}
+        editing={false}
+        onEdit={vi.fn()}
+        onDuplicate={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('09:00 – 17:00')).toBeInTheDocument()
+    expect(screen.queryByText('Your timezone')).toBeNull()
+  })
+
   it('shows the live status', () => {
     atMidday()
     renderDeployment('daytime')

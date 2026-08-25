@@ -43,6 +43,22 @@ describe('Popup', () => {
     vi.useRealTimers()
   })
 
+  it('shows the window once when it is already in the viewer timezone', async () => {
+    const config = testConfig()
+    config.deployments.daytime.time = {
+      start: '09:00',
+      end: '17:00',
+      timezone: 'America/New_York',
+    }
+    await Config.save(config)
+    seedTabs([{ url: 'https://github.com/acme/daytime', active: true }])
+    render(<Popup />)
+
+    await screen.findByText('Daytime project')
+    expect(screen.getByText('09:00 – 17:00')).toBeInTheDocument()
+    expect(screen.queryByText('Your timezone')).toBeNull()
+  })
+
   it('says how much longer the window has', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     vi.setSystemTime(new Date('2024-06-03T10:00:00'))

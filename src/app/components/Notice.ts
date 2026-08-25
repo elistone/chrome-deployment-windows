@@ -288,11 +288,17 @@ export class Notice {
       `<div class="head-end">${countdown}${toggle}${close}</div>`,
     ].join('')
 
+    // The converted window is only worth the space when it actually differs.
+    // Reading the same hours twice, under two labels, says less than reading
+    // them once - and the notice is a strip across someone else's page, so the
+    // room it does not need is room it should not take.
+    const showLocal = timeObj.original.timezone !== timeObj.local.timezone
+
     const times = notesOnly
       ? ''
       : `<dl class="rows">
           ${Notice.row(Methods.i18n('l10nDeploymentWindow'), timeObj.original)}
-          ${Notice.row(Methods.i18n('l10nYourTimezone'), timeObj.local)}
+          ${showLocal ? Notice.row(Methods.i18n('l10nYourTimezone'), timeObj.local) : ''}
           <div class="row">
             <dt>${Methods.i18n('l10nCurrentTime')}</dt>
             <dd><span class="time clock">${t(Timezones.getCurrentTime())}</span></dd>
