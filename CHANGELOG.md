@@ -4,6 +4,47 @@ Notable changes to Deployment windows. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-08-25
+
+### Added
+
+- **Dated freezes.** A run of calendar days when nothing ships, whatever the
+  window says - a Christmas change freeze, a conference week, the fortnight the
+  people who would fix it are away:
+
+  ```json
+  "freezes": [
+      { "from": "2026-12-20", "to": "2027-01-02", "reason": "Christmas change freeze" }
+  ]
+  ```
+
+  Both days are included, and the dates are read against the window's own
+  timezone. While a freeze is on, the status reads "Deployment frozen", the
+  countdown says when it lifts rather than when the window next opens, and the
+  reason is shown beside it. A freeze beats the hours and the days both.
+
+### Changed
+
+- **The notice leads with your own window.** It used to show the configured
+  window first and the converted one second, under a "Your timezone" label,
+  which put the row you act on underneath a row naming a timezone you are not
+  standing in - and repeated the days across both. Your window comes first now
+  and does not name your zone, because you know where you are; what the config
+  says follows, quieter, as "Set in Europe/Zurich". The days appear once unless
+  the conversion really did move them. The strip fits on one line again.
+- The popup and the dashboard cards read the same way, for the same reason.
+- **Shared config and JSON config are one block** at the foot of the options
+  page rather than two full-width slabs, and site cards stretch to match each
+  other so their buttons line up.
+
+### Fixed
+
+- The extension pages no longer preload chunks that Chrome then refuses to use.
+  Vite stamps `crossorigin` on its modulepreload links, which is right on the
+  web and wrong on a `chrome-extension://` page: every preloaded chunk was
+  fetched, refused and fetched again, with two console warnings each. Nothing
+  was broken by it, and the console is silent now.
+
 ## [2.2.0] - 2026-08-25
 
 ### Added
@@ -173,6 +214,7 @@ rejected.
 
 First release.
 
+[2.3.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.3.0
 [2.2.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.2.0
 [2.1.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.1.0
 [2.0.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.0.0
