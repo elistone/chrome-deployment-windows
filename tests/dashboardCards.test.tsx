@@ -82,17 +82,18 @@ describe('DeploymentCard', () => {
 
     expect(screen.getByRole('heading', { name: 'Daytime project' })).toBeInTheDocument()
     expect(screen.getByText('daytime')).toBeInTheDocument()
-    expect(screen.getByText('09:00 – 17:00')).toBeInTheDocument()
-    expect(screen.getByText('Europe/London')).toBeInTheDocument()
+    // The viewer's own window leads, without naming their zone. Tests run in
+    // America/New_York against a London window.
+    expect(screen.getByText('04:00 – 12:00')).toBeInTheDocument()
+    expect(screen.queryByText('America/New_York')).toBeNull()
   })
 
-  it('also shows the window in the viewer timezone', () => {
+  it('shows what the config actually says, as provenance', () => {
     atMidday()
     renderDeployment('daytime')
 
-    expect(screen.getByText('Your timezone')).toBeInTheDocument()
-    expect(screen.getByText('04:00 – 12:00')).toBeInTheDocument()
-    expect(screen.getByText('America/New_York')).toBeInTheDocument()
+    expect(screen.getByText(/Set in Europe\/London/)).toBeInTheDocument()
+    expect(screen.getByText('09:00 – 17:00')).toBeInTheDocument()
   })
 
   it('shows the window once when it is already in the viewer timezone', () => {

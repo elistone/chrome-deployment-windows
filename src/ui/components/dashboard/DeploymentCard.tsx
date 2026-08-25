@@ -86,9 +86,12 @@ export function DeploymentCard({
   const notes = typeof deployment.notes === 'string' ? deployment.notes : ''
   const notesHtml = useMarkdown(notes)
   const times = deployment.time ? DW.buildTimes(deployment) : null
-  // The converted window is only worth the space when it actually differs.
-  const showLocal =
+  // Your own window leads, and does not name your zone; what the config says
+  // follows as provenance, and only when it differs.
+  const showSource =
     times !== null && times.original.timezone !== times.local.timezone
+  const localDays = times ? daysLabel(times.local.days) : ''
+  const sourceDays = times ? daysLabel(times.original.days) : ''
 
   return (
     <article className="dw-card" data-status={tone}>
@@ -127,28 +130,24 @@ export function DeploymentCard({
               </span>
             </dt>
             <dd>
-              {daysLabel(times.original.days) && (
-                <span className="dw-days">
-                  {daysLabel(times.original.days)}
-                </span>
-              )}
+              {localDays && <span className="dw-days">{localDays}</span>}
               <span className="dw-mono">
-                {times.original.start} &ndash; {times.original.end}
+                {times.local.start} &ndash; {times.local.end}
               </span>
-              <span className="dw-card-zone">{times.original.timezone}</span>
             </dd>
           </div>
-          {showLocal && (
+          {showSource && (
             <div className="dw-card-row dw-card-row-subtle">
-              <dt>{Methods.i18n('l10nYourTimezone')}</dt>
+              <dt>
+                {Methods.i18n('l10nSetIn')} {times.original.timezone}
+              </dt>
               <dd>
-                {daysLabel(times.local.days) && (
-                  <span className="dw-days">{daysLabel(times.local.days)}</span>
+                {sourceDays !== localDays && sourceDays && (
+                  <span className="dw-days">{sourceDays}</span>
                 )}
                 <span className="dw-mono">
-                  {times.local.start} &ndash; {times.local.end}
+                  {times.original.start} &ndash; {times.original.end}
                 </span>
-                <span className="dw-card-zone">{times.local.timezone}</span>
               </dd>
             </div>
           )}

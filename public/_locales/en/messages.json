@@ -15,9 +15,9 @@
     "message": "Deployment window",
     "description": "What is the original deployment window."
   },
-  "l10nYourTimezone": {
-    "message": "Your timezone",
-    "description": "What is the deployment window in your local timezone."
+  "l10nSetIn": {
+    "message": "Set in",
+    "description": "Precedes the timezone a window was configured in, e.g. \"Set in Europe/Zurich\"."
   },
   "l10nCurrentTime": {
     "message": "Current time",
@@ -722,5 +722,9 @@
   "l10nFreezeBackwards": {
     "message": "The last day cannot be before the first.",
     "description": "Error when a freeze range ends before it starts."
+  },
+  "l10nConfig": {
+    "message": "Config",
+    "description": "Groups the shared config and JSON config panels."
   }
 }

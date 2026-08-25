@@ -342,6 +342,13 @@
 /* the times                                                           */
 /* ------------------------------------------------------------------ */
 
+/* Where the window was written, as against where it is being read. Quieter
+   than the row above it, because it is provenance rather than the answer. */
+.row-quiet dt,
+.row-quiet dd {
+  opacity: 0.72;
+}
+
 /* Which days the window opens on, when it is not all of them. Reads ahead of
    the hours because it is the coarser fact: there is no point reading 09:00
    before knowing whether today is one of the days at all. */
