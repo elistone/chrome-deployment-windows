@@ -91,6 +91,11 @@ jobs:
       - name: Check no dev-harness code leaked into the build
         run: pnpm check:bundle
 
+      # The content script runs on every page the user visits, so anything it
+      # loads eagerly is paid for by pages that get nothing back.
+      - name: Check the content script stayed within its payload budget
+        run: pnpm check:payload
+
       - name: Upload unpacked extension
         uses: actions/upload-artifact@v7
         with:

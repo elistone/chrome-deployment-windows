@@ -1,8 +1,9 @@
 import type { ResolvedDeployment, SiteStyle } from '../config/types'
 import { GLYPHS, GLYPH_VIEWBOX, glyphFor } from '../glyphs'
 import type { IconState } from '../icons'
-import { isCssSpacing } from '../config/schema'
+import { isCssSpacing } from '../config/css'
 import { Methods } from './Methods'
+import { renderNotes as renderMarkdown } from './Markdown'
 import { TextFormatter } from './TextFormatter'
 import { Timezones } from './Timezones'
 import { DW } from './DW'
@@ -51,7 +52,10 @@ export class Notice {
   private countdown: HTMLElement | null = null
   private markPath: SVGPathElement | null = null
   private details: HTMLElement | null = null
+  private notesBody: HTMLElement | null = null
   private toggle: HTMLElement | null = null
+  /** The notes have been rendered, or are being rendered right now. */
+  private notesRequested = false
 
   constructor(deployment: ResolvedDeployment) {
     this.deployment = deployment
@@ -93,6 +97,7 @@ export class Notice {
     this.countdown = card.querySelector('.countdown')
     this.markPath = card.querySelector('.mark path')
     this.details = card.querySelector('.details')
+    this.notesBody = card.querySelector('.notes-body')
     this.toggle = card.querySelector('.toggle')
 
     return host
@@ -127,6 +132,12 @@ export class Notice {
     if (this.inserted) {
       this.enableToggleDetails()
       this.enableRealTime()
+      // A notes-only entry opens with its notes showing, so there is nothing
+      // to wait for - the renderer is wanted now rather than on a click that
+      // is never coming.
+      if (this.deployment.notesOnly) {
+        void this.renderNotes()
+      }
     }
 
     return this.inserted
@@ -166,6 +177,9 @@ export class Notice {
     }
     this.toggleHandler = null
     this.element?.remove()
+    // Dropped so a render still in flight writes into nothing rather than into
+    // a card that has been taken off the page.
+    this.notesBody = null
     this.inserted = false
     this.locationIndex = -1
   }
@@ -246,7 +260,7 @@ export class Notice {
           <div class="details-inner">
             <div class="notes">
               <p class="notes-title">${Methods.i18n('l10nNotes')}</p>
-              ${TextFormatter.toMarkdown(notes)}
+              <div class="notes-body"></div>
             </div>
           </div>
         </div>`
@@ -354,11 +368,41 @@ export class Notice {
     }
 
     const open = this.details.dataset.open !== 'true'
+    if (open) {
+      void this.renderNotes()
+    }
     this.details.dataset.open = String(open)
     this.toggle.setAttribute('aria-expanded', String(open))
     this.toggle.textContent = Methods.i18n(
       open ? 'l10nDetailsHide' : 'l10nDetailsShow',
     )
+  }
+
+  /**
+   * Render the notes, the first time anyone asks to see them.
+   *
+   * markdown-it is the largest thing the extension ships and this is the only
+   * thing on the page that needs it, so it is fetched on the way to being
+   * shown rather than on the way to every page. Notes that are never opened
+   * never load it at all.
+   */
+  private async renderNotes(): Promise<void> {
+    if (this.notesRequested || !this.notesBody) {
+      return
+    }
+    this.notesRequested = true
+
+    try {
+      const html = await renderMarkdown(this.deployment.notes)
+      // The notice may have been torn down while the chunk was in flight.
+      if (this.notesBody) {
+        this.notesBody.innerHTML = html
+      }
+    } catch {
+      // A chunk that will not load leaves the notes empty rather than the
+      // notice broken. Allowed to be retried on the next open.
+      this.notesRequested = false
+    }
   }
 
   /** One tick: refresh the clock, the status text and the notice's tone. */

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import Popup from '../src/ui/components/Popup'
@@ -93,8 +93,10 @@ describe('Popup', () => {
     const { container } = await renderPopupFor('https://github.com/acme/daytime')
 
     await screen.findByText('Daytime project')
-    expect(container.querySelector('.dw-popup-notes strong')?.textContent).toBe(
-      'two',
+    await waitFor(() =>
+      expect(
+        container.querySelector('.dw-popup-notes strong')?.textContent,
+      ).toBe('two'),
     )
   })
 
@@ -106,7 +108,7 @@ describe('Popup', () => {
     expect(await screen.findByText('Notes only project')).toBeInTheDocument()
     expect(container.querySelector('.dw-popup-rows')).toBeNull()
     expect(screen.getByText('Notes only')).toBeInTheDocument()
-    expect(screen.getByText('Frozen until Q3.')).toBeInTheDocument()
+    expect(await screen.findByText('Frozen until Q3.')).toBeInTheDocument()
   })
 
   it('reports when the tab has no deployment information', async () => {

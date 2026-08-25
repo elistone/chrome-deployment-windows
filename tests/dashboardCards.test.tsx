@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import DeploymentCard, {
@@ -206,10 +213,16 @@ describe('DeploymentCard', () => {
     )
   })
 
-  it('renders notes as markdown', () => {
-    atMidday()
+  // No fake clock: the notes do not depend on one, and waitFor cannot poll
+  // against timers that never advance.
+  it('renders notes as markdown', async () => {
     const { container } = renderDeployment('daytime')
-    expect(container.querySelector('.dw-card-notes strong')?.textContent).toBe('two')
+    // The renderer is fetched on demand, so the notes arrive a tick later.
+    await waitFor(() =>
+      expect(container.querySelector('.dw-card-notes strong')?.textContent).toBe(
+        'two',
+      ),
+    )
   })
 
   it('explains why an entry with no window always reads as closed', () => {
@@ -503,23 +516,26 @@ describe('SiteCard', () => {
 })
 
 describe('HowToUse', () => {
-  it('renders the bundled document', () => {
+  it('renders the bundled document', async () => {
     const { container } = render(<HowToUse />)
     expect(
-      screen.getByRole('heading', { name: 'Using the extension' }),
+      await screen.findByRole('heading', { name: 'Using the extension' }),
     ).toBeInTheDocument()
     expect(container.querySelector('table')).not.toBeNull()
   })
 
-  it('keeps json examples readable rather than entity encoded', () => {
+  it('keeps json examples readable rather than entity encoded', async () => {
     const { container } = render(<HowToUse />)
+    await screen.findByRole('heading', { name: 'Using the extension' })
     const code = container.querySelector('pre code')?.textContent ?? ''
     expect(code).toContain('"domains"')
     expect(code).not.toContain('&#34;')
   })
 
-  it('leads with the UI workflow rather than the json', () => {
+  it('leads with the UI workflow rather than the json', async () => {
     render(<HowToUse />)
-    expect(screen.getByRole('heading', { name: 'Quick start' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: 'Quick start' }),
+    ).toBeInTheDocument()
   })
 })
