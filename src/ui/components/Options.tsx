@@ -424,15 +424,18 @@ export function Options() {
           )}
         </section>
 
-        <SharedConfigPanel onChanged={() => void reload()} />
+        {/* One block rather than two full-width slabs. Neither is a place you
+            go on purpose - they are the ways in and out of the config, not part
+            of it - so they should not weigh the same as the cards above. */}
+        <section className="dw-panels" aria-label={Methods.i18n('l10nConfig')}>
+          <SharedConfigPanel onChanged={() => void reload()} />
 
-        <JsonPanel
-          config={config}
-          theme={theme.resolved}
-          onApply={(next) =>
-            persist(next, Methods.i18n('l10nSaved'))
-          }
-        />
+          <JsonPanel
+            config={config}
+            theme={theme.resolved}
+            onApply={(next) => persist(next, Methods.i18n('l10nSaved'))}
+          />
+        </section>
       </main>
 
       {dialog?.kind === 'deployment' && (

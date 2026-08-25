@@ -303,11 +303,15 @@ body {
   color: var(--dw-text-muted);
 }
 
+/* Cards match the tallest in their row rather than each ending wherever their
+   own content does. Two sites side by side with a different number of insert
+   rules used to leave their Edit and Delete buttons at different heights,
+   which reads as a mistake rather than as a difference in content. */
 .dw-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: var(--dw-space-4);
-  align-items: start;
+  align-items: stretch;
 }
 
 .dw-card {
@@ -469,6 +473,9 @@ body {
   align-items: center;
   gap: var(--dw-space-2);
   flex-wrap: wrap;
+  /* Pinned to the bottom of a stretched card, so the row of buttons lines up
+     across the grid however much is above it. */
+  margin-top: auto;
   padding-top: var(--dw-space-3);
   border-top: 1px solid var(--dw-border);
 }
@@ -772,10 +779,19 @@ body {
 /* json panel                                                          */
 /* ------------------------------------------------------------------ */
 
-.dw-panel {
+/* Both panels in one frame, divided rather than stacked as separate cards. */
+.dw-panels {
   background: var(--dw-surface);
   border: 1px solid var(--dw-border);
   border-radius: var(--dw-radius-lg);
+  overflow: hidden;
+}
+
+.dw-panel + .dw-panel {
+  border-top: 1px solid var(--dw-border);
+}
+
+.dw-panel {
   overflow: hidden;
 }
 
@@ -784,7 +800,8 @@ body {
   align-items: center;
   gap: var(--dw-space-3);
   width: 100%;
-  padding: var(--dw-space-4);
+  /* Tighter than a card's: these are rows in a list of two, not content. */
+  padding: var(--dw-space-3) var(--dw-space-4);
   font: inherit;
   text-align: left;
   color: inherit;
