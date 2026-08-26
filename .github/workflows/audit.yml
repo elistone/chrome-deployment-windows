@@ -1,0 +1,61 @@
+name: Audit
+
+# Its own workflow rather than a job in ci.yml, for two reasons. It answers a
+# different question - "is anything we depend on known to be broken today" is
+# not "does this change work" - and it needs a trigger the tests do not: an
+# advisory is published by somebody else, on a day when nobody here is pushing
+# anything, and a check that only runs on a push would not hear about it until
+# the next one.
+#
+# Dependabot already opens pull requests for security updates. This is the part
+# that fails loudly in between, and the part that notices an advisory published
+# against a version already installed.
+on:
+  push:
+    branches: [main, '2.x']
+  pull_request:
+  # Tuesday morning, a day after Dependabot's Monday run, so a fix it has
+  # already opened is on the table before this complains about the problem.
+  schedule:
+    - cron: '0 8 * * 2'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: 0
+
+jobs:
+  audit:
+    name: Known vulnerabilities
+    runs-on: ubuntu-latest
+    # Same de-duplication as ci.yml; see the comment there.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      !contains(fromJSON('["main", "2.x"]'), github.head_ref)
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+
+      # Anything that reaches a user's browser, at any severity. There are
+      # seven of these and one of them parses notes out of the config, so
+      # "only moderate" is not a reason to ship it.
+      - name: Audit what ships to users
+        run: pnpm audit --prod --audit-level low
+
+      # The build tools, where the bar is higher on purpose. A low-severity
+      # advisory against a test runner is not worth stopping the line for, and
+      # a check that cries wolf is one people learn to ignore - which is how
+      # the 74 alerts this repo used to carry went unread.
+      - name: Audit the build tools
+        run: pnpm audit --audit-level high
+
+      # Reported whatever the result, so a moderate advisory against a dev
+      # dependency is visible in the log without failing the run.
+      - name: Everything known, for the record
+        if: ${{ !cancelled() }}
+        run: pnpm audit || true

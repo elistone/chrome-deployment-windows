@@ -189,6 +189,12 @@ Four build checks run in CI and can be run locally:
   total passes its budget, or if `markdown-it` — which the notes render through,
   behind a dynamic import — reappears on that path. One ordinary-looking static
   import puts it back and nothing else would notice.
+* `pnpm check:deps` — known vulnerabilities. Anything that reaches a user's
+  browser fails at any severity; the build tools only at high and above, because
+  a check that cries wolf over a low-severity advisory against a test runner is
+  one people learn to ignore. It runs in its own workflow rather than beside the
+  tests, on a weekly schedule as well as on pushes: an advisory is published by
+  somebody else, on a day when nobody here is pushing anything.
 
 ## Project layout
 
