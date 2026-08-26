@@ -29,7 +29,8 @@
     "check:locales": "node scripts/check-locales.js",
     "check:manifest": "node scripts/check-manifest.js",
     "check:bundle": "node scripts/check-bundle.js",
-    "check:payload": "node scripts/check-payload.js"
+    "check:payload": "node scripts/check-payload.js",
+    "check:deps": "pnpm audit --prod --audit-level low && pnpm audit --audit-level high"
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",
