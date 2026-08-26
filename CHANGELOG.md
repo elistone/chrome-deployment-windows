@@ -4,6 +4,29 @@ Notable changes to Deployment windows. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-08-26
+
+### Added
+
+- **Revert.** An entry taken from a shared config that you have since changed
+  stops following the file - which is the point - but the only way back used to
+  be deleting your copy by hand. The card offers it directly now, and only
+  where there is something to go back to.
+
+### Changed
+
+- **Refreshing a shared config is nearly free when nothing has changed.** The
+  extension keeps whatever validators the server offered and asks whether the
+  file has moved, rather than asking for it again. An hourly refresh of an
+  unchanged config now costs a round trip instead of a download.
+
+### Fixed
+
+- Nothing user-facing. Internally, every end-to-end test now fails if the page
+  it opened left a warning, an error or an uncaught exception in the console -
+  added after a build change filled every extension page with preload warnings
+  and the suite drove past them for weeks with all tests green.
+
 ## [2.3.0] - 2026-08-25
 
 ### Added
@@ -214,6 +237,7 @@ rejected.
 
 First release.
 
+[2.4.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.4.0
 [2.3.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.3.0
 [2.2.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.2.0
 [2.1.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.1.0

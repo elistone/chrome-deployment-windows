@@ -1,6 +1,6 @@
 {
   "name": "chrome-deployment-windows",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Chrome extension that surfaces deployment window reminders on sites such as GitHub and Jira.",
   "license": "BSD-3-Clause",
   "type": "module",
