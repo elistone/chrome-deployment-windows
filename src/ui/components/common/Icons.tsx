@@ -122,6 +122,14 @@ export const TrashIcon = (props: IconProps) => (
   </Icon>
 )
 
+/** An arrow curving back on itself: undoing a change rather than reversing it. */
+export const UndoIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M4 10h11a5 5 0 0 1 0 10h-5" />
+    <path d="m8.5 5.5-4.5 4.5 4.5 4.5" />
+  </Icon>
+)
+
 export const CopyIcon = (props: IconProps) => (
   <Icon {...props}>
     <rect x="9" y="9" width="12" height="12" rx="2" />

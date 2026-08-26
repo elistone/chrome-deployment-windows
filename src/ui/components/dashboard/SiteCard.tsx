@@ -4,7 +4,7 @@ import { Methods } from '../../../app/components/Methods'
 import { TextFormatter } from '../../../app/components/TextFormatter'
 import type { SiteConfig } from '../../../app/config/types'
 import ConfirmDelete from '../common/ConfirmDelete'
-import { PencilIcon } from '../common/Icons'
+import { PencilIcon, UndoIcon } from '../common/Icons'
 import {
   faviconUrl,
   siteHost,
@@ -32,6 +32,8 @@ interface SiteCardProps {
   usedBy: number
   /** True while this site is still exactly what the shared config says. */
   shared?: boolean
+  /** Set when this site came from the shared config and was changed here. */
+  onRevert?: () => void
   editing: boolean
   onEdit: () => void
   onDelete: () => void
@@ -79,6 +81,7 @@ export function SiteCard({
   editing,
   onEdit,
   onDelete,
+  onRevert,
 }: SiteCardProps) {
   const host = siteHost(patterns)
   const style = site?.style
@@ -201,6 +204,17 @@ export function SiteCard({
             <PencilIcon size={14} />
             {Methods.i18n('l10nEdit')}
           </button>
+          {onRevert && (
+            <button
+              type="button"
+              className="dw-button dw-button-ghost"
+              onClick={onRevert}
+              title={Methods.i18n('l10nRevertToSharedHint')}
+            >
+              <UndoIcon size={14} />
+              {Methods.i18n('l10nRevertToShared')}
+            </button>
+          )}
           <ConfirmDelete onConfirm={onDelete} label={configKey} />
         </footer>
       )}

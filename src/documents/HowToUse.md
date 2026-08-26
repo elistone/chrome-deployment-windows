@@ -117,10 +117,15 @@ is a layer *underneath* your own settings, which means:
 * Entries you have not touched follow the file. Change a window at the source
   and everyone picks it up on the next refresh. They are marked **Shared**.
 * Editing one stores your version on this machine, and yours wins from then on.
-  The badge goes, because that entry has stopped following the file.
+  The badge goes, because that entry has stopped following the file. **Revert**
+  on the card puts the file's version back and starts following it again.
 * Deleting one hides it here without touching the file. Add it back and it
   follows the file again.
 * Everything you add yourself is yours alone and is never sent anywhere.
+
+Refreshes are cheap. After the first fetch the extension asks the server whether
+anything has changed rather than for the file again, so an hourly refresh of an
+unchanged config costs a round trip rather than a download.
 
 If the file cannot be fetched, the last copy that worked carries on being used
 and the panel says what went wrong. Nothing is lost while it is unreachable.

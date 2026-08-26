@@ -496,6 +496,103 @@ describe('Options shared config', () => {
     expect(screen.getByRole('button', { name: 'Connect' })).toBeDisabled()
   })
 
+  it('offers no way back until something has been changed', async () => {
+    serve(shared())
+    const { user } = await openDashboard()
+    await connect(user)
+    await screen.findByRole('heading', { name: 'Team project' })
+
+    await enterEditMode(user)
+
+    // Nothing has diverged, so there is nothing to revert to.
+    expect(
+      within(cardFor('Team project')).queryByRole('button', { name: 'Revert' }),
+    ).toBeNull()
+  })
+
+  it('puts the shared version back', async () => {
+    serve(shared())
+    const { user } = await openDashboard()
+    await connect(user)
+    await screen.findByRole('heading', { name: 'Team project' })
+
+    await enterEditMode(user)
+    await user.click(
+      within(cardFor('Team project')).getByRole('button', { name: 'Edit' }),
+    )
+    const name = screen.getByLabelText(/Name/)
+    await user.clear(name)
+    await user.type(name, 'Overridden here')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    await screen.findByRole('heading', { name: 'Overridden here' })
+
+    await user.click(
+      within(cardFor('Overridden here')).getByRole('button', {
+        name: 'Revert',
+      }),
+    )
+
+    // Back to the file's version, badged as following it again.
+    const card = await screen.findByRole('heading', { name: 'Team project' })
+    expect(within(card.closest('article')!).getByText('Shared')).toBeInTheDocument()
+  })
+
+  it('stops storing the entry once it has been reverted', async () => {
+    serve(shared())
+    const { user } = await openDashboard()
+    await connect(user)
+    await screen.findByRole('heading', { name: 'Team project' })
+
+    await enterEditMode(user)
+    await user.click(
+      within(cardFor('Team project')).getByRole('button', { name: 'Edit' }),
+    )
+    const name = screen.getByLabelText(/Name/)
+    await user.clear(name)
+    await user.type(name, 'Overridden here')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    await screen.findByRole('heading', { name: 'Overridden here' })
+
+    // The override is stored; the seeded entries are local anyway and stay.
+    expect(
+      (await chrome.storage.sync.get('DEPLOYMENTS')).DEPLOYMENTS,
+    ).toHaveProperty('team')
+
+    await user.click(
+      within(cardFor('Overridden here')).getByRole('button', {
+        name: 'Revert',
+      }),
+    )
+    await screen.findByRole('heading', { name: 'Team project' })
+
+    // A copy left in local storage would go on shadowing the file for ever,
+    // which is the thing revert exists to undo. Everything genuinely local is
+    // untouched.
+    await waitFor(async () => {
+      const stored = (await chrome.storage.sync.get('DEPLOYMENTS'))
+        .DEPLOYMENTS as Record<string, unknown>
+      expect(stored).not.toHaveProperty('team')
+      expect(stored).toHaveProperty('daytime')
+    })
+  })
+
+  it('offers no way back for an entry that is purely local', async () => {
+    serve(shared())
+    const { user } = await openDashboard()
+    await connect(user)
+    await screen.findByRole('heading', { name: 'Team project' })
+
+    await enterEditMode(user)
+
+    // Daytime is from the seeded config, not from the file. There is nothing
+    // to revert to, and offering it would suggest there was.
+    expect(
+      within(cardFor('Daytime project')).queryByRole('button', {
+        name: 'Revert',
+      }),
+    ).toBeNull()
+  })
+
   it('survives storage being unavailable', async () => {
     const { user } = await openDashboard()
     // Reading the URL and the cache is the panel's first act; a rejection

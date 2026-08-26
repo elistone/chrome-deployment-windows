@@ -49,7 +49,9 @@ team that deploys the same projects to the same windows. It is fetched hourly
 and merged *underneath* everything configured locally, so any single entry can
 still be corrected - or deleted - on the machine that needs it, without the
 change going anywhere near the file. Entries still tracking the file are marked
-"Shared" on the dashboard.
+"Shared" on the dashboard, and one that has been changed locally offers a
+**Revert** back to the file's version. Refreshes are conditional, so an
+unchanged config costs a round trip rather than a download.
 
 The full guide is [found here](/src/documents/HowToUse.md), and is also
 available from the "How to use" link in the options page header.

@@ -118,6 +118,49 @@ export function Options() {
     }
   }, [config, remote])
 
+  /**
+   * Entries the shared config has, which have since been changed here.
+   *
+   * The other half of the same split: `shared` is what is still following the
+   * file, this is what has stopped. Anything in neither set is simply local.
+   */
+  const overridden = useMemo(
+    () => ({
+      deployments: new Set(
+        Object.keys(remote.deployments).filter(
+          (key) => key in config.deployments && !shared.deployments.has(key),
+        ),
+      ),
+      sites: new Set(
+        Object.keys(remote.domains).filter(
+          (key) => key in config.domains && !shared.sites.has(key),
+        ),
+      ),
+    }),
+    [config, remote, shared],
+  )
+
+  /** Put the shared version back, which drops the local copy on save. */
+  const revertDeployment = (key: string) => {
+    void persist(
+      upsertDeployment(config, key, key, remote.deployments[key]),
+      Methods.i18n('l10nReverted'),
+    )
+  }
+
+  const revertSite = (key: string) => {
+    void persist(
+      upsertSite(
+        config,
+        key,
+        key,
+        remote.domains[key] ?? [],
+        remote.sites[key],
+      ),
+      Methods.i18n('l10nReverted'),
+    )
+  }
+
   const domainKeys = useMemo(() => Object.keys(config.domains), [config.domains])
   const deploymentKeys = useMemo(
     () => Object.keys(config.deployments),
@@ -354,6 +397,11 @@ export function Options() {
                   deployment={config.deployments[key]}
                   domainKeys={domainKeys}
                   shared={shared.deployments.has(key)}
+                  onRevert={
+                    overridden.deployments.has(key)
+                      ? () => revertDeployment(key)
+                      : undefined
+                  }
                   editing={editing}
                   onEdit={() => openDeployment(key)}
                   onDuplicate={() => duplicateDeployment(key)}
@@ -410,6 +458,9 @@ export function Options() {
                   site={config.sites[key]}
                   usedBy={deploymentsUsingSite(config, key)}
                   shared={shared.sites.has(key)}
+                  onRevert={
+                    overridden.sites.has(key) ? () => revertSite(key) : undefined
+                  }
                   editing={editing}
                   onEdit={() => openSite(key)}
                   onDelete={() =>
