@@ -10,6 +10,7 @@ import { Methods } from './Methods'
 import { Timezones, type WindowSpec, isValidTimezone } from './Timezones'
 import {
   type ActiveFreeze,
+  type Freeze,
   activeFreeze,
   toFreezes,
   todayIn,
@@ -50,6 +51,11 @@ export class DW {
 
   getUrl(): string {
     return this.currentUrl
+  }
+
+  /** Freezes that apply to every deployment in this config. */
+  globalFreezes(): Freeze[] {
+    return toFreezes(this.config.freezes)
   }
 
   /** The matched domain key (e.g. `github`), or null when nothing matched. */
@@ -132,7 +138,7 @@ export class DW {
     deployment: DeploymentConfig,
     domainKey: string,
   ): ResolvedDeployment {
-    const timeObj = DW.buildTimes(deployment)
+    const timeObj = DW.buildTimes(deployment, this.globalFreezes())
 
     return {
       key,
@@ -148,8 +154,17 @@ export class DW {
     }
   }
 
-  /** Build the original/local pair of windows for a deployment. */
-  static buildTimes(deployment: DeploymentConfig): ResolvedTimes {
+  /**
+   * Build the original/local pair of windows for a deployment.
+   *
+   * `globalFreezes` is required rather than defaulted, so that a caller which
+   * predates them cannot go on satisfying the signature while quietly leaving
+   * a company-wide freeze out of the answer.
+   */
+  static buildTimes(
+    deployment: DeploymentConfig,
+    globalFreezes: readonly Freeze[],
+  ): ResolvedTimes {
     const time = deployment.time
     const start =
       typeof time?.start === 'string' && time.start ? time.start : DEFAULT_TIME
@@ -170,8 +185,15 @@ export class DW {
     // Against the window's own calendar, not the viewer's: a freeze is written
     // by the same people who wrote the window, and 20 December means their
     // 20 December.
+    // Both sets, not one or the other: a company freeze and a project freeze
+    // are both true at once, and the longest-running of them is what decides
+    // when deploying resumes.
+    //
+    // Against this window's own timezone, as a deployment's own freezes are:
+    // a global 20 December freezes the Tokyo project by Tokyo's calendar and
+    // the London one by London's, which is what each team means by the date.
     const freeze = activeFreeze(
-      toFreezes(deployment.freezes),
+      [...globalFreezes, ...toFreezes(deployment.freezes)],
       todayIn(startTime.getOriginalTimezone()),
     )
 

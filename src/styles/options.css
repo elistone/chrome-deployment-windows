@@ -610,6 +610,54 @@ body {
 }
 
 /* ------------------------------------------------------------------ */
+/* freezes                                                             */
+/* ------------------------------------------------------------------ */
+
+/* A list rather than cards. A freeze is three short facts, most teams have one
+   or two, and a grid of cards for that is more furniture than content. */
+.dw-freeze-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--dw-border);
+  border: 1px solid var(--dw-border);
+  border-radius: var(--dw-radius);
+  overflow: hidden;
+}
+
+.dw-freeze {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--dw-space-2) var(--dw-space-4);
+  padding: var(--dw-space-3) var(--dw-space-4);
+  background: var(--dw-surface);
+}
+
+.dw-freeze-dates {
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.dw-freeze-reason {
+  color: var(--dw-text-muted);
+  font-size: 0.9rem;
+  min-width: 0;
+}
+
+/* The one that is happening now, rather than the ones that will or did. */
+.dw-freeze-on {
+  background: var(--dw-warn-soft);
+}
+
+.dw-freeze-on .dw-freeze-reason {
+  color: var(--dw-text);
+}
+
+/* ------------------------------------------------------------------ */
 /* empty states                                                        */
 /* ------------------------------------------------------------------ */
 

@@ -25,6 +25,9 @@ const INSERT_POSITIONS = ['before', 'after'] as const
 
 const TIME_KNOWN_KEYS = new Set(['start', 'end', 'timezone', 'days'])
 
+/** `freezes` is optional, so an existing config without one still validates. */
+const CONFIG_KNOWN_KEYS = new Set(['domains', 'sites', 'deployments', 'freezes'])
+
 const DEPLOYMENT_KNOWN_KEYS = new Set([
   'name',
   'notes',
@@ -375,9 +378,13 @@ export function validateConfig(value: unknown): ValidationResult {
   }
 
   for (const key of Object.keys(value)) {
-    if (key !== 'domains' && key !== 'sites' && key !== 'deployments') {
+    if (!CONFIG_KNOWN_KEYS.has(key)) {
       errors.add('', `must NOT have additional properties ('${key}')`)
     }
+  }
+
+  if ('freezes' in value) {
+    validateFreezes(value.freezes, '/freezes', errors)
   }
 
   if ('domains' in value) validateDomains(value.domains, '/domains', errors)

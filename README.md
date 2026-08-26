@@ -42,7 +42,9 @@ another timezone. When the next one is days away the countdown says "Opens in
 A **freeze** covers a run of calendar days when nothing ships, whatever the
 window says — a Christmas change freeze, or a conference week. While one is on
 the status reads "Deployment frozen", the countdown says when it lifts rather
-than when the window next opens, and the reason is shown beside it.
+than when the window next opens, and the reason is shown beside it. Freezes can
+be set once for everything, or per deployment; a deployment's own are added to
+the company-wide ones rather than replacing them.
 
 A **shared config** can be pointed at a JSON file on an https address, for a
 team that deploys the same projects to the same windows. It is fetched hourly

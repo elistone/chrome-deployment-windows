@@ -167,6 +167,16 @@ was written in.
 A freeze beats everything else. It does not matter what the hours say or which
 days are ticked.
 
+**Company-wide freezes** live in their own section on this page rather than on
+each project. "We do not ship over Christmas" is one fact about a company, not
+one fact repeated on every deployment — and repeated facts are how a config
+ends up frozen on eight projects and not on the ninth.
+
+A deployment's own freezes are *added* to those, not swapped for them: both are
+true at once, and whichever runs longest is the one that decides when deploying
+resumes. Put the company freeze in a [shared config](#sharing-one-config-with-a-team)
+and everyone gets it from one place.
+
 ---
 
 ## Editing the JSON directly
@@ -259,7 +269,7 @@ time.time_data.start|time[24]|24 hour time the window opens, e.g. `09:00`
 time.time_data.end|time[24]|24 hour time the window closes; may be earlier than the start to run past midnight
 time.time_data.timezone|string|An [IANA timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) such as `Europe/London`
 time.time_data.days|array[day]|Days the window opens on, e.g. `["mon","tue","wed","thu","fri"]`. Leave it out for every day
-freezes|array[freeze_data]|Runs of days when nothing ships, whatever the window says
+freezes|array[freeze_data]|Runs of days when nothing ships for *this* deployment, on top of any company-wide ones
 freezes.freeze_data.from|date|First frozen day, `YYYY-MM-DD`, included
 freezes.freeze_data.to|date|Last frozen day, `YYYY-MM-DD`, included
 freezes.freeze_data.reason|string|Optional, shown wherever the freeze is reported

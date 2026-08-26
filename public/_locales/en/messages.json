@@ -738,5 +738,29 @@
   "l10nReverted": {
     "message": "Following the shared config again",
     "description": "Toast after reverting a local override."
+  },
+  "l10nGlobalFreezes": {
+    "message": "Freezes",
+    "description": "Section title for company-wide freezes."
+  },
+  "l10nGlobalFreezesSubtitle": {
+    "message": "Days nothing ships, on every project at once.",
+    "description": "Subtitle for the freezes section."
+  },
+  "l10nGlobalFreezesHint": {
+    "message": "These apply to every deployment. A deployment can add its own on top.",
+    "description": "Explains what a company-wide freeze does."
+  },
+  "l10nNoFreezesYet": {
+    "message": "No freezes yet.",
+    "description": "Empty state for the freezes list."
+  },
+  "l10nEditFreezes": {
+    "message": "Edit freezes",
+    "description": "Button that opens the freeze list for editing."
+  },
+  "l10nFreezeActive": {
+    "message": "On now",
+    "description": "Badge on a freeze that covers today."
   }
 }

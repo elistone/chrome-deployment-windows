@@ -80,6 +80,16 @@ export interface DeploymentWindowsConfig {
   sites: Record<string, SiteConfig>
   /** deployment key -> deployment */
   deployments: Record<string, DeploymentConfig>
+  /**
+   * Freezes that apply to everything.
+   *
+   * "We do not ship over Christmas" is one fact about a company, not one fact
+   * repeated on every project - and repeated facts are how a config ends up
+   * with a freeze on eight deployments and not on the ninth. A deployment's
+   * own freezes are added to these rather than replacing them: both are true
+   * at once.
+   */
+  freezes?: Freeze[]
 }
 
 export interface ResolvedTimeWindow {
