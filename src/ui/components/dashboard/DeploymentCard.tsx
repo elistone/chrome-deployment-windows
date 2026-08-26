@@ -6,7 +6,13 @@ import type { DeploymentConfig } from '../../../app/config/types'
 import ConfirmDelete from '../common/ConfirmDelete'
 import Countdown from '../common/Countdown'
 import StatusPill, { type StatusTone } from '../common/StatusPill'
-import { ClockIcon, CopyIcon, NoteIcon, PencilIcon } from '../common/Icons'
+import {
+  ClockIcon,
+  CopyIcon,
+  NoteIcon,
+  PencilIcon,
+  UndoIcon,
+} from '../common/Icons'
 import { useMarkdown } from '../common/useMarkdown'
 import { useNow } from '../common/useNow'
 
@@ -17,6 +23,11 @@ interface DeploymentCardProps {
   domainKeys: string[]
   /** True while this entry is still exactly what the shared config says. */
   shared?: boolean
+  /**
+   * Set when this entry came from the shared config and has been changed here.
+   * Calling it puts the shared version back.
+   */
+  onRevert?: () => void
   editing: boolean
   onEdit: () => void
   onDuplicate: () => void
@@ -74,6 +85,7 @@ export function DeploymentCard({
   onEdit,
   onDuplicate,
   onDelete,
+  onRevert,
 }: DeploymentCardProps) {
   // The status and the countdown are both worked out from the clock, so the
   // card has to keep redrawing for either to stay true.
@@ -212,6 +224,17 @@ export function DeploymentCard({
             <CopyIcon size={14} />
             {Methods.i18n('l10nDuplicate')}
           </button>
+          {onRevert && (
+            <button
+              type="button"
+              className="dw-button dw-button-ghost"
+              onClick={onRevert}
+              title={Methods.i18n('l10nRevertToSharedHint')}
+            >
+              <UndoIcon size={14} />
+              {Methods.i18n('l10nRevertToShared')}
+            </button>
+          )}
           <ConfirmDelete onConfirm={onDelete} label={name} />
         </footer>
       )}

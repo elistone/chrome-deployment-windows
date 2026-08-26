@@ -31,17 +31,51 @@ function sharedConfig(): DeploymentWindowsConfig {
   }
 }
 
+/** Every request the stubbed network saw, so the headers can be asserted. */
+let requests: { url: string; headers: Record<string, string> }[] = []
+
+/**
+ * The most recent request.
+ *
+ * Not `requests[0]`: a test that refreshes twice is usually asking about the
+ * second one, and indexing from the front quietly asserts about the first.
+ */
+function lastRequest() {
+  const request = requests[requests.length - 1]
+  if (!request) {
+    throw new Error('nothing was fetched')
+  }
+  return request
+}
+
 /** Stand in for the network, returning whatever a test wants back. */
-function serve(body: unknown, init: { ok?: boolean; status?: number } = {}) {
+function serve(
+  body: unknown,
+  init: {
+    ok?: boolean
+    status?: number
+    headers?: Record<string, string>
+  } = {},
+) {
   const text = typeof body === 'string' ? body : JSON.stringify(body)
+  const headers = init.headers ?? {}
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => ({
-      ok: init.ok ?? true,
-      status: init.status ?? 200,
-      statusText: init.status === 404 ? 'Not Found' : 'OK',
-      text: async () => text,
-    })),
+    vi.fn(async (url: string, options?: RequestInit) => {
+      requests.push({
+        url,
+        headers: (options?.headers ?? {}) as Record<string, string>,
+      })
+      return {
+        ok: init.ok ?? (init.status ?? 200) < 400,
+        status: init.status ?? 200,
+        statusText: init.status === 404 ? 'Not Found' : 'OK',
+        headers: {
+          get: (name: string) => headers[name.toLowerCase()] ?? null,
+        },
+        text: async () => text,
+      }
+    }),
   )
 }
 
@@ -51,6 +85,10 @@ async function connect(config: unknown = sharedConfig()) {
 }
 
 describe('shared config', () => {
+  beforeEach(() => {
+    requests = []
+  })
+
   afterEach(() => {
     vi.unstubAllGlobals()
   })
@@ -170,6 +208,96 @@ describe('shared config', () => {
       // The window is still the right one to show; only the copy is stale.
       expect(cache.error).toBeTruthy()
       expect(cache.config?.deployments.team.name).toBe('Team project')
+    })
+
+    it('asks for the whole file the first time', async () => {
+      serve(sharedConfig(), { headers: { etag: '"v1"' } })
+      await refreshRemote()
+
+      // Nothing to fall back on yet, so nothing conditional to ask.
+      expect(requests).toHaveLength(1)
+      expect(lastRequest().headers).toEqual({})
+    })
+
+    it('remembers the validators the server offered', async () => {
+      serve(sharedConfig(), {
+        headers: { etag: '"v1"', 'last-modified': 'Wed, 20 Aug 2026 10:00:00 GMT' },
+      })
+      const cache = await refreshRemote()
+
+      expect(cache.etag).toBe('"v1"')
+      expect(cache.lastModified).toBe('Wed, 20 Aug 2026 10:00:00 GMT')
+    })
+
+    it('asks whether anything changed on the next refresh', async () => {
+      serve(sharedConfig(), {
+        headers: { etag: '"v1"', 'last-modified': 'Wed, 20 Aug 2026 10:00:00 GMT' },
+      })
+      await refreshRemote()
+
+      serve(sharedConfig(), { headers: { etag: '"v1"' } })
+      await refreshRemote()
+
+      // An hourly refresh that re-downloads an unchanged file all day is most
+      // of the cost of having one.
+      expect(lastRequest().headers['If-None-Match']).toBe('"v1"')
+      expect(lastRequest().headers['If-Modified-Since']).toBe(
+        'Wed, 20 Aug 2026 10:00:00 GMT',
+      )
+    })
+
+    it('keeps everything when the server says nothing changed', async () => {
+      serve(sharedConfig(), { headers: { etag: '"v1"' } })
+      await refreshRemote()
+
+      serve('', { status: 304 })
+      const cache = await refreshRemote()
+
+      expect(cache.unchanged).toBe(true)
+      expect(cache.error).toBeNull()
+      expect(cache.config?.deployments.team.name).toBe('Team project')
+      // And the validator survives, so the next refresh can ask again.
+      expect(cache.etag).toBe('"v1"')
+    })
+
+    it('takes the new file when the server says it changed', async () => {
+      serve(sharedConfig(), { headers: { etag: '"v1"' } })
+      await refreshRemote()
+
+      const changed = sharedConfig()
+      changed.deployments.team.name = 'Renamed at the source'
+      serve(changed, { headers: { etag: '"v2"' } })
+      const cache = await refreshRemote()
+
+      expect(cache.unchanged).toBe(false)
+      expect(cache.config?.deployments.team.name).toBe('Renamed at the source')
+      expect(cache.etag).toBe('"v2"')
+    })
+
+    it('forgets a validator the server has stopped sending', async () => {
+      serve(sharedConfig(), { headers: { etag: '"v1"' } })
+      await refreshRemote()
+
+      serve(sharedConfig())
+      const cache = await refreshRemote()
+
+      // Otherwise it would go on asking about a version the server no longer
+      // knows, and be answered with the whole file every time anyway.
+      expect(cache.etag).toBeUndefined()
+    })
+
+    it('does not ask conditionally after the URL changes', async () => {
+      serve(sharedConfig(), { headers: { etag: '"v1"' } })
+      await refreshRemote()
+
+      await chrome.storage.sync.set({
+        [REMOTE_URL_KEY]: 'https://example.com/other.json',
+      })
+      serve(sharedConfig())
+      await refreshRemote()
+
+      // A different file's etag says nothing about this one.
+      expect(lastRequest().headers).toEqual({})
     })
 
     it('refuses a URL that is not https', async () => {

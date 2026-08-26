@@ -19,6 +19,46 @@ import type { DeploymentWindowsConfig } from './types'
  * it out.
  */
 
+/** What a server says when the conditional request was answered "no". */
+const NOT_MODIFIED = 304
+
+/**
+ * Ask the server whether anything has changed, rather than for the file.
+ *
+ * An hourly refresh that re-downloads an unchanged file all day is most of the
+ * cost of having one at all. Both validators are sent when both are known:
+ * servers vary in which they honour, and sending one the server ignores simply
+ * means the answer arrives as a 200 with the body, which is what would have
+ * happened anyway.
+ */
+function conditionalHeaders(cache: RemoteCache): Record<string, string> {
+  const headers: Record<string, string> = {}
+  if (cache.etag) {
+    headers['If-None-Match'] = cache.etag
+  }
+  if (cache.lastModified) {
+    headers['If-Modified-Since'] = cache.lastModified
+  }
+  return headers
+}
+
+/** Keep whatever the server offered for next time, and drop what it did not. */
+function rememberValidators(cache: RemoteCache, response: Response): void {
+  const etag = response.headers.get('etag')
+  const lastModified = response.headers.get('last-modified')
+
+  if (etag) {
+    cache.etag = etag
+  } else {
+    delete cache.etag
+  }
+  if (lastModified) {
+    cache.lastModified = lastModified
+  } else {
+    delete cache.lastModified
+  }
+}
+
 /** Refuse anything larger; a config this big is a wrong URL, not a config. */
 const MAX_BYTES = 512 * 1024
 
@@ -37,13 +77,18 @@ export const REFRESH_INTERVAL_MINUTES = 60
 export async function refreshRemote(): Promise<RemoteCache> {
   const url = await readRemoteUrl()
   const previous = await readCache()
-  const kept = previous?.url === url ? previous.config : null
+  const sameUrl = previous?.url === url
+  const kept = sameUrl ? previous.config : null
 
   const cache: RemoteCache = {
     url,
     fetchedAt: Date.now(),
     config: kept,
     error: null,
+    ...(sameUrl && previous.etag ? { etag: previous.etag } : {}),
+    ...(sameUrl && previous.lastModified
+      ? { lastModified: previous.lastModified }
+      : {}),
   }
 
   if (!url) {
@@ -58,7 +103,25 @@ export async function refreshRemote(): Promise<RemoteCache> {
   }
 
   try {
-    const response = await fetch(url, { cache: 'no-cache' })
+    // Only ask conditionally when there is something to fall back on. A 304
+    // with nothing cached would leave the extension holding neither the old
+    // config nor a new one.
+    const response = await fetch(url, {
+      // Our own validators do the revalidating, so the HTTP cache is left out
+      // of it entirely - otherwise a 304 arrives as an opaque 200 from cache
+      // and there is no way to tell a cheap refresh from an expensive one.
+      cache: 'no-store',
+      headers: kept ? conditionalHeaders(cache) : {},
+    })
+
+    if (response.status === NOT_MODIFIED && kept) {
+      // The file has not changed. Keep everything, including the validators,
+      // and record that this cost a round trip rather than a download.
+      cache.unchanged = true
+      await chrome.storage.local.set({ [REMOTE_CACHE_KEY]: cache })
+      return cache
+    }
+
     if (!response.ok) {
       throw new Error(`${response.status} ${response.statusText}`.trim())
     }
@@ -80,6 +143,8 @@ export async function refreshRemote(): Promise<RemoteCache> {
       sites: config.sites ?? {},
       deployments: config.deployments ?? {},
     }
+    cache.unchanged = false
+    rememberValidators(cache, response)
   } catch (error: unknown) {
     cache.error = error instanceof Error ? error.message : String(error)
   }

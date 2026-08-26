@@ -726,5 +726,17 @@
   "l10nConfig": {
     "message": "Config",
     "description": "Groups the shared config and JSON config panels."
+  },
+  "l10nRevertToShared": {
+    "message": "Revert",
+    "description": "Button that discards a local change and follows the shared config again."
+  },
+  "l10nRevertToSharedHint": {
+    "message": "Discard your changes and follow the shared config again",
+    "description": "Tooltip for the revert button."
+  },
+  "l10nReverted": {
+    "message": "Following the shared config again",
+    "description": "Toast after reverting a local override."
   }
 }

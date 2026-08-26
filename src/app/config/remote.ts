@@ -38,6 +38,14 @@ export interface RemoteCache {
   config: DeploymentWindowsConfig | null
   /** Why the last attempt failed, or null when it did not. */
   error: string | null
+  /**
+   * What the server said last time, so the next fetch can ask whether anything
+   * has changed rather than asking for the whole file again.
+   */
+  etag?: string
+  lastModified?: string
+  /** True when the last refresh was answered "nothing has changed". */
+  unchanged?: boolean
 }
 
 export interface HiddenKeys {
