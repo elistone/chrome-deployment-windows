@@ -372,6 +372,49 @@ describe('shared config', () => {
       ).toBeUndefined()
     })
 
+    it('takes global freezes from the shared config', async () => {
+      // The point of a company freeze in a shared file: one entry, everyone.
+      serve({
+        ...sharedConfig(),
+        freezes: [{ from: '2026-12-20', to: '2027-01-02', reason: 'Company' }],
+      })
+      await setRemoteUrl(URL_)
+
+      expect((await Config.load()).freezes).toEqual([
+        { from: '2026-12-20', to: '2027-01-02', reason: 'Company' },
+      ])
+    })
+
+    it('does not store a shared freeze list as if it were yours', async () => {
+      serve({
+        ...sharedConfig(),
+        freezes: [{ from: '2026-12-20', to: '2027-01-02' }],
+      })
+      await setRemoteUrl(URL_)
+      await Config.save(await Config.load())
+
+      expect((await chrome.storage.sync.get('FREEZES')).FREEZES).toEqual([])
+    })
+
+    it('lets a local list replace the shared one', async () => {
+      serve({
+        ...sharedConfig(),
+        freezes: [{ from: '2026-12-20', to: '2027-01-02' }],
+      })
+      await setRemoteUrl(URL_)
+
+      const merged = await Config.load()
+      merged.freezes = [{ from: '2026-07-01', to: '2026-07-14', reason: 'Ours' }]
+      await Config.save(merged)
+
+      // A list, not a record: there is no key to win on, so it is one value.
+      // Concatenating would read better until someone tried to remove a freeze
+      // the file had put there and found they could not.
+      expect((await Config.load()).freezes).toEqual([
+        { from: '2026-07-01', to: '2026-07-14', reason: 'Ours' },
+      ])
+    })
+
     it('does not fall back to the defaults when only the shared layer has entries', async () => {
       await connect()
 

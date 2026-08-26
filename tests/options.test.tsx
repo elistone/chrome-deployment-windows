@@ -626,3 +626,84 @@ describe('Options shared config', () => {
     expect(screen.getByRole('heading', { name: 'Daytime project' })).toBeInTheDocument()
   })
 })
+
+describe('Options global freezes', () => {
+  it('says there are none, rather than showing an empty list', async () => {
+    await openDashboard()
+    expect(screen.getByText('No freezes yet.')).toBeInTheDocument()
+  })
+
+  it('adds one that applies to everything', async () => {
+    const { user } = await openDashboard()
+    await enterEditMode(user)
+
+    await user.click(screen.getByRole('button', { name: /Edit freezes/ }))
+    await user.click(screen.getByRole('button', { name: /Add freeze/ }))
+    await user.type(screen.getByLabelText(/^From/), '2026-12-20')
+    await user.type(screen.getByLabelText(/^To/), '2027-01-02')
+    await user.type(screen.getByLabelText(/^Reason/), 'Company freeze')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText('Company freeze')).toBeInTheDocument()
+    expect(
+      (await chrome.storage.sync.get('FREEZES')).FREEZES,
+    ).toEqual([
+      { from: '2026-12-20', to: '2027-01-02', reason: 'Company freeze' },
+    ])
+  })
+
+  it('freezes every deployment while it is on', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+
+    const config = testConfig()
+    config.freezes = [{ from: '2026-12-20', to: '2027-01-02' }]
+    await openDashboard(config)
+
+    // Every entry with a window, not just one that asked to be frozen.
+    const frozen = screen.getAllByText('Deployment frozen')
+    expect(frozen.length).toBeGreaterThan(1)
+    vi.useRealTimers()
+  })
+
+  it('marks the one that is running now', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+
+    const config = testConfig()
+    // Distinctive, because the reason also appears on every frozen card.
+    config.freezes = [
+      { from: '2026-12-20', to: '2027-01-02', reason: 'Running right now' },
+      { from: '2027-06-01', to: '2027-06-07', reason: 'Some way off' },
+    ]
+    await openDashboard(config)
+
+    const now = screen
+      .getAllByText('Running right now')
+      .map((node) => node.closest('li'))
+      .find(Boolean)
+    const later = screen.getByText('Some way off').closest('li')
+    expect(within(now!).getByText('On now')).toBeInTheDocument()
+    expect(within(later!).queryByText('On now')).toBeNull()
+    vi.useRealTimers()
+  })
+
+  it('refuses a range that ends before it starts', async () => {
+    // Typed rather than seeded: a stored range that can never contain a day is
+    // dropped when the config loads, so there would be nothing left to refuse.
+    const { user } = await openDashboard()
+    await enterEditMode(user)
+
+    await user.click(screen.getByRole('button', { name: /Edit freezes/ }))
+    await user.click(screen.getByRole('button', { name: /Add freeze/ }))
+    await user.type(screen.getByLabelText(/^From/), '2027-01-02')
+    await user.type(screen.getByLabelText(/^To/), '2026-12-20')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      screen.getByText('The last day cannot be before the first.'),
+    ).toBeInTheDocument()
+    // The seeding save wrote an empty list; the refused one did not add to it.
+    expect((await chrome.storage.sync.get('FREEZES')).FREEZES).toEqual([])
+  })
+})

@@ -2,6 +2,7 @@ import { DW } from '../../../app/components/DW'
 import { daysLabel } from '../../../app/components/dayLabels'
 import { Methods } from '../../../app/components/Methods'
 import { TextFormatter } from '../../../app/components/TextFormatter'
+import type { Freeze } from '../../../app/components/freezes'
 import type { DeploymentConfig } from '../../../app/config/types'
 import ConfirmDelete from '../common/ConfirmDelete'
 import Countdown from '../common/Countdown'
@@ -21,6 +22,8 @@ interface DeploymentCardProps {
   deployment: DeploymentConfig
   /** Every configured site key, so missing fragments can be shown as gaps. */
   domainKeys: string[]
+  /** Freezes that apply to everything, not just to this entry. */
+  globalFreezes?: readonly Freeze[]
   /** True while this entry is still exactly what the shared config says. */
   shared?: boolean
   /**
@@ -35,7 +38,15 @@ interface DeploymentCardProps {
 }
 
 /** What the pill should say for this entry, right now. */
-export function statusFor(deployment: DeploymentConfig): StatusTone {
+/**
+ * `globalFreezes` is required rather than defaulted. Defaulting it let the
+ * "open now" count on the options page go on compiling while reporting a
+ * frozen deployment as open.
+ */
+export function statusFor(
+  deployment: DeploymentConfig,
+  globalFreezes: readonly Freeze[],
+): StatusTone {
   if (deployment['notes-only'] === true) {
     return 'notes'
   }
@@ -44,7 +55,7 @@ export function statusFor(deployment: DeploymentConfig): StatusTone {
     // the day. Saying so is more use than showing a permanent red "closed".
     return 'unset'
   }
-  const { local } = DW.buildTimes(deployment)
+  const { local } = DW.buildTimes(deployment, globalFreezes)
   if (local.freeze) {
     return 'frozen'
   }
@@ -80,6 +91,7 @@ export function DeploymentCard({
   configKey,
   deployment,
   domainKeys,
+  globalFreezes = [],
   shared = false,
   editing,
   onEdit,
@@ -90,14 +102,16 @@ export function DeploymentCard({
   // The status and the countdown are both worked out from the clock, so the
   // card has to keep redrawing for either to stay true.
   useNow()
-  const tone = statusFor(deployment)
+  const tone = statusFor(deployment, globalFreezes)
   const name =
     typeof deployment.name === 'string' && deployment.name
       ? deployment.name
       : configKey
   const notes = typeof deployment.notes === 'string' ? deployment.notes : ''
   const notesHtml = useMarkdown(notes)
-  const times = deployment.time ? DW.buildTimes(deployment) : null
+  const times = deployment.time
+    ? DW.buildTimes(deployment, globalFreezes)
+    : null
   // Your own window leads, and does not name your zone; what the config says
   // follows as provenance, and only when it differs.
   const showSource =

@@ -53,25 +53,25 @@ describe('statusFor', () => {
     // 09:00-17:00 Europe/London is 04:00-12:00 in New York.
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2024-06-03T10:00:00'))
-    expect(statusFor(testConfig().deployments.daytime)).toBe('open')
+    expect(statusFor(testConfig().deployments.daytime, [])).toBe('open')
   })
 
   it('reports closed outside it', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2024-06-03T18:00:00'))
-    expect(statusFor(testConfig().deployments.daytime)).toBe('closed')
+    expect(statusFor(testConfig().deployments.daytime, [])).toBe('closed')
   })
 
   it('reports notes for a notes-only entry, whatever the time', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2024-06-03T18:00:00'))
-    expect(statusFor(testConfig().deployments.notesOnly)).toBe('notes')
+    expect(statusFor(testConfig().deployments.notesOnly, [])).toBe('notes')
   })
 
   it('flags an entry with no window rather than calling it closed', () => {
     // Without times it resolves to 00:00-00:00, so a plain red "closed" would
     // be technically true and completely unhelpful.
-    expect(statusFor(testConfig().deployments.untimed)).toBe('unset')
+    expect(statusFor(testConfig().deployments.untimed, [])).toBe('unset')
   })
 })
 

@@ -89,18 +89,33 @@ export function visibleRemote(
     domains: without(remote.domains, hidden.domains),
     sites: without(remote.sites, hidden.sites),
     deployments: without(remote.deployments, hidden.deployments),
+    // Not hideable: the freeze list is one value rather than a set of keyed
+    // entries, so there is nothing to hide individually. Replacing it locally
+    // is how you get rid of one.
+    ...(remote.freezes ? { freezes: remote.freezes } : {}),
   }
 }
 
-/** Local entries win, key by key. */
+/**
+ * Local entries win, key by key.
+ *
+ * The global freezes are the exception, because they are a list rather than a
+ * record and there is no key to win on. They are treated as one value: a local
+ * list replaces the shared one outright. Concatenating instead would read
+ * better right up until someone tried to remove a freeze the file had put
+ * there, and found they could not.
+ */
 export function mergeConfigs(
   remote: DeploymentWindowsConfig,
   local: DeploymentWindowsConfig,
 ): DeploymentWindowsConfig {
+  const freezes = local.freezes ?? remote.freezes
+
   return {
     domains: { ...remote.domains, ...local.domains },
     sites: { ...remote.sites, ...local.sites },
     deployments: { ...remote.deployments, ...local.deployments },
+    ...(freezes && freezes.length > 0 ? { freezes } : {}),
   }
 }
 
@@ -150,11 +165,18 @@ export function splitLocal(
   const sites = diffSection(merged.sites, remote.sites)
   const deployments = diffSection(merged.deployments, remote.deployments)
 
+  // One value, compared whole: identical to the shared list means it is still
+  // the shared list, and nothing needs storing.
+  const freezes = merged.freezes ?? []
+  const ownFreezes =
+    stable(freezes) === stable(remote.freezes ?? []) ? [] : freezes
+
   return {
     local: {
       domains: domains.own,
       sites: sites.own,
       deployments: deployments.own,
+      ...(ownFreezes.length > 0 ? { freezes: ownFreezes } : {}),
     },
     hidden: {
       domains: domains.missing,

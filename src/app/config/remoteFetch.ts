@@ -1,4 +1,5 @@
 import { validateConfig } from './schema'
+import { toFreezes } from '../components/freezes'
 import {
   REMOTE_CACHE_KEY,
   REMOTE_URL_KEY,
@@ -138,10 +139,15 @@ export async function refreshRemote(): Promise<RemoteCache> {
     }
 
     const config = parsed as DeploymentWindowsConfig
+    // Rebuilt section by section rather than kept whole, so a file with extra
+    // keys cannot smuggle them into storage. Anything added to the config
+    // shape has to be added here too - global freezes were dropped on the way
+    // in until a test asked for them back.
     cache.config = {
       domains: config.domains ?? {},
       sites: config.sites ?? {},
       deployments: config.deployments ?? {},
+      ...(config.freezes ? { freezes: toFreezes(config.freezes) } : {}),
     }
     cache.unchanged = false
     rememberValidators(cache, response)

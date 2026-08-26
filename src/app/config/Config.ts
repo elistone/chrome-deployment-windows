@@ -9,12 +9,14 @@ import {
   splitLocal,
   visibleRemote,
 } from './remote'
+import { toFreezes } from '../components/freezes'
 import type { DeploymentWindowsConfig, SiteConfig } from './types'
 
 export const STORAGE_KEYS = {
   domains: 'DOMAINS',
   sites: 'SITES',
   deployments: 'DEPLOYMENTS',
+  freezes: 'FREEZES',
 } as const
 
 /**
@@ -92,6 +94,7 @@ export class Config {
       STORAGE_KEYS.domains,
       STORAGE_KEYS.sites,
       STORAGE_KEYS.deployments,
+      STORAGE_KEYS.freezes,
     ])
 
     const domains = stored[STORAGE_KEYS.domains] as
@@ -104,10 +107,13 @@ export class Config {
       | DeploymentWindowsConfig['deployments']
       | undefined
 
+    const freezes = toFreezes(stored[STORAGE_KEYS.freezes])
+
     return {
       domains: domains ?? {},
       sites: migrateSites(sites ?? {}),
       deployments: deployments ?? {},
+      ...(freezes.length > 0 ? { freezes } : {}),
     }
   }
 
@@ -154,11 +160,16 @@ export class Config {
     const remote = visibleRemote(await Config.loadRemote(), await readHidden())
     // A config assembled elsewhere may be missing a section entirely; the
     // storage layer has always filled those in rather than refusing them.
+    //
+    // Every key of the config shape has to appear here. Listing three of them
+    // and forgetting the fourth is how global freezes were silently dropped on
+    // the way to storage - twice, in two different files, before a test asked.
     const { local, hidden } = splitLocal(
       {
         domains: config.domains ?? {},
         sites: config.sites ?? {},
         deployments: config.deployments ?? {},
+        ...(config.freezes ? { freezes: config.freezes } : {}),
       },
       remote,
     )
@@ -167,6 +178,7 @@ export class Config {
       [STORAGE_KEYS.domains]: local.domains,
       [STORAGE_KEYS.sites]: local.sites,
       [STORAGE_KEYS.deployments]: local.deployments,
+      [STORAGE_KEYS.freezes]: local.freezes ?? [],
     })
 
     if (isHiddenEmpty(hidden)) {
@@ -181,6 +193,7 @@ export class Config {
       STORAGE_KEYS.domains,
       STORAGE_KEYS.sites,
       STORAGE_KEYS.deployments,
+      STORAGE_KEYS.freezes,
       REMOTE_HIDDEN_KEY,
     ])
   }

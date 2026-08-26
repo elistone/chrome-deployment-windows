@@ -412,3 +412,85 @@ describe('DW with freezes', () => {
     expect(resolve(config).canDeploy).toBe(false)
   })
 })
+
+describe('DW with global freezes', () => {
+  function withFreezes(
+    global?: unknown,
+    own?: unknown,
+  ): ReturnType<typeof testConfig> {
+    const config = testConfig()
+    config.deployments.daytime.time = {
+      start: '09:00',
+      end: '17:00',
+      timezone: 'America/New_York',
+    }
+    if (global) {
+      config.freezes = global as ReturnType<typeof testConfig>['freezes']
+    }
+    if (own) {
+      ;(config.deployments.daytime as Record<string, unknown>).freezes = own
+    }
+    return config
+  }
+
+  function resolve(config: ReturnType<typeof testConfig>) {
+    return new DW(config, 'https://github.com/acme/daytime').getDeploymentInfo()!
+  }
+
+  const CHRISTMAS = [{ from: '2026-12-20', to: '2027-01-02', reason: 'Company freeze' }]
+
+  it('shuts every deployment, not just the ones that asked', () => {
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    const info = resolve(withFreezes(CHRISTMAS))
+
+    expect(info.canDeploy).toBe(false)
+    expect(info.status).toBe('Deployment frozen')
+    expect(info.timeObj.original.freeze?.reason).toBe('Company freeze')
+  })
+
+  it('leaves everything alone outside the dates', () => {
+    vi.setSystemTime(new Date('2027-01-03T12:00:00'))
+    expect(resolve(withFreezes(CHRISTMAS)).canDeploy).toBe(true)
+  })
+
+  it('adds to a deployment freeze rather than replacing it', () => {
+    // A company freeze and a project freeze are both true at once.
+    vi.setSystemTime(new Date('2026-06-10T12:00:00'))
+    const info = resolve(
+      withFreezes(CHRISTMAS, [
+        { from: '2026-06-08', to: '2026-06-12', reason: 'Migration' },
+      ]),
+    )
+
+    expect(info.canDeploy).toBe(false)
+    expect(info.timeObj.original.freeze?.reason).toBe('Migration')
+  })
+
+  it('reports whichever of the two runs longest', () => {
+    // Otherwise "deploys resume on the 24th" while the company freeze runs on.
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    const info = resolve(
+      withFreezes(CHRISTMAS, [
+        { from: '2026-12-22', to: '2026-12-23', reason: 'Migration' },
+      ]),
+    )
+
+    expect(info.timeObj.original.freeze?.to).toBe('2027-01-02')
+    expect(info.timeObj.original.freeze?.reason).toBe('Company freeze')
+  })
+
+  it('ignores a global freeze it cannot read', () => {
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    expect(resolve(withFreezes([{ from: 'christmas', to: 'new year' }])).canDeploy).toBe(
+      true,
+    )
+  })
+
+  it('leaves a config with no global freezes exactly as it was', () => {
+    vi.setSystemTime(new Date('2026-12-23T12:00:00'))
+    const info = resolve(testConfig())
+
+    expect(info.timeObj.original.freeze).toBeNull()
+    expect(info.canDeploy).toBe(true)
+  })
+})

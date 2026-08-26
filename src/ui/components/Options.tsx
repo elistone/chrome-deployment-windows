@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Methods } from '../../app/components/Methods'
+import {
+  activeFreeze,
+  toFreezes,
+  todayIn,
+} from '../../app/components/freezes'
+import { Timezones } from '../../app/components/Timezones'
 import { Config, defaultConfig } from '../../app/config/Config'
 import {
   emptyConfig,
@@ -20,6 +26,7 @@ import { PlusIcon, SearchIcon, StatusMark } from './common/Icons'
 import DashboardHeader from './dashboard/DashboardHeader'
 import DeploymentCard, { statusFor } from './dashboard/DeploymentCard'
 import DeploymentForm from './dashboard/DeploymentForm'
+import FreezeForm from './dashboard/FreezeForm'
 import JsonPanel from './dashboard/JsonPanel'
 import SiteCard from './dashboard/SiteCard'
 import SharedConfigPanel from './dashboard/SharedConfigPanel'
@@ -42,6 +49,7 @@ import { matchesFilter, uniqueKey, useTick } from './dashboard/support'
 type Dialog =
   | { kind: 'deployment'; originalKey: string | null; draft: DeploymentDraft }
   | { kind: 'site'; originalKey: string | null; draft: SiteDraft }
+  | { kind: 'freezes' }
 
 /**
  * The options page.
@@ -167,13 +175,20 @@ export function Options() {
     [config.deployments],
   )
 
+  /** Freezes that apply to everything, read from the merged config. */
+  const globalFreezes = useMemo(() => toFreezes(config.freezes), [config.freezes])
+  // The list is a summary rather than a per-project answer, so "on now" is
+  // read against the viewer's own calendar. Each deployment still decides for
+  // itself, against the timezone its window is written in.
+  const localZone = Timezones.findLocalTimezone()
+
   const openCount = useMemo(
     () =>
       Object.values(config.deployments).filter(
-        (deployment) => statusFor(deployment) === 'open',
+        (deployment) => statusFor(deployment, globalFreezes) === 'open',
       ).length,
     // Recomputed on every tick as well, since the answer changes with the clock.
-    [config.deployments, tick],
+    [config.deployments, globalFreezes, tick],
   )
 
   const visibleDeployments = deploymentKeys.filter((key) => {
@@ -396,6 +411,7 @@ export function Options() {
                   configKey={key}
                   deployment={config.deployments[key]}
                   domainKeys={domainKeys}
+                  globalFreezes={globalFreezes}
                   shared={shared.deployments.has(key)}
                   onRevert={
                     overridden.deployments.has(key)
@@ -414,6 +430,59 @@ export function Options() {
                 />
               ))}
             </div>
+          )}
+        </section>
+
+        <section className="dw-section" aria-labelledby="dw-freezes-title">
+          <div className="dw-section-head">
+            <div className="dw-section-heading">
+              <h2 className="dw-section-title" id="dw-freezes-title">
+                {Methods.i18n('l10nGlobalFreezes')}
+              </h2>
+              <p className="dw-section-subtitle">
+                {Methods.i18n('l10nGlobalFreezesSubtitle')}
+              </p>
+            </div>
+            {editing && (
+              <button
+                type="button"
+                className="dw-button dw-button-primary"
+                onClick={() => setDialog({ kind: 'freezes' })}
+              >
+                <PlusIcon size={15} />
+                {Methods.i18n('l10nEditFreezes')}
+              </button>
+            )}
+          </div>
+
+          {globalFreezes.length === 0 ? (
+            <p className="dw-empty-inline">
+              {Methods.i18n('l10nNoFreezesYet')}
+            </p>
+          ) : (
+            <ul className="dw-freeze-list">
+              {globalFreezes.map((freeze) => {
+                const on = activeFreeze([freeze], todayIn(localZone)) !== null
+                return (
+                  <li
+                    className={`dw-freeze${on ? ' dw-freeze-on' : ''}`}
+                    key={`${freeze.from}-${freeze.to}-${freeze.reason ?? ''}`}
+                  >
+                    <span className="dw-mono dw-freeze-dates">
+                      {freeze.from} &ndash; {freeze.to}
+                    </span>
+                    {freeze.reason && (
+                      <span className="dw-freeze-reason">{freeze.reason}</span>
+                    )}
+                    {on && (
+                      <span className="dw-badge dw-badge-warn">
+                        {Methods.i18n('l10nFreezeActive')}
+                      </span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
           )}
         </section>
 
@@ -506,6 +575,23 @@ export function Options() {
           initial={dialog.draft}
           takenKeys={domainKeys.filter((key) => key !== dialog.originalKey)}
           onSubmit={saveSite}
+          onClose={() => setDialog(null)}
+        />
+      )}
+
+      {dialog?.kind === 'freezes' && (
+        <FreezeForm
+          initial={globalFreezes}
+          onSubmit={(freezes) => {
+            setDialog(null)
+            void persist(
+              {
+                ...config,
+                ...(freezes.length > 0 ? { freezes } : { freezes: [] }),
+              },
+              Methods.i18n('l10nSaved'),
+            )
+          }}
           onClose={() => setDialog(null)}
         />
       )}
