@@ -4,6 +4,26 @@ Notable changes to Deployment windows. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-08-26
+
+### Added
+
+- **Freezes that apply to everything.** "We do not ship over Christmas" is one
+  fact about a company, not one fact repeated on every project - and repeated
+  facts are how a config ends up frozen on eight deployments and not on the
+  ninth. There is a **Freezes** section on the options page, and a `freezes`
+  key beside `deployments` in the JSON:
+
+  ```json
+  "freezes": [
+      { "from": "2026-12-20", "to": "2027-01-02", "reason": "Christmas change freeze" }
+  ]
+  ```
+
+  A deployment's own freezes are *added* to these rather than replacing them:
+  both are true at once, and whichever runs longest decides when deploying
+  resumes. Put one in a shared config and the whole team has it from one place.
+
 ## [2.4.0] - 2026-08-26
 
 ### Added
@@ -237,6 +257,7 @@ rejected.
 
 First release.
 
+[2.5.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.5.0
 [2.4.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.4.0
 [2.3.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.3.0
 [2.2.0]: https://github.com/elistone/chrome-deployment-windows/releases/tag/v2.2.0
